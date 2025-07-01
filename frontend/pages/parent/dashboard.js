@@ -18,7 +18,7 @@ function ParentSidebar({ userEmail, userPhoto, userName, onMenuSelect, selectedM
     { key: "timetable", label: "Timetable", icon: <FaCalendarAlt style={{ fontSize: 18 }} /> },
     { key: "resources", label: "Digital Resources", icon: <FaLaptop style={{ fontSize: 18 }} /> },
     { key: "profile", label: "Profile", icon: <FaUser style={{ fontSize: 18 }} /> },
-    { key: "delete-account", label: "Delete Account", icon: <span style={{fontSize:18, color:'#c00'}}>🗑️</span> }
+    { key: "delete-account", label: "Delete Account", icon: <span style={{fontSize:18, color:'#c00'}}>🗑️</span> },
   ];
   return (
     <aside style={{
@@ -77,7 +77,7 @@ function ParentSidebar({ userEmail, userPhoto, userName, onMenuSelect, selectedM
           style={{
             margin: "32px auto 0 auto",
             width: "80%",
-            background: "#ff0080",
+            background: "rgb(98, 106, 169)",
             color: "#fff",
             border: "none",
             borderRadius: 8,
@@ -138,7 +138,7 @@ function ParentDashboard() {
   const [userEmail, setUserEmail] = useState("");
   const [profile, setProfile] = useState(null);
   const [editMode, setEditMode] = useState(false);
-  const [form, setForm] = useState({ name: '', phone: '', school: '', photo: null });
+  const [form, setForm] = useState({ name: '', phone: '', photo: null });
   const [status, setStatus] = useState('');
   const [preview, setPreview] = useState('');
   const fileInputRef = useRef();
@@ -172,8 +172,6 @@ function ParentDashboard() {
           setForm({
             name: data.user.name || '',
             phone: data.user.phone || '',
-            school: data.user.school || '',
-            class: data.user.class || '',
             photo: null
           });
           const photoUrl = data.user.photo && data.user.photo !== "" ? data.user.photo : "/default-avatar.png";
@@ -223,7 +221,6 @@ function ParentDashboard() {
     setForm({
       name: profile?.name || '',
       phone: profile?.phone || '',
-      school: profile?.school || '',
       photo: null
     });
     setPreview(profile?.photo || "/default-avatar.png");
@@ -240,6 +237,10 @@ function ParentDashboard() {
     }
   };
   const handleSave = async () => {
+    if (!form.phone || form.phone.length !== 10) {
+      setStatus('Phone number must be exactly 10 digits');
+      return;
+    }
     setStatus('Saving...');
     try {
       let body;
@@ -248,14 +249,12 @@ function ParentDashboard() {
         body = new FormData();
         body.append('name', form.name);
         body.append('phone', form.phone);
-        body.append('school', form.school);
         body.append('photo', form.photo);
         headers = { 'Authorization': `Bearer ${getToken()}` };
       } else {
         body = JSON.stringify({
           name: form.name,
-          phone: form.phone,
-          school: form.school
+          phone: form.phone
         });
         headers = {
           'Authorization': `Bearer ${getToken()}`,
@@ -313,14 +312,31 @@ function ParentDashboard() {
 
   const fetchAnnouncements = useCallback(() => {
     setAnnouncementsLoading(true);
-    fetch(`${BASE_API_URL}/getannouncements`)
+    // If profile.childClass exists, fetch with class param for Student announcements
+    let url = `${BASE_API_URL}/getannouncements?registeredAs=Parent`;
+    if (profile && profile.childClass) {
+      url += `&class=${encodeURIComponent(profile.childClass)}`;
+    }
+    fetch(url)
       .then(res => res.json())
       .then(data => {
-        setAnnouncements(data.announcements || []);
+        // Filter announcements: show if for Parent, or for Student and class matches
+        const filtered = (data.announcements || []).filter(a => {
+          // For Parent
+          if (a.announcementFor && Array.isArray(a.announcementFor) && a.announcementFor.some(role => role.toLowerCase() === 'parent')) return true;
+          // For Student and class matches
+          if (
+            profile && profile.childClass &&
+            a.announcementFor && Array.isArray(a.announcementFor) && a.announcementFor.some(role => role.toLowerCase() === 'student') &&
+            a.classes && Array.isArray(a.classes) && (a.classes.includes('ALL') || a.classes.includes(profile.childClass))
+          ) return true;
+          return false;
+        });
+        setAnnouncements(filtered);
         setAnnouncementsLoading(false);
       })
       .catch(() => setAnnouncementsLoading(false));
-  }, []);
+  }, [profile]);
 
   const fetchCbseUpdates = useCallback(() => {
     setCbseLoading(true);
@@ -456,22 +472,6 @@ function ParentDashboard() {
                       onChange={val => setForm(f => ({ ...f, phone: val }))}
                     />
                   </div>
-                  <div>
-                    <label style={{ fontWeight: 600, color: "#1e3c72" }}>School:</label>
-                    <input
-                      name="school"
-                      value={form.school}
-                      onChange={handleChange}
-                      style={{
-                        width: "100%",
-                        padding: "10px 12px",
-                        borderRadius: 6,
-                        border: "1.5px solid #e0e0e0",
-                        fontSize: 16,
-                        marginTop: 4
-                      }}
-                    />
-                  </div>
                 </div>
                 <div style={{ display: "flex", gap: 12, marginTop: 18 }}>
                   <button
@@ -591,10 +591,18 @@ function ParentDashboard() {
                   <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Phone:</span>
                   <span style={{ color: "#222", fontSize: 16 }}>{profile.phone || "-"}</span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>School:</span>
-                  <span style={{ color: "#222", fontSize: 16 }}>{profile.school || "-"}</span>
-                </div>
+                {profile.childEmail && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Child Email:</span>
+                    <span style={{ color: "#222", fontSize: 16 }}>{profile.childEmail}</span>
+                  </div>
+                )}
+                {profile.childClass && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Child Class:</span>
+                    <span style={{ color: "#222", fontSize: 16 }}>{profile.childClass}</span>
+                  </div>
+                )}
               </div>
               <button
                 onClick={handleEdit}
@@ -917,54 +925,66 @@ function ParentDashboard() {
       return (
         <div style={{ padding: 48, maxWidth: 700, margin: "0 auto" }}>
           <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24, color: "#1e3c72" }}>Announcements</h2>
-          {announcementsLoading ? <div>Loading...</div> : (
+          {announcementsLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 120 }}>
+              <div className="spinner" style={{ width: 48, height: 48, border: '6px solid #eee', borderTop: '6px solid #1e3c72', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+              <style>{`@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
+            </div>
+          ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
               {announcements.length === 0 && <div>No announcements yet.</div>}
-              {announcements.map(a => (
-                <div key={a._id} style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 24, marginBottom: 8 }}>
-                  <div style={{ fontSize: 17, color: "#222", marginBottom: 12, whiteSpace: "pre-line" }}>{a.text}</div>
-                  {a.images && a.images.length > 0 && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 8 }}>
-                      {a.images.map((img, idx) => (
-                        typeof img === "object" && img.url ? (
-                          img.fileType === "pdf" ? (
-                            <div
-                              key={idx}
-                              style={{ cursor: "pointer", position: "relative", display: "inline-block" }}
-                              onClick={() => setPreviewModal({ open: true, url: img.url, fileType: "pdf" })}
-                            >
-                              <iframe
-                                src={img.url}
-                                title={`Announcement PDF ${idx + 1}`}
-                                style={{ width: 180, height: 120, border: "1px solid #e0e0e0", borderRadius: 8, boxShadow: "0 2px 8px rgba(30,60,114,0.10)" }}
-                              />
-                              <div style={{
-                                position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
-                                background: "rgba(255,255,255,0.01)", borderRadius: 8
-                              }} />
-                            </div>
-                          ) : (
-                            <img
-                              key={idx}
-                              src={img.url}
-                              alt="Announcement"
-                              style={{ maxWidth: 180, maxHeight: 120, borderRadius: 8, boxShadow: "0 2px 8px rgba(30,60,114,0.10)", cursor: "pointer" }}
-                              onClick={() => setPreviewModal({ open: true, url: img.url, fileType: "image" })}
-                            />
-                          )
-                        ) : (
-                          // fallback for old data: just show as image
-                          <img key={idx} src={img} alt="Announcement" style={{ maxWidth: 180, maxHeight: 120, borderRadius: 8, boxShadow: "0 2px 8px rgba(30,60,114,0.10)" }} />
-                        )
-                      ))}
+              {announcements.map(a => {
+                const dateObj = new Date(a.createdAt);
+                const day = dateObj.toLocaleString('en-US', { day: '2-digit' });
+                const month = dateObj.toLocaleString('en-US', { month: 'short' });
+                const year = dateObj.getFullYear();
+                const time = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                return (
+                  <div key={a._id} style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    background: 'linear-gradient(90deg, #f0f4ff 0%, #e8eafc 100%)',
+                    borderRadius: 12,
+                    padding: '20px 32px',
+                    marginBottom: 18,
+                    boxShadow: 'none',
+                    border: 'none',
+                    gap: 24,
+                    minHeight: 70,
+                    width: '100%',
+                    maxWidth: 'none',
+                  }}>
+                    {/* Date column */}
+                    <div style={{
+                      minWidth: 60,
+                      textAlign: 'right',
+                      color: '#b0b0b0',
+                      fontWeight: 500,
+                      fontSize: 15,
+                      lineHeight: 1.2,
+                      marginTop: 2
+                    }}>
+                      <div>{day}</div>
+                      <div>{month}</div>
+                      <div>{year !== new Date().getFullYear() ? year : time}</div>
                     </div>
-                  )}
-                  <div style={{ fontSize: 13, color: "#888", marginTop: 8 }}>
-                    {/* Remove "By: ..." for consistency with student dashboard */}
-                    {new Date(a.createdAt).toLocaleString()}
+                    {/* Announcement content */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ color: '#222', fontSize: 17, fontWeight: 400, lineHeight: 1.5, whiteSpace: 'pre-line' }}>
+                        {a.text || ''}
+                      </div>
+                      {/* Images or files if any */}
+                      {a.images && a.images.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 8 }}>
+                          {a.images.map((img, idx) => (
+                            <img key={idx} src={img.url} alt="Announcement" style={{ maxWidth: 120, maxHeight: 80, borderRadius: 6 }} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
           {/* Preview Modal for image/pdf */}

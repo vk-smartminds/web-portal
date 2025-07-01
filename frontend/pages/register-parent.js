@@ -31,15 +31,15 @@ export default function RegisterParent() {
   const [childOtpVerified, setChildOtpVerified] = useState(false);
   const [childOtpTimer, setChildOtpTimer] = useState(0);
 
-  // Parent info
-  const [parentName, setParentName] = useState("");
-  const [parentEmail, setParentEmail] = useState("");
-  const [parentPassword, setParentPassword] = useState("");
-  const [parentOtpBlocks, setParentOtpBlocks] = useState(["", "", "", "", "", ""]);
-  const parentOtpRefs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
-  const [parentOtpSent, setParentOtpSent] = useState(false);
-  const [parentOtpVerified, setParentOtpVerified] = useState(false);
-  const [parentOtpTimer, setParentOtpTimer] = useState(0);
+  // Guardian info
+  const [guardianName, setGuardianName] = useState("");
+  const [guardianEmail, setGuardianEmail] = useState("");
+  const [guardianPassword, setGuardianPassword] = useState("");
+  const [guardianOtpBlocks, setGuardianOtpBlocks] = useState(["", "", "", "", "", ""]);
+  const guardianOtpRefs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
+  const [guardianOtpSent, setGuardianOtpSent] = useState(false);
+  const [guardianOtpVerified, setGuardianOtpVerified] = useState(false);
+  const [guardianOtpTimer, setGuardianOtpTimer] = useState(0);
 
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
@@ -48,6 +48,8 @@ export default function RegisterParent() {
 
   const [showStudentRegister, setShowStudentRegister] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const [childClass, setChildClass] = useState("");
 
   useEffect(() => {
     // If already authenticated, redirect to dashboard
@@ -74,13 +76,13 @@ export default function RegisterParent() {
     return () => clearInterval(interval);
   }, [childOtpSent, childOtpTimer]);
   useEffect(() => {
-    if (parentOtpSent) setParentOtpTimer(120); // 2 minutes
-  }, [parentOtpSent]);
+    if (guardianOtpSent) setGuardianOtpTimer(120); // 2 minutes
+  }, [guardianOtpSent]);
   useEffect(() => {
-    if (!parentOtpSent || parentOtpTimer <= 0) return;
-    const interval = setInterval(() => setParentOtpTimer(t => t - 1), 1000);
+    if (!guardianOtpSent || guardianOtpTimer <= 0) return;
+    const interval = setInterval(() => setGuardianOtpTimer(t => t - 1), 1000);
     return () => clearInterval(interval);
-  }, [parentOtpSent, parentOtpTimer]);
+  }, [guardianOtpSent, guardianOtpTimer]);
 
   // Step 1: Verify child email and send OTP
   const handleChildEmailSubmit = async (e) => {
@@ -102,6 +104,7 @@ export default function RegisterParent() {
       const data = await res.json();
       if (res.ok) {
         setChildOtpSent(true);
+        setChildClass("");
         setMsg("Child found. OTP sent to child email.");
       } else {
         setError(data.message || "Child verification failed");
@@ -149,18 +152,18 @@ export default function RegisterParent() {
     setLoading(false);
   };
 
-  // Step 2: Parent info and OTP
-  const handleParentInfoSubmit = async (e) => {
+  // Step 2: Guardian info and OTP
+  const handleGuardianInfoSubmit = async (e) => {
     e.preventDefault();
     setMsg("");
     setError("");
     setLoading(true);
-    // Check if parent email already exists
+    // Check if guardian email already exists
     try {
       const checkRes = await fetch(`${BASE_API_URL}/user/find`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: parentEmail.trim().toLowerCase() }),
+        body: JSON.stringify({ email: guardianEmail.trim().toLowerCase() }),
       });
       if (checkRes.ok) {
         setError("Email already registered.");
@@ -168,16 +171,16 @@ export default function RegisterParent() {
         return;
       }
     } catch {}
-    // Send OTP to parent email
+    // Send OTP to guardian email
     try {
       const res = await fetch(`${BASE_API_URL}/user/send-register-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: parentEmail.trim().toLowerCase() }),
+        body: JSON.stringify({ email: guardianEmail.trim().toLowerCase() }),
       });
       const data = await res.json();
       if (res.ok) {
-        setParentOtpSent(true);
+        setGuardianOtpSent(true);
         setMsg("OTP sent to your email.");
       } else {
         setError(data.message || "Failed to send OTP.");
@@ -221,7 +224,7 @@ export default function RegisterParent() {
     }
   };
 
-  const handleParentOtpVerifyAndRegister = async (e) => {
+  const handleGuardianOtpVerifyAndRegister = async (e) => {
     e.preventDefault();
     setMsg("");
     setError("");
@@ -232,8 +235,8 @@ export default function RegisterParent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: parentEmail.trim().toLowerCase(),
-          otp: parentOtpBlocks.join(""),
+          email: guardianEmail.trim().toLowerCase(),
+          otp: guardianOtpBlocks.join(""),
         }),
       });
       const data = await res.json();
@@ -248,23 +251,24 @@ export default function RegisterParent() {
       return;
     }
     // Check password strength
-    if (getPasswordSuggestions(parentPassword).length > 0) {
+    if (getPasswordSuggestions(guardianPassword).length > 0) {
       setError('Password is not strong enough.');
       setLoading(false);
       return;
     }
-    // Register parent
+    // Register guardian
     try {
       const res = await fetch(`${BASE_API_URL}/user/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: parentName,
-          email: parentEmail.trim().toLowerCase(),
-          password: parentPassword,
-          otp: parentOtpBlocks.join(""),
+          name: guardianName,
+          email: guardianEmail.trim().toLowerCase(),
+          password: guardianPassword,
+          otp: guardianOtpBlocks.join(""),
           registeredAs: "Parent",
           childEmail: childEmail.trim().toLowerCase(),
+          childClass: childClass.trim(),
         }),
       });
       const data = await res.json();
@@ -277,7 +281,7 @@ export default function RegisterParent() {
         if (data.user) {
           localStorage.setItem('user_data', JSON.stringify(data.user));
         }
-        localStorage.setItem("userEmail", parentEmail.trim().toLowerCase());
+        localStorage.setItem("userEmail", guardianEmail.trim().toLowerCase());
         setTimeout(() => {
           router.replace("/parent/dashboard");
         }, 1200);
@@ -291,33 +295,22 @@ export default function RegisterParent() {
   };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
-        background: "rgba(0,0,0,0.4)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-      }}
-    >
-      <div
-        style={{
-          background: "#fff",
-          color: "#222",
-          borderRadius: 16,
-          padding: 32,
-          minWidth: 320,
-          boxShadow:
-            "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
-          position: "relative",
-        }}
-      >
-        <h2>Parent Registration</h2>
+    <div style={{ minHeight: '100vh', width: '100vw', background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{
+        background: '#fff',
+        color: '#222',
+        borderRadius: 18,
+        boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
+        padding: 40,
+        minWidth: 340,
+        maxWidth: 400,
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        position: 'relative'
+      }}>
+        <div style={{ fontWeight: 700, fontSize: '2rem', color: '#222f5b', marginBottom: 8 }}>Guardian Registration</div>
         {step === 1 && (
           <form
             onSubmit={childOtpSent ? handleChildOtpVerify : handleChildEmailSubmit}
@@ -329,14 +322,14 @@ export default function RegisterParent() {
               onChange={(e) => setChildEmail(e.target.value)}
               required
               disabled={childOtpSent}
-              style={inputStyle}
+              style={{ width: '100%', padding: '12px 14px', marginBottom: 14, borderRadius: 8, border: '1.5px solid #e0e0e0', fontSize: '1rem', background: '#f7f8fa' }}
             />
             {!childOtpSent ? (
               <>
                 <button
                   type="submit"
                   disabled={loading}
-                  style={btnStyle}
+                  style={{ width: '100%', background: '#4a69bb', color: '#fff', border: 'none', borderRadius: 8, padding: '13px 0', fontWeight: 700, fontSize: '1.1rem', marginBottom: 8, cursor: loading ? 'not-allowed' : 'pointer', boxShadow: '0 2px 8px #4a69bb22' }}
                 >
                   {loading ? "Verifying..." : "Verify Child Email"}
                 </button>
@@ -377,57 +370,66 @@ export default function RegisterParent() {
                       value={v}
                       onChange={e => handleOtpBlockChange(childOtpBlocks, setChildOtpBlocks, childOtpRefs, i, e.target.value)}
                       onKeyDown={e => handleOtpBlockKeyDown(childOtpBlocks, childOtpRefs, i, e)}
-                      style={{ width: 36, height: 36, textAlign: 'center', fontSize: 20, borderRadius: 6, border: '1px solid #ccc' }}
+                      style={{ width: 36, height: 44, textAlign: 'center', fontSize: 22, borderRadius: 7, border: '1.5px solid #e0e0e0', background: '#f7f8fa' }}
                     />
                   ))}
                 </div>
                 <input type="hidden" name="childOtp" value={childOtpBlocks.join("")} />
-                <div style={{ marginBottom: 8, color: childOtpTimer > 0 ? '#1e3c72' : '#c00', fontWeight: 600 }}>
+                <div style={{ marginBottom: 8, color: childOtpTimer > 0 ? '#222f5b' : '#c00', fontWeight: 600, fontSize: 14 }}>
                   {childOtpTimer > 0 ? `OTP expires in ${Math.floor(childOtpTimer/60)}:${(childOtpTimer%60).toString().padStart(2,'0')}` : 'OTP expired'}
                 </div>
                 <button
                   type="submit"
                   disabled={!childOtpSent || childOtpTimer <= 0}
-                  style={btnStyle}
+                  style={{ width: '100%', background: '#4a69bb', color: '#fff', border: 'none', borderRadius: 8, padding: '13px 0', fontWeight: 700, fontSize: '1.1rem', marginBottom: 8, cursor: 'pointer', boxShadow: '0 2px 8px #4a69bb22' }}
                 >
                   {loading ? "Verifying OTP..." : "Verify OTP"}
                 </button>
                 {childOtpSent && childOtpTimer <= 0 && (
-                  <button type="button" onClick={handleChildEmailSubmit} style={{ marginTop: 8, color: '#1e3c72', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Resend OTP</button>
+                  <button type="button" onClick={handleChildEmailSubmit} style={{ marginTop: 8, color: '#222f5b', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Resend OTP</button>
                 )}
               </>
             )}
           </form>
         )}
         {step === 2 && (
-          <form onSubmit={parentOtpSent ? handleParentOtpVerifyAndRegister : handleParentInfoSubmit}>
+          <form onSubmit={guardianOtpSent ? handleGuardianOtpVerifyAndRegister : handleGuardianInfoSubmit}>
             <input
               type="text"
-              placeholder="Parent Name"
-              value={parentName}
-              onChange={e => setParentName(e.target.value)}
+              placeholder="Guardian Name"
+              value={guardianName}
+              onChange={e => setGuardianName(e.target.value)}
               required
-              disabled={parentOtpSent}
-              style={inputStyle}
+              disabled={guardianOtpSent}
+              style={{ width: '100%', padding: '12px 14px', marginBottom: 14, borderRadius: 8, border: '1.5px solid #e0e0e0', fontSize: '1rem', background: '#f7f8fa' }}
             />
             <input
               type="email"
-              placeholder="Parent Email"
-              value={parentEmail}
-              onChange={e => setParentEmail(e.target.value)}
+              placeholder="Guardian Email"
+              value={guardianEmail}
+              onChange={e => setGuardianEmail(e.target.value)}
               required
-              disabled={parentOtpSent}
+              disabled={guardianOtpSent}
+              style={{ width: '100%', padding: '12px 14px', marginBottom: 14, borderRadius: 8, border: '1.5px solid #e0e0e0', fontSize: '1rem', background: '#f7f8fa' }}
+            />
+            <input
+              type="text"
+              placeholder="Enter your child's class (e.g. 5A, 10, etc.)"
+              value={childClass}
+              onChange={e => setChildClass(e.target.value)}
+              required
+              disabled={guardianOtpSent}
               style={inputStyle}
             />
             <div style={{ position: 'relative' }}>
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
-                value={parentPassword}
-                onChange={e => setParentPassword(e.target.value)}
+                value={guardianPassword}
+                onChange={e => setGuardianPassword(e.target.value)}
                 required
-                style={inputStyle}
-                disabled={parentOtpSent}
+                style={{ width: '100%', padding: '12px 14px', marginBottom: 14, borderRadius: 8, border: '1.5px solid #e0e0e0', fontSize: '1rem', background: '#f7f8fa' }}
+                disabled={guardianOtpSent}
                 maxLength={30}
               />
               <span
@@ -438,41 +440,41 @@ export default function RegisterParent() {
                 {showPassword ? '🙈' : '👁️'}
               </span>
             </div>
-            {parentPassword && getPasswordSuggestions(parentPassword).length > 0 && (
+            {guardianPassword && getPasswordSuggestions(guardianPassword).length > 0 && (
               <div style={{ color: '#c00', fontSize: 13, marginTop: 4 }}>
-                Password must contain: {getPasswordSuggestions(parentPassword).join(', ')}
+                Password must contain: {getPasswordSuggestions(guardianPassword).join(', ')}
               </div>
             )}
-            {!parentOtpSent ? (
-              <button type="submit" disabled={loading} style={btnStyle}>
-                {loading ? "Sending OTP..." : "Send OTP to Parent Email"}
+            {!guardianOtpSent ? (
+              <button type="submit" disabled={loading} style={{ width: '100%', background: '#4a69bb', color: '#fff', border: 'none', borderRadius: 8, padding: '13px 0', fontWeight: 700, fontSize: '1.1rem', marginBottom: 8, cursor: 'pointer', boxShadow: '0 2px 8px #4a69bb22' }}>
+                {loading ? "Sending OTP..." : "Send OTP to Guardian Email"}
               </button>
             ) : (
               <>
                 <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 8 }}>
-                  {parentOtpBlocks.map((v, i) => (
+                  {guardianOtpBlocks.map((v, i) => (
                     <input
                       key={i}
-                      ref={parentOtpRefs[i]}
+                      ref={guardianOtpRefs[i]}
                       type="text"
                       inputMode="numeric"
                       maxLength={1}
                       value={v}
-                      onChange={e => handleOtpBlockChange(parentOtpBlocks, setParentOtpBlocks, parentOtpRefs, i, e.target.value)}
-                      onKeyDown={e => handleOtpBlockKeyDown(parentOtpBlocks, parentOtpRefs, i, e)}
-                      style={{ width: 36, height: 36, textAlign: 'center', fontSize: 20, borderRadius: 6, border: '1px solid #ccc' }}
+                      onChange={e => handleOtpBlockChange(guardianOtpBlocks, setGuardianOtpBlocks, guardianOtpRefs, i, e.target.value)}
+                      onKeyDown={e => handleOtpBlockKeyDown(guardianOtpBlocks, guardianOtpRefs, i, e)}
+                      style={{ width: 36, height: 44, textAlign: 'center', fontSize: 22, borderRadius: 7, border: '1.5px solid #e0e0e0', background: '#f7f8fa' }}
                     />
                   ))}
                 </div>
-                <input type="hidden" name="parentOtp" value={parentOtpBlocks.join("")} />
-                <div style={{ marginBottom: 8, color: parentOtpTimer > 0 ? '#1e3c72' : '#c00', fontWeight: 600 }}>
-                  {parentOtpTimer > 0 ? `OTP expires in ${Math.floor(parentOtpTimer/60)}:${(parentOtpTimer%60).toString().padStart(2,'0')}` : 'OTP expired'}
+                <input type="hidden" name="guardianOtp" value={guardianOtpBlocks.join("")} />
+                <div style={{ marginBottom: 8, color: guardianOtpTimer > 0 ? '#222f5b' : '#c00', fontWeight: 600, fontSize: 14 }}>
+                  {guardianOtpTimer > 0 ? `OTP expires in ${Math.floor(guardianOtpTimer/60)}:${(guardianOtpTimer%60).toString().padStart(2,'0')}` : 'OTP expired'}
                 </div>
-                <button type="submit" disabled={!parentOtpSent || parentOtpTimer <= 0} style={btnStyle}>
+                <button type="submit" disabled={!guardianOtpSent || guardianOtpTimer <= 0} style={{ width: '100%', background: '#4a69bb', color: '#fff', border: 'none', borderRadius: 8, padding: '13px 0', fontWeight: 700, fontSize: '1.1rem', marginTop: 6, marginBottom: 8, cursor: 'pointer', boxShadow: '0 2px 8px #4a69bb22' }}>
                   {loading ? "Verifying & Registering..." : "Verify OTP & Register"}
                 </button>
-                {parentOtpSent && parentOtpTimer <= 0 && (
-                  <button type="button" onClick={handleParentInfoSubmit} style={{ marginTop: 8, color: '#1e3c72', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Resend OTP</button>
+                {guardianOtpSent && guardianOtpTimer <= 0 && (
+                  <button type="button" onClick={handleGuardianInfoSubmit} style={{ marginTop: 8, color: '#222f5b', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Resend OTP</button>
                 )}
               </>
             )}

@@ -114,23 +114,30 @@ export default function RegisterTeacher() {
   }, [otpSent, otpTimer]);
 
   return (
-    <div style={{
-      position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
-      background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000
-    }}>
+    <div style={{ minHeight: '100vh', width: '100vw', background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{
-        background: "#fff", color: "#222", borderRadius: 16, padding: 32, minWidth: 320,
-        boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)", position: "relative"
+        background: '#fff',
+        color: '#222',
+        borderRadius: 18,
+        boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
+        padding: 40,
+        minWidth: 340,
+        maxWidth: 400,
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        position: 'relative'
       }}>
-        <h2>Teacher Registration</h2>
-        <form onSubmit={otpSent ? handleSubmit : handleSendOtp}>
-          <input type="text" name="name" placeholder="Teacher Name" value={form.name} onChange={handleChange} required disabled={otpSent} style={inputStyle} />
-          <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} required disabled={otpSent} style={inputStyle} />
+        <div style={{ fontWeight: 700, fontSize: '2rem', color: '#222f5b', marginBottom: 8 }}>Teacher Registration</div>
+        <form onSubmit={otpSent ? handleSubmit : handleSendOtp} style={{ width: '100%' }}>
+          <input type="text" name="name" placeholder="Teacher Name" value={form.name} onChange={handleChange} required disabled={otpSent} style={{ width: '100%', padding: '12px 14px', marginBottom: 14, borderRadius: 8, border: '1.5px solid #e0e0e0', fontSize: '1rem', background: '#f7f8fa' }} />
+          <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} required disabled={otpSent} style={{ width: '100%', padding: '12px 14px', marginBottom: 14, borderRadius: 8, border: '1.5px solid #e0e0e0', fontSize: '1rem', background: '#f7f8fa' }} />
           {!otpSent ? (
-            <button type="submit" disabled={loading} style={btnStyle}>{loading ? "Sending OTP..." : "Send OTP"}</button>
+            <button type="submit" disabled={loading} style={{ width: '100%', background: '#4a69bb', color: '#fff', border: 'none', borderRadius: 8, padding: '13px 0', fontWeight: 700, fontSize: '1.1rem', marginBottom: 8, cursor: loading ? 'not-allowed' : 'pointer', boxShadow: '0 2px 8px #4a69bb22' }}>{loading ? 'Sending OTP...' : 'Send OTP'}</button>
           ) : (
             <>
-              <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 8 }}>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 10 }}>
                 {otpBlocks.map((v, i) => (
                   <input
                     key={i}
@@ -141,20 +148,30 @@ export default function RegisterTeacher() {
                     value={v}
                     onChange={e => handleOtpBlockChange(i, e.target.value)}
                     onKeyDown={e => handleOtpBlockKeyDown(i, e)}
-                    style={{ width: 36, height: 36, textAlign: 'center', fontSize: 20, borderRadius: 6, border: '1px solid #ccc' }}
+                    style={{ width: 36, height: 44, textAlign: 'center', fontSize: 22, borderRadius: 7, border: '1.5px solid #e0e0e0', background: '#f7f8fa' }}
                   />
                 ))}
               </div>
               {otpSent && (
-                <div style={{ marginBottom: 8, color: otpTimer > 0 ? '#1e3c72' : '#c00', fontWeight: 600 }}>
+                <div style={{ marginBottom: 8, color: otpTimer > 0 ? '#222f5b' : '#c00', fontWeight: 600, fontSize: 14 }}>
                   {otpTimer > 0 ? `OTP expires in ${Math.floor(otpTimer/60)}:${(otpTimer%60).toString().padStart(2,'0')}` : 'OTP expired'}
                 </div>
               )}
               <input type="hidden" name="otp" value={otpBlocks.join("")} />
-              <div style={{ position: 'relative' }}>
-                <input type={showPassword ? "text" : "password"} name="password" placeholder="Password" value={form.password} onChange={handleChange} required style={inputStyle} maxLength={30} />
-                <span onClick={() => setShowPassword(v => !v)} style={{ position: 'absolute', right: 12, top: 14, cursor: 'pointer', userSelect: 'none', color: '#888', fontSize: 18 }} title={showPassword ? 'Hide password' : 'Show password'}>
-                  {showPassword ? '🙈' : '👁️'}
+              <div style={{ position: 'relative', marginBottom: 14 }}>
+                <input type={showPassword ? 'text' : 'password'} name='password' placeholder='Password' value={form.password} onChange={handleChange} required style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1.5px solid #e0e0e0', fontSize: '1rem', background: '#f7f8fa' }} maxLength={30} />
+                <span onClick={() => setShowPassword(v => !v)} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: '#222f5b', fontSize: 20, display: 'flex', alignItems: 'center' }} title={showPassword ? 'Hide password' : 'Show password'}>
+                  {showPassword ? (
+                    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M1 1L21 21" stroke="#222f5b" strokeWidth="2" strokeLinecap="round"/>
+                      <path d="M11 5C6 5 2.73 9.11 2.09 10C2.03 10.08 2 10.17 2 10.25C2 10.33 2.03 10.42 2.09 10.5C2.73 11.39 6 15.5 11 15.5C13.13 15.5 15.01 14.5 16.37 13.25M18.5 10.5C18.5 10.5 17.5 8.5 15.5 7.25M8.5 8.5C9.03 8.18 9.66 8 10.33 8C12.06 8 13.5 9.44 13.5 11.17C13.5 11.84 13.32 12.47 13 13" stroke="#222f5b" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  ) : (
+                    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <ellipse cx="11" cy="11" rx="9" ry="5.5" stroke="#222f5b" strokeWidth="2"/>
+                      <circle cx="11" cy="11" r="2.5" stroke="#222f5b" strokeWidth="2"/>
+                    </svg>
+                  )}
                 </span>
               </div>
               {form.password && getPasswordSuggestions(form.password).length > 0 && (
@@ -162,15 +179,15 @@ export default function RegisterTeacher() {
                   Password must contain: {getPasswordSuggestions(form.password).join(', ')}
                 </div>
               )}
-              <button type="submit" disabled={!otpSent || otpTimer <= 0} style={btnStyle}>{loading ? "Registering..." : "Register"}</button>
+              <button type="submit" disabled={!otpSent || otpTimer <= 0} style={{ width: '100%', background: '#4a69bb', color: '#fff', border: 'none', borderRadius: 8, padding: '13px 0', fontWeight: 700, fontSize: '1.1rem', marginTop: 6, marginBottom: 8, cursor: 'pointer', boxShadow: '0 2px 8px #4a69bb22' }}>{loading ? 'Registering...' : 'Register'}</button>
               {otpSent && otpTimer <= 0 && (
-                <button type="button" onClick={handleSendOtp} style={{ marginTop: 8, color: '#1e3c72', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Resend OTP</button>
+                <button type="button" onClick={handleSendOtp} style={{ marginTop: 8, color: '#222f5b', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Resend OTP</button>
               )}
             </>
           )}
         </form>
-        {msg && <div style={{ color: "#0a0", marginTop: 12 }}>{msg}</div>}
-        {error && <div style={{ color: "#f00", marginTop: 12 }}>{error}</div>}
+        {msg && <div style={{ color: '#0a0', marginTop: 12 }}>{msg}</div>}
+        {error && <div style={{ color: '#f00', marginTop: 12 }}>{error}</div>}
       </div>
     </div>
   );

@@ -95,7 +95,7 @@ export const verifyRegisterOtp = async (req, res) => {
 
 export const registerUser = async (req, res) => {
   try {
-    const { name, registeredAs, email, password, school, class: userClass, phone, otp, childEmail } = req.body;
+    const { name, registeredAs, email, password, school, class: userClass, phone, otp, childEmail, childClass } = req.body;
     const cleanEmail = email.trim().toLowerCase();
     // OTP check
     const record = otpStore[cleanEmail];
@@ -113,8 +113,9 @@ export const registerUser = async (req, res) => {
       school,
       class: userClass,
       phone: phone || "",
-      // Save childEmail only if registering as Parent
-      ...(registeredAs === 'Parent' && childEmail ? { childEmail: childEmail.trim().toLowerCase() } : {})
+      // Save childEmail and childClass only if registering as Parent
+      ...(registeredAs === 'Parent' && childEmail ? { childEmail: childEmail.trim().toLowerCase() } : {}),
+      ...(registeredAs === 'Parent' && childClass ? { childClass: childClass.trim() } : {})
     });
     await user.save();
     // Remove OTP after successful registration

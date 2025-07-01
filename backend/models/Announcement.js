@@ -26,7 +26,11 @@ const announcementSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  announcementFor: [{
+    type: String, // "Student", "Teacher", "Parent", "All"
+    required: true
+  }]
 });
 
 const Announcement = mongoose.model('Announcement', announcementSchema);

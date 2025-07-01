@@ -11,6 +11,10 @@ import { getChildProfile } from '../controller/parentChildController.js';
 import { findUserByEmail as manageFindUserByEmail, deleteUserByEmail as manageDeleteUserByEmail } from '../controller/manageUserController.js';
 import { createAnnouncement, getAnnouncements, updateAnnouncement, deleteAnnouncement, announcementUpload, removeAnnouncementImage } from '../controller/announcementController.js';
 import { getCbseUpdates } from '../controller/cbseController.js';
+import { addMindMap, getMindMaps, deleteMindMap, mindMapUpload, updateMindMap } from '../controller/mindMapController.js';
+import { addAVLR, getAVLRs, updateAVLR, deleteAVLR } from '../controller/avlrController.js';
+import { createDLR, getDLRs, updateDLR, deleteDLR, removeDLRPdf, dlrUpload } from '../controller/dlrController.js';
+import { addCreativeItem, getCreativeItems, deleteCreativeItem, creativeCornerUpload, updateCreativeItem } from '../controller/creativeCornerController.js';
 
 const router = express.Router();
 
@@ -67,6 +71,40 @@ router.put('/api/announcement/:id/remove-image', authenticateToken, removeAnnoun
 
 // CBSE Updates route
 router.get('/api/cbse-updates', getCbseUpdates);
+
+// Mind Map routes
+router.post('/api/mindmap', authenticateToken, mindMapUpload.array('mindmap', 10), addMindMap);
+router.get('/api/mindmaps', getMindMaps);
+router.delete('/api/mindmap/:id', authenticateToken, deleteMindMap);
+router.put('/api/mindmap/:id', authenticateToken, (req, res, next) => {
+  mindMapUpload.array('mindmap', 10)(req, res, function (err) {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({ message: err.message });
+    } else if (err) {
+      return res.status(400).json({ message: err.message });
+    }
+    next();
+  });
+}, updateMindMap);
+
+// AVLR routes
+router.post('/api/avlr', authenticateToken, addAVLR);
+router.get('/api/avlrs', getAVLRs);
+router.put('/api/avlr/:id', authenticateToken, updateAVLR);
+router.delete('/api/avlr/:id', authenticateToken, deleteAVLR);
+
+// DLR routes
+router.post('/api/dlr', dlrUpload.array('pdfs', 10), createDLR);
+router.get('/api/dlrs', getDLRs);
+router.put('/api/dlr/:id', dlrUpload.array('pdfs', 10), updateDLR);
+router.delete('/api/dlr/:id', deleteDLR);
+router.post('/api/dlr/:id/remove-pdf', removeDLRPdf);
+
+// Creative Corner routes
+router.post('/api/creative-corner', authenticateToken, creativeCornerUpload.array('files', 10), addCreativeItem);
+router.get('/api/creative-corner', getCreativeItems);
+router.put('/api/creative-corner/:id', authenticateToken, creativeCornerUpload.array('files', 10), updateCreativeItem);
+router.delete('/api/creative-corner/:id', authenticateToken, deleteCreativeItem);
 
 // Serve announcement images
 router.use('/uploads/announcements', express.static('backend/public/uploads/announcements'));

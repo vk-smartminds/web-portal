@@ -40,4 +40,30 @@ api.interceptors.response.use(
 
 export default api;
 
+export const fetchVideos = async () => {
+  const res = await api.get('/videos');
+  return res.data;
+};
+
+export const addVideo = async (video, token) => {
+  const res = await api.post('/videos', video, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+
+export const updateVideo = async (id, video, token) => {
+  const res = await api.put(`/videos/${id}`, video, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+
+export const deleteVideo = async (id, token) => {
+  const res = await api.delete(`/videos/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+
 
