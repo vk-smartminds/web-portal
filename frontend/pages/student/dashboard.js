@@ -5,6 +5,7 @@ import { BASE_API_URL } from '../apiurl.js';
 import { getToken, logout } from "../../utils/auth.js";
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useRouter } from 'next/navigation';
+import { deleteAccount } from '../../service/api.js';
 
 // Sidebar component for Student (always visible, no hamburger)
 function StudentSidebar({ userEmail, userPhoto, userName, onMenuSelect, selectedMenu }) {
@@ -144,7 +145,7 @@ function StudentDashboard() {
   const [userEmail, setUserEmail] = useState("");
   const [profile, setProfile] = useState(null);
   const [editMode, setEditMode] = useState(false);
-  const [form, setForm] = useState({ name: '', phone: '', school: '', class: '', photo: null });
+  const [form, setForm] = useState({ name: '', username: '', phone: '', school: '', class: '', photo: null });
   const [status, setStatus] = useState('');
   const [preview, setPreview] = useState('');
   const fileInputRef = useRef();
@@ -185,6 +186,12 @@ function StudentDashboard() {
   }, [profile, lastFetchedClass]);
 
   // Fetch profile on mount and when userEmail changes
+  useEffect(() => {
+    if (userEmail) {
+      fetchProfile();
+    }
+  }, [userEmail]);
+
   const fetchProfile = useCallback(() => {
     if (userEmail) {
       fetch(`${BASE_API_URL}/profile`, {
@@ -198,6 +205,7 @@ function StudentDashboard() {
           setUserName(data.user.name || "");
           setForm({
             name: data.user.name || '',
+            username: data.user.username || '',
             phone: data.user.phone || '',
             school: data.user.school || '',
             class: data.user.class || '',
@@ -240,13 +248,7 @@ function StudentDashboard() {
 
   useEffect(() => {
     fetchProfile();
-  }, [fetchProfile]);
-
-  useEffect(() => {
-    if (selectedMenu === "profile" && userEmail) {
-      fetchProfile();
-    }
-  }, [selectedMenu, userEmail, fetchProfile]);
+  }, [userEmail]);
 
   useEffect(() => {
     if (selectedMenu === "announcements") {
@@ -268,11 +270,24 @@ function StudentDashboard() {
     }
   }, [form.photo]);
 
-  const handleEdit = () => setEditMode(true);
+  const handleEdit = () => {
+    setForm({
+      name: profile?.name || '',
+      username: profile?.username || '',
+      phone: profile?.phone || '',
+      school: profile?.school || '',
+      class: profile?.class || '',
+      photo: null
+    });
+    setPreview(profile?.photo || "/default-avatar.png");
+    setEditMode(true);
+    setStatus('');
+  };
   const handleCancel = () => {
     setEditMode(false);
     setForm({
       name: profile?.name || '',
+      username: profile?.username || '',
       phone: profile?.phone || '',
       school: profile?.school || '',
       class: profile?.class || '',
@@ -298,18 +313,20 @@ function StudentDashboard() {
       let headers;
       if (form.photo) {
         body = new FormData();
-        body.append('name', form.name);
-        body.append('phone', form.phone);
-        body.append('school', form.school);
-        body.append('class', form.class);
+        body.append('name', form.name ?? '');
+        body.append('username', form.username ?? '');
+        body.append('phone', form.phone ?? '');
+        body.append('school', form.school ?? '');
+        body.append('class', form.class ?? '');
         body.append('photo', form.photo);
         headers = { 'Authorization': `Bearer ${getToken()}` };
       } else {
         body = JSON.stringify({
-          name: form.name,
-          phone: form.phone,
-          school: form.school,
-          class: form.class
+          name: form.name ?? '',
+          username: form.username ?? '',
+          phone: form.phone ?? '',
+          school: form.school ?? '',
+          class: form.class ?? ''
         });
         headers = {
           'Authorization': `Bearer ${getToken()}`,
@@ -328,7 +345,7 @@ function StudentDashboard() {
         setStatus('Profile updated!');
         setPreview(data.user.photo || "/default-avatar.png");
         setUserPhoto(data.user.photo && data.user.photo !== "" ? data.user.photo : "");
-        fetchProfile();
+        fetchProfile(); // Only fetch after save
       } else {
         setStatus(data.message || 'Failed to update profile');
       }
@@ -340,24 +357,28 @@ function StudentDashboard() {
   useEffect(() => {
     // On mount, verify token
     const token = getToken();
+    console.log('[Student Dashboard] JWT read from localStorage:', token);
     if (!token) {
       // No token, redirect to login
-      router.replace("/Login");
+      router.replace("/login");
       return;
     }
     fetch(`${BASE_API_URL}/verify-token`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => {
-        if (!res.ok) {
-          // Token invalid or user deleted
+        if (res.status === 401) {
+          // Token invalid or expired
           localStorage.clear();
-          router.replace("/Login");
+          router.replace("/login");
+        } else if (!res.ok) {
+          // Other errors: do not clear JWT, show error or stay
+          console.error('Token verification failed with status:', res.status);
         }
       })
-      .catch(() => {
-        localStorage.clear();
-        router.replace("/Login");
+      .catch((err) => {
+        // Network or other error: do not clear JWT
+        console.error('Token verification error:', err);
       });
   }, []);
 
@@ -458,6 +479,22 @@ function StudentDashboard() {
                     <input
                       name="name"
                       value={form.name}
+                      onChange={handleChange}
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        borderRadius: 6,
+                        border: "1.5px solid #e0e0e0",
+                        fontSize: 16,
+                        marginTop: 4
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: 600, color: "#1e3c72" }}>Username:</label>
+                    <input
+                      name="username"
+                      value={form.username}
                       onChange={handleChange}
                       style={{
                         width: "100%",
@@ -622,6 +659,10 @@ function StudentDashboard() {
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Email:</span>
                   <span style={{ color: "#222", fontSize: 16 }}>{profile.email}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Username:</span>
+                  <span style={{ color: "#222", fontSize: 16 }}>{profile.username}</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Phone:</span>
@@ -799,16 +840,12 @@ function StudentDashboard() {
                       gap: 8
                     }}
                     onClick={async () => {
-                      const res = await fetch(`${BASE_API_URL}/user/delete`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ email: userEmail })
-                      });
-                      if (res.ok) {
+                      try {
+                        await deleteAccount(userEmail);
                         localStorage.clear();
                         window.location.href = "/Login";
-                      } else {
-                        alert("Failed to delete account.");
+                      } catch (err) {
+                        alert("Failed to delete account. " + (err?.response?.data?.message || err.message));
                         setShowDeleteModal(false);
                       }
                     }}

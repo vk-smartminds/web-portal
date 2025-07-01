@@ -50,11 +50,11 @@ export default function Login() {
     if (isAuthenticated() && !isTokenExpired(token)) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        const role = payload.role && payload.role.toLowerCase();
+        const role = (payload.role || '').toLowerCase();
         if (role === 'admin') router.replace('/admin/dashboard');
         else if (role === 'student') router.replace('/student/dashboard');
         else if (role === 'teacher') router.replace('/teacher/dashboard');
-        else if (role === 'parent') router.replace('/parent/dashboard');
+        else if (role === 'guardian') router.replace('/guardian/dashboard');
         else router.replace('/login');
       } catch {}
     }
@@ -65,8 +65,7 @@ export default function Login() {
     setError("");
     setMsg("");
     const cleanEmail = email.trim().toLowerCase();
-    // DO NOT lowercase or trim the password!
-    const cleanPassword = password; // <-- use as-is
+    const cleanPassword = password;
 
     // --- SECURE ADMIN LOGIN CHECK FIRST ---
     let adminNotFound = false;
@@ -74,86 +73,77 @@ export default function Login() {
       const adminRes = await fetch(`${BASE_API_URL}/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: cleanEmail, password: cleanPassword }) // <-- use cleanPassword
+        body: JSON.stringify({ email: cleanEmail, password: cleanPassword })
       });
       if (adminRes.ok) {
         const data = await adminRes.json();
-        setToken(data.token); // <-- Store admin JWT
-        setUserData(data.admin); // <-- Store admin data
+        setToken(data.token);
+        setUserData(data.admin);
         localStorage.setItem("userEmail", cleanEmail);
         setMsg("Admin login successful!");
         setError("");
-        // Use push for navigation and ensure it happens after state updates
         router.push("/admin/dashboard");
         return;
       }
       if (adminRes.status === 404) {
         adminNotFound = true;
-        // Do not return here, check user table next
       }
       if (adminRes.status === 401) {
         setError("Incorrect password.");
         return;
       }
-      // If unauthorized, continue to user login
-    } catch (err) {
-      // Ignore admin check errors, fallback to user table check
-    }
+    } catch (err) {}
     // --- END ADMIN LOGIN CHECK ---
 
-    // --- USER TABLE CHECK ---
-    try {
-      const res = await fetch(`${BASE_API_URL}/user/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: cleanEmail, password: cleanPassword }) // <-- use cleanPassword
-      });
-      if (res.status === 404) {
-        // Only show not found if admin was also not found
-        if (adminNotFound) {
+    // --- TRY STUDENT, TEACHER, GUARDIAN LOGIN ---
+    const loginEndpoints = [
+      { url: `${BASE_API_URL}/login-student`, role: "student", redirect: "/student/dashboard" },
+      { url: `${BASE_API_URL}/login-teacher`, role: "teacher", redirect: "/teacher/dashboard" },
+      { url: `${BASE_API_URL}/login-guardian`, role: "guardian", redirect: "/guardian/dashboard" }
+    ];
+    let found = false;
+    for (const endpoint of loginEndpoints) {
+      try {
+        const res = await fetch(endpoint.url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: cleanEmail, password: cleanPassword })
+        });
+        if (res.status === 404) continue;
+        if (res.status === 401) {
+          setError("Incorrect password.");
+          return;
+        }
+        if (res.ok) {
+          const data = await res.json();
+          setMsg("Login successful!");
           setError("");
-          setShowNotFoundPopup(true);
-        }
-        return;
-      }
-      if (res.status === 401) {
-        setError("Incorrect password.");
-        return;
-      }
-      if (res.ok) {
-        const data = await res.json();
-        console.log('LOGIN RESPONSE:', data); // Debug log
-        setMsg("Login successful!");
-        setError("");
-        setToken(data.token); // <-- Store user JWT
-        setUserData(data.user); // <-- Store user data
-        localStorage.setItem("userEmail", cleanEmail);
-        // Debug: log token and user
-        console.log('STORED TOKEN:', getToken());
-        console.log('STORED USER:', localStorage.getItem('user_data'));
-        // Redirect to dashboard based on user type, after a short delay to ensure storage is flushed
-        if (data.user && data.user.registeredAs && data.token) {
-          const role = data.user.registeredAs.toLowerCase();
+          setToken(data.token);
+          console.log('[Student Login] JWT set in localStorage:', data.token);
+          setUserData(data.user);
+          localStorage.setItem("userEmail", cleanEmail);
+          // Redirect based on role in response
+          const role = data.user && data.user.role ? data.user.role.toLowerCase() : endpoint.role;
           setTimeout(() => {
-            if (role === "student") {
-              router.replace("/student/dashboard");
-            } else if (role === "teacher") {
-              router.replace("/teacher/dashboard");
-            } else if (role === "parent") {
-              router.replace("/parent/dashboard");
-            } else {
-              router.replace("/login");
-            }
+            if (role === "student") router.replace("/student/dashboard");
+            else if (role === "teacher") router.replace("/teacher/dashboard");
+            else if (role === "guardian") router.replace("/guardian/dashboard");
+            else router.replace("/login");
           }, 100);
+          found = true;
+          break;
         } else {
-          router.replace("/login");
+          const data = await res.json();
+          setError(data.message || "Login failed.");
+          return;
         }
-      } else {
-        const data = await res.json();
-        setError(data.message || "Login failed.");
+      } catch (err) {
+        // continue to next endpoint
       }
-    } catch (err) {
-      setError("Login failed. Please try again.");
+    }
+    if (!found && adminNotFound) {
+      setError("");
+      setShowNotFoundPopup(true);
     }
     // --- END USER TABLE CHECK ---
   };
@@ -177,8 +167,8 @@ export default function Login() {
         const adminData = await adminRes.json();
         const foundAdmin = (adminData.admins || []).find(a => a.email === cleanEmail);
         if (foundAdmin) {
-          // Send OTP to admin email (reuse user OTP endpoint for now)
-          const sendOtpRes = await fetch(`${BASE_API_URL}/user/send-login-otp`, {
+          // Send OTP to admin email using the new unified endpoint
+          const sendOtpRes = await fetch(`${BASE_API_URL}/send-login-otp`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: cleanEmail })
@@ -200,36 +190,20 @@ export default function Login() {
       // Ignore admin check errors, fallback to user table check
     }
 
-    // 2. Check in User table
+    // 2. Send OTP using new unified endpoint for all user types
     try {
-      const userRes = await fetch(`${BASE_API_URL}/user/find-by-email`, {
+      const sendOtpRes = await fetch(`${BASE_API_URL}/send-login-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: cleanEmail })
       });
-      if (userRes.ok) {
-        // User exists, send OTP
-        const sendOtpRes = await fetch(`${BASE_API_URL}/user/send-login-otp`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: cleanEmail })
-        });
-        setSendingOtp(false); // <-- stop loading
-        if (sendOtpRes.ok) {
-          setOtpSent(true);
-          setMsg("OTP sent to your email.");
-        } else {
-          const data = await sendOtpRes.json();
-          setError(data.message || "Failed to send OTP.");
-        }
-      } else if (userRes.status === 404) {
-        setSendingOtp(false); // <-- stop loading
-        setError("");
-        setShowNotFoundPopup(true);
+      setSendingOtp(false); // <-- stop loading
+      if (sendOtpRes.ok) {
+        setOtpSent(true);
+        setMsg("OTP sent to your email.");
       } else {
-        setSendingOtp(false); // <-- stop loading
-        const data = await userRes.json();
-        setError(data.message || "Failed to check user.");
+        const data = await sendOtpRes.json();
+        setError(data.message || "Failed to send OTP.");
       }
     } catch (err) {
       setSendingOtp(false); // <-- stop loading
@@ -299,7 +273,7 @@ export default function Login() {
 
     // --- USER TABLE CHECK ---
     try {
-      const res = await fetch(`${BASE_API_URL}/user/verify-login-otp`, {
+      const res = await fetch(`${BASE_API_URL}/verify-login-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: cleanEmail, otp: otpBlocks.join("") })
@@ -311,17 +285,17 @@ export default function Login() {
         setToken(data.token); // <-- Store user JWT
         setUserData(data.user); // <-- Store user data
         localStorage.setItem("userEmail", cleanEmail);
-        // Debug: log token and user
-        // console.log('OTP login:', data.token, data.user);
         // Redirect to dashboard based on user type
-        if (data.user && data.user.registeredAs) {
-          const role = data.user.registeredAs.toLowerCase();
+        if (data.user && data.user.role) {
+          const role = data.user.role.toLowerCase();
           if (role === "student") {
             router.replace("/student/dashboard");
           } else if (role === "teacher") {
             router.replace("/teacher/dashboard");
-          } else if (role === "parent") {
-            router.replace("/parent/dashboard");
+          } else if (role === "guardian") {
+            router.replace("/guardian/dashboard");
+          } else if (role === "admin") {
+            router.replace("/admin/dashboard");
           } else {
             router.replace("/login");
           }
@@ -745,7 +719,7 @@ export default function Login() {
                 Teacher
               </button>
               <button
-                onClick={() => { setShowRegister(false); router.push("/register-parent"); }}
+                onClick={() => { setShowRegister(false); router.push("/register-guardian"); }}
                 style={{
                   background: "linear-gradient(90deg, #ff0080 0%, #1e3c72 100%)",
                   color: "#fff",
@@ -757,7 +731,7 @@ export default function Login() {
                   cursor: "pointer"
                 }}
               >
-                Parent
+                Guardian
               </button>
               <button
                 onClick={() => setShowRegister(false)}

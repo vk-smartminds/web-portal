@@ -38,6 +38,13 @@ api.interceptors.response.use(
   }
 );
 
+export async function deleteAccount(email) {
+  const token = getToken();
+  if (!token) throw new Error('Not authenticated');
+  const res = await api.post('/user/delete', { email });
+  return res.data;
+}
+
 export default api;
 
 

@@ -165,7 +165,7 @@ function TeacherDashboard() {
   // Logout handler using router.push for consistency
   const handleLogout = useCallback(() => {
     logout();
-    router.push("/Login");
+    router.push("/login");
   }, [router]);
 
   // Fetch profile on mount and when userEmail changes (not just when profile menu is selected)
@@ -335,7 +335,7 @@ function TeacherDashboard() {
   useEffect(() => {
     const token = getToken();
     if (!token) {
-      router.replace("/Login");
+      router.replace("/login");
       return;
     }
     fetch(`${BASE_API_URL}/verify-token`, {
@@ -344,12 +344,12 @@ function TeacherDashboard() {
       .then(res => {
         if (!res.ok) {
           localStorage.clear();
-          router.replace("/Login");
+          router.replace("/login");
         }
       })
       .catch(() => {
         localStorage.clear();
-        router.replace("/Login");
+        router.replace("/login");
       });
   }, []);
 
