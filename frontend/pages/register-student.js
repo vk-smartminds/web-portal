@@ -63,28 +63,21 @@ export default function RegisterStudent() {
   const handleSendOtp = async e => {
     e.preventDefault();
     setMsg(""); setError(""); setLoading(true);
-    // Check if email already registered
     try {
-      const checkRes = await fetch(`${BASE_API_URL}/student/find`, {
+      const res = await fetch(`${BASE_API_URL}/send-register-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: form.email.trim().toLowerCase() })
       });
-      if (checkRes.ok) {
-        setError("Email already registered as Student.");
-        setLoading(false);
-        return;
+      if (res.ok) {
+        setOtpSent(true); setMsg("OTP sent to your email.");
+      } else {
+        const data = await res.json();
+        setError(data.message || "Failed to send OTP.");
       }
-    } catch {}
-    // Send OTP
-    try {
-      const res = await fetch(`${BASE_API_URL}/student/send-otp`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: form.email.trim().toLowerCase() })
-      });
-      if (res.ok) { setOtpSent(true); setMsg("OTP sent to your email."); }
-      else { const data = await res.json(); setError(data.message || "Failed to send OTP."); }
-    } catch { setError("Failed to send OTP. Please try again."); }
+    } catch {
+      setError("Failed to send OTP. Please try again.");
+    }
     setLoading(false);
   };
 
@@ -97,20 +90,27 @@ export default function RegisterStudent() {
         setLoading(false);
         return;
       }
-      const res = await fetch(`${BASE_API_URL}/student/register`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, email: form.email.trim().toLowerCase(), otp: otpBlocks.join("") })
+      const res = await fetch(`${BASE_API_URL}/register-student`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          email: form.email.trim().toLowerCase(),
+          otp: otpBlocks.join("")
+        })
       });
       if (res.ok) {
         setMsg("Registration successful! Redirecting...");
         localStorage.setItem("userEmail", form.email.trim().toLowerCase());
-        setTimeout(() => { 
-          router.replace("/student/dashboard"); 
+        setTimeout(() => {
+          router.replace("/student/dashboard");
         }, 1200);
       } else {
         const data = await res.json(); setError(data.message || "Registration failed.");
       }
-    } catch { setError("Registration failed. Please try again."); }
+    } catch {
+      setError("Registration failed. Please try again.");
+    }
     setLoading(false);
   };
 

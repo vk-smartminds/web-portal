@@ -1,7 +1,11 @@
-import User from '../models/User.js';
+// @ts-nocheck
+import dotenv from 'dotenv';
+dotenv.config();
+import Guardian from '../models/Guardian.js';
+import Student from '../models/Student.js';
 import bcrypt from 'bcrypt';
 import nodemailer from 'nodemailer';
-import Admin from '../models/Admin.js'; // <-- Add this
+import Admin from '../models/Admin.js';
 
 // OTP store for child verification
 const childOtpStore = {};
@@ -21,14 +25,14 @@ function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// POST /api/parent/verify-child-email
+// POST /api/guardian/verify-child-email
 export const verifyChildEmail = async (req, res) => {
   try {
     const { childEmail } = req.body;
     if (!childEmail) return res.status(400).json({ message: "Child email is required" });
     const cleanEmail = childEmail.trim().toLowerCase();
-    // Only allow if registeredAs === 'Student'
-    const child = await User.findOne({ email: cleanEmail, registeredAs: 'Student' });
+    // Only allow if student exists in Student collection
+    const child = await Student.findOne({ email: cleanEmail });
     if (!child) {
       return res.status(404).json({ message: "No student is registered with this email." });
     }
@@ -48,7 +52,7 @@ export const verifyChildEmail = async (req, res) => {
   }
 };
 
-// POST /api/parent/verify-child-otp
+// POST /api/guardian/verify-child-otp
 export const verifyChildOtp = async (req, res) => {
   try {
     const { childEmail, otp } = req.body;
@@ -66,6 +70,6 @@ export const verifyChildOtp = async (req, res) => {
   }
 };
 
-// Optionally, export childOtpStore for use in parent registration if needed
+// Optionally, export childOtpStore for use in guardian registration if needed
 export { childOtpStore };
 

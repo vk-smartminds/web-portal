@@ -14,7 +14,7 @@ function getRoleFromToken(token) {
   }
 }
 
-export default function ProtectedRoute({ children }) {
+export default function ProtectedRoute({ children, allowedRoles }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isValid, setIsValid] = useState(false);
   const router = useRouter();
@@ -26,6 +26,7 @@ export default function ProtectedRoute({ children }) {
     student: '/student/dashboard',
     teacher: '/teacher/dashboard',
     parent: '/parent/dashboard',
+    guardian: '/guardian/dashboard', // Added guardian
   };
 
   useEffect(() => {
@@ -38,6 +39,15 @@ export default function ProtectedRoute({ children }) {
           return;
         }
         const role = getRoleFromToken(token);
+        // If allowedRoles is set, enforce RBAC
+        if (allowedRoles && Array.isArray(allowedRoles) && !allowedRoles.includes(role)) {
+          if (roleDashboardMap[role]) {
+            router.replace(roleDashboardMap[role]);
+          } else {
+            router.replace('/login');
+          }
+          return;
+        }
         // If authenticated and on /login, redirect to dashboard
         if (pathname === '/login') {
           if (roleDashboardMap[role]) {
@@ -80,7 +90,7 @@ export default function ProtectedRoute({ children }) {
       }
     };
     checkAuth();
-  }, [router, pathname]);
+  }, [router, pathname, allowedRoles]);
 
   if (isLoading) {
     return (

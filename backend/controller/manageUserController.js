@@ -1,5 +1,7 @@
-import User from '../models/User.js';
 import Admin from '../models/Admin.js';
+import Student from '../models/Student.js';
+import Guardian from '../models/Guardian.js';
+import Teacher from '../models/Teacher.js';
 
 // Find a user by email (superadmin only)
 export const findUserByEmail = async (req, res) => {
@@ -10,7 +12,11 @@ export const findUserByEmail = async (req, res) => {
     if (!requester || !requester.isSuperAdmin) {
       return res.status(403).json({ message: 'Forbidden: Only superadmin can perform this action.' });
     }
-    const user = await User.findOne({ email: email.trim().toLowerCase() }).select('-password -__v');
+    // Search in all user collections
+    let user = await Student.findOne({ email: email.trim().toLowerCase() }).select('-password -__v');
+    if (!user) user = await Guardian.findOne({ email: email.trim().toLowerCase() }).select('-password -__v');
+    if (!user) user = await Teacher.findOne({ email: email.trim().toLowerCase() }).select('-password -__v');
+    if (!user) user = await Admin.findOne({ email: email.trim().toLowerCase() }).select('-password -__v');
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json({ user });
   } catch (err) {
@@ -27,12 +33,17 @@ export const deleteUserByEmail = async (req, res) => {
     if (!requester || !requester.isSuperAdmin) {
       return res.status(403).json({ message: 'Forbidden: Only superadmin can perform this action.' });
     }
-    const user = await User.findOne({ email: email.trim().toLowerCase() });
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    // TODO: Delete related data if any (parent/child links, etc.)
-    await User.deleteOne({ email: email.trim().toLowerCase() });
-    res.json({ message: 'User deleted successfully' });
+    // Try deleting from all user collections
+    let user = await Student.findOne({ email: email.trim().toLowerCase() });
+    if (user) { await Student.deleteOne({ email: email.trim().toLowerCase() }); return res.json({ message: 'Student deleted successfully' }); }
+    user = await Guardian.findOne({ email: email.trim().toLowerCase() });
+    if (user) { await Guardian.deleteOne({ email: email.trim().toLowerCase() }); return res.json({ message: 'Guardian deleted successfully' }); }
+    user = await Teacher.findOne({ email: email.trim().toLowerCase() });
+    if (user) { await Teacher.deleteOne({ email: email.trim().toLowerCase() }); return res.json({ message: 'Teacher deleted successfully' }); }
+    user = await Admin.findOne({ email: email.trim().toLowerCase() });
+    if (user) { await Admin.deleteOne({ email: email.trim().toLowerCase() }); return res.json({ message: 'Admin deleted successfully' }); }
+    return res.status(404).json({ message: 'User not found' });
   } catch (err) {
     res.status(500).json({ message: 'Error deleting user', error: err.message });
   }
-}; 
+};

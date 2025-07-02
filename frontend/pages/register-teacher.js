@@ -28,8 +28,9 @@ export default function RegisterTeacher() {
     e.preventDefault();
     setMsg(""); setError(""); setLoading(true);
     try {
-      const res = await fetch(`${BASE_API_URL}/teacher/send-otp`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+      const res = await fetch(`${BASE_API_URL}/send-register-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: form.email.trim().toLowerCase() })
       });
       if (res.ok) {
@@ -67,15 +68,20 @@ export default function RegisterTeacher() {
         setLoading(false);
         return;
       }
-      const res = await fetch(`${BASE_API_URL}/teacher/register`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, email: form.email.trim().toLowerCase(), otp: otpBlocks.join("") })
+      const res = await fetch(`${BASE_API_URL}/register-teacher`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          email: form.email.trim().toLowerCase(),
+          otp: otpBlocks.join("")
+        })
       });
       if (res.ok) {
         setMsg("Registration successful! Redirecting...");
         localStorage.setItem("userEmail", form.email.trim().toLowerCase());
-        setTimeout(() => { 
-          router.replace("/teacher/dashboard"); 
+        setTimeout(() => {
+          router.replace("/teacher/dashboard");
         }, 1200);
       } else {
         const data = await res.json(); setError(data.message || "Registration failed.");

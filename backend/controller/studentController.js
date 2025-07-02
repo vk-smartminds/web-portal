@@ -1,7 +1,7 @@
-import User from '../models/User.js';
+import Student from '../models/Student.js';
 import bcrypt from 'bcrypt';
 import nodemailer from 'nodemailer';
-import Admin from '../models/Admin.js'; // <-- Add this
+import Admin from '../models/Admin.js';
 
 const otpStore = {}; // { email: { otp, expires } }
 
@@ -31,15 +31,10 @@ export const sendOtp = async (req, res) => {
       return res.status(409).json({ message: 'You cannot use this email. It is an admin ID. Please use a different email.' });
     }
 
-    // Block if already registered as Student or Teacher, allow Parent
-    const exists = await User.findOne({ email: cleanEmail });
+    // Block if already registered as Student
+    const exists = await Student.findOne({ email: cleanEmail });
     if (exists) {
-      if (exists.registeredAs === 'Student') {
-        return res.status(409).json({ message: 'Email already registered as Student.' });
-      } else if (exists.registeredAs === 'Teacher') {
-        return res.status(409).json({ message: 'Email already registered as Teacher.' });
-      }
-      // Allow if registeredAs === 'Parent'
+      return res.status(409).json({ message: 'Email already registered as Student.' });
     }
 
     const otp = generateOtp();
@@ -72,26 +67,22 @@ export const register = async (req, res) => {
     if (!record || record.otp !== otp || record.expires < Date.now()) {
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
-    // Block if already registered as Student or Teacher, allow Parent
-    const exists = await User.findOne({ email: cleanEmail });
-    if (exists && (exists.registeredAs === 'Student' || exists.registeredAs === 'Teacher')) {
-      return res.status(409).json({ message: exists.registeredAs === 'Student'
-        ? 'Email already registered as Student.'
-        : 'Email already registered as Teacher.' });
+    // Block if already registered as Student
+    const exists = await Student.findOne({ email: cleanEmail });
+    if (exists) {
+      return res.status(409).json({ message: 'Email already registered as Student.' });
     }
-    // Allow Parent or new
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({
+    const student = new Student({
       name,
-      registeredAs: 'Student',
       email: cleanEmail,
       password: hashedPassword,
       school,
       class: userClass,
       phone: ""
     });
-    await user.save();
+    await student.save();
     delete otpStore[cleanEmail];
     res.status(201).json({ message: 'Student registered successfully' });
   } catch (err) {
@@ -103,9 +94,9 @@ export const find = async (req, res) => {
   try {
     const { email } = req.body;
     const cleanEmail = email.trim().toLowerCase();
-    const user = await User.findOne({ email: cleanEmail, registeredAs: 'Student' });
-    if (!user) return res.status(404).json({ message: 'Student not found' });
-    res.json({ user });
+    const student = await Student.findOne({ email: cleanEmail });
+    if (!student) return res.status(404).json({ message: 'Student not found' });
+    res.json({ student });
   } catch (err) {
     res.status(500).json({ message: 'Error finding student', error: err.message });
   }
