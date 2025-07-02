@@ -1,13 +1,8 @@
 import mongoose from 'mongoose';
 
-const userSchema = new mongoose.Schema({
+const studentSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true
-  },
-  registeredAs: {
-    type: String,
-    enum: ['Student', 'Teacher', 'Parent'],
     required: true
   },
   email: {
@@ -19,8 +14,13 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  username:{
+    type: String,
+    default: ""
+  },
   school: {
-    type: String
+    type: String,
+    default:""
   },
   class: {
     type: String
@@ -30,9 +30,12 @@ const userSchema = new mongoose.Schema({
     match: [/^\d{10}$/, 'Phone number must be 10 digits'],
     default: ""
   },
-  childEmail: {
-    type: String,
-    // Only required for Parent, so not globally required
+  guardianIds: {
+    type: "array",
+    default: ""
+  },
+  quizIds: {
+    type: "array",
     default: ""
   },
   childClass: {
@@ -46,6 +49,6 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-const User = mongoose.model('User', userSchema);
+const Student = mongoose.model('Student', studentSchema);
 
-export default User;
+export default Student;

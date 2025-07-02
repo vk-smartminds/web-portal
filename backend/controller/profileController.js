@@ -1,5 +1,7 @@
-import User from '../models/User.js';
 import Admin from '../models/Admin.js';
+import Student from '../models/Student.js';
+import Guardian from '../models/Guardian.js';
+import Teacher from '../models/Teacher.js';
 import multer from 'multer';
 import path from 'path';
 
@@ -15,12 +17,21 @@ const storage = multer.diskStorage({
 });
 export const upload = multer({ storage });
 
+// Helper to get model by role
+function getModelByRole(role) {
+  if (role === 'student') return Student;
+  if (role === 'guardian') return Guardian;
+  if (role === 'teacher') return Teacher;
+  if (role === 'admin') return Admin;
+  return null;
+}
+
 // GET /api/profile - Get user profile (JWT authenticated)
 export const getProfile = async (req, res) => {
   try {
     const user = req.user;
     if (!user) return res.status(404).json({ message: 'User not found' });
-    let userObj = user.toObject();
+    let userObj = user.toObject ? user.toObject() : user;
     if (userObj.photo && userObj.photo.data) {
       userObj.photo = `data:${userObj.photo.contentType};base64,${userObj.photo.data.toString('base64')}`;
     } else {
@@ -35,14 +46,18 @@ export const getProfile = async (req, res) => {
 // PUT /api/profile - Update user profile (JWT authenticated)
 export const updateProfile = async (req, res) => {
   try {
-    const { name, phone, school, class: userClass, deletePhoto } = req.body;
+    let body = req.body;
     const userId = req.user._id;
-    // Determine if req.user is a User or Admin
-    const isAdmin = req.user.isSuperAdmin !== undefined || req.user.isAdmin;
-    const update = isAdmin
-      ? { name, phone } // Only update name and phone for admin
-      : { name, phone, school, class: userClass };
-    if (deletePhoto === true || deletePhoto === 'true') {
+    const role = req.user.role || (req.user.isSuperAdmin !== undefined || req.user.isAdmin ? 'admin' : null);
+    const Model = getModelByRole(role);
+    if (!Model) return res.status(400).json({ message: 'Invalid user role' });
+    const update = {};
+    if (typeof body.name !== 'undefined') update.name = body.name;
+    if (typeof body.phone !== 'undefined') update.phone = body.phone;
+    if ((role === 'student' || role === 'teacher') && typeof body.school !== 'undefined') update.school = body.school;
+    if (role === 'student' && typeof body.class !== 'undefined') update.class = body.class;
+    if (role === 'student' && typeof body.username !== 'undefined') update.username = body.username;
+    if (body.deletePhoto === true || body.deletePhoto === 'true') {
       update.photo = { data: undefined, contentType: undefined };
     } else if (req.file) {
       update.photo = {
@@ -50,20 +65,7 @@ export const updateProfile = async (req, res) => {
         contentType: req.file.mimetype
       };
     }
-    let user;
-    if (isAdmin) {
-      user = await Admin.findByIdAndUpdate(
-        userId,
-        { $set: update },
-        { new: true }
-      );
-    } else {
-      user = await User.findByIdAndUpdate(
-        userId,
-        { $set: update },
-        { new: true }
-      );
-    }
+    const user = await Model.findByIdAndUpdate(userId, { $set: update }, { new: true });
     if (!user) return res.status(404).json({ message: 'User not found' });
     let userObj = user.toObject();
     if (userObj.photo && userObj.photo.data) {
@@ -80,17 +82,13 @@ export const updateProfile = async (req, res) => {
 // GET /api/verify-token - Verify JWT token and return user profile
 export const verifyToken = async (req, res) => {
   try {
-    // User is already attached to req by authenticateToken middleware
     const user = req.user;
-    
-    // Convert photo buffer to base64 string for frontend
-    let userObj = user.toObject();
+    let userObj = user.toObject ? user.toObject() : user;
     if (userObj.photo && userObj.photo.data) {
       userObj.photo = `data:${userObj.photo.contentType};base64,${userObj.photo.data.toString('base64')}`;
     } else {
       userObj.photo = null;
     }
-    
     res.json({ 
       message: 'Token verified',
       user: userObj
