@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { FaClipboardList, FaBookOpen, FaChartBar, FaBullhorn, FaCalendarAlt, FaEnvelope, FaLaptop, FaUser, FaTrashAlt } from "react-icons/fa";
+import { FaClipboardList, FaBookOpen, FaChartBar, FaBullhorn, FaCalendarAlt, FaEnvelope, FaLaptop, FaUser, FaTrashAlt, FaFilePdf, FaPalette, FaFileVideo } from "react-icons/fa";
 import { BASE_API_URL } from '../apiurl.js';
 import { getToken, logout } from "../../utils/auth.js";
 import ProtectedRoute from '../../components/ProtectedRoute';
@@ -16,9 +16,9 @@ function StudentSidebar({ userEmail, userPhoto, userName, onMenuSelect, selected
     { key: "sample-papers", label: "Sample Papers", icon: <FaBookOpen style={{ fontSize: 18 }} /> },
     { key: "avlrs", label: "AVLRs", icon: <FaLaptop style={{ fontSize: 18 }} /> },
     { key: "mind-maps", label: "Mind Maps", icon: <FaChartBar style={{ fontSize: 18 }} /> },
-    { key: "dlr", label: "DLRs", icon: <FaLaptop style={{ fontSize: 18 }} /> },
+    { key: "dlrs", label: "DLRs", icon: <FaFilePdf style={{ fontSize: 18 }} /> },
     { key: "discussion-panel", label: "Discussion Panel", icon: <FaUser style={{ fontSize: 18 }} /> },
-    { key: "creative-corner", label: "Creative Corner", icon: <FaBookOpen style={{ fontSize: 18 }} /> },
+    { key: "creative-corner", label: "Creative Corner", icon: <FaPalette style={{ fontSize: 18, color: '#ff0080' }} /> },
     { key: "books", label: "Books", icon: <FaBookOpen style={{ fontSize: 18 }} /> },
     { key: "performance", label: "Performance", icon: <FaChartBar style={{ fontSize: 18 }} /> },
     { key: "profile", label: "Profile", icon: <FaUser style={{ fontSize: 18 }} /> },
@@ -168,18 +168,55 @@ function StudentDashboard() {
   // Track if announcements have already been fetched for the current class
   const [lastFetchedClass, setLastFetchedClass] = useState(null);
 
+  // Add state for Mind Map search and results
+  const [mmSubject, setMmSubject] = useState("");
+  const [mmChapter, setMmChapter] = useState("");
+  const [mindMaps, setMindMaps] = useState([]);
+  const [mindMapsLoading, setMindMapsLoading] = useState(false);
+  const [mmStatus, setMmStatus] = useState("");
+  const [mmPreview, setMmPreview] = useState({ open: false, url: '', fileType: '' });
+
+  // Add state for AVLRs
+  const [avlrs, setAvlrs] = useState([]);
+  const [avlrsLoading, setAvlrsLoading] = useState(false);
+  const [search, setSearch] = useState({ class: '', subject: '', chapter: '' });
+  const [searchInitiated, setSearchInitiated] = useState(false);
+
+  // Add state for DLRs
+  const [dlrs, setDlrs] = useState([]);
+  const [dlrsLoading, setDlrsLoading] = useState(false);
+  const [dlrSearch, setDlrSearch] = useState({ class: '', subject: '', chapter: '' });
+  const [dlrSearchInitiated, setDlrSearchInitiated] = useState(false);
+
+  // Add previewPdf state and modal
+  const [previewPdf, setPreviewPdf] = useState({ open: false, url: '' });
+
+  // Creative Corner state
+  const [ccSubject, setCcSubject] = useState("");
+  const [ccChapter, setCcChapter] = useState("");
+  const [ccType, setCcType] = useState("");
+  const [creativeItems, setCreativeItems] = useState([]);
+  const [ccLoading, setCcLoading] = useState(false);
+  const [ccPreviewModal, setCcPreviewModal] = useState({ open: false, url: '', fileType: '', name: '' });
+
   const fetchAnnouncements = useCallback(() => {
     const studentClass = (profile && profile.class) ? profile.class : globalUserClass;
     if (!studentClass || lastFetchedClass === studentClass) return; // Prevent repeated fetches for same class
     setAnnouncementsLoading(true);
     setLastFetchedClass(studentClass);
-    const classParam = `?class=${encodeURIComponent(studentClass)}`;
-    console.log("Frontend: Sending class to backend:", studentClass);
+    const classParam = `?class=${encodeURIComponent(studentClass)}&registeredAs=Student`;
     fetch(`${BASE_API_URL}/getannouncements${classParam}`)
       .then(res => res.json())
       .then(data => {
-        console.log("Frontend: Announcements received for class", studentClass, data.announcements);
-        setAnnouncements(data.announcements || []);
+        // Filter announcements: show if classes includes 'ALL' or student's class
+        const filtered = (data.announcements || []).filter(a => {
+          // Case-insensitive check for Student in announcementFor
+          if (a.announcementFor && Array.isArray(a.announcementFor) && !a.announcementFor.some(role => role.toLowerCase() === 'student')) return false;
+          if (!a.classes || a.classes.length === 0) return true;
+          if (a.classes.some(c => c && typeof c === 'string' && c.trim().toLowerCase() === 'all')) return true;
+          return a.classes.includes(studentClass);
+        });
+        setAnnouncements(filtered);
         setAnnouncementsLoading(false);
       })
       .catch(() => setAnnouncementsLoading(false));
@@ -203,7 +240,8 @@ function StudentDashboard() {
         .then(data => {
           setProfile(data.user);
           setUserName(data.user.name || "");
-          setForm({
+          // Only update form state if not in edit mode
+          setForm(f => editMode ? f : {
             name: data.user.name || '',
             username: data.user.username || '',
             phone: data.user.phone || '',
@@ -228,7 +266,7 @@ function StudentDashboard() {
           console.log("Fetched user class: null");
         });
     }
-  }, [userEmail, selectedMenu, fetchAnnouncements]);
+  }, [userEmail, selectedMenu, fetchAnnouncements, editMode]);
 
   // Fetch CBSE updates
   const fetchCbseUpdates = useCallback(() => {
@@ -270,10 +308,23 @@ function StudentDashboard() {
     }
   }, [form.photo]);
 
+  // Prefill class from student profile
+  useEffect(() => {
+    if (profile && profile.class) {
+      setSearch(f => ({ ...f, class: profile.class }));
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    if (profile && profile.class) {
+      setDlrSearch(f => ({ ...f, class: profile.class }));
+    }
+  }, [profile]);
+
   const handleEdit = () => {
+    // When entering edit mode, set form state from profile
     setForm({
       name: profile?.name || '',
-      username: profile?.username || '',
       phone: profile?.phone || '',
       school: profile?.school || '',
       class: profile?.class || '',
@@ -281,7 +332,6 @@ function StudentDashboard() {
     });
     setPreview(profile?.photo || "/default-avatar.png");
     setEditMode(true);
-    setStatus('');
   };
   const handleCancel = () => {
     setEditMode(false);
@@ -307,6 +357,10 @@ function StudentDashboard() {
     }
   };
   const handleSave = async () => {
+    if (!form.phone || form.phone.length !== 10) {
+      setStatus('Phone number must be exactly 10 digits');
+      return;
+    }
     setStatus('Saving...');
     try {
       let body;
@@ -381,6 +435,111 @@ function StudentDashboard() {
         console.error('Token verification error:', err);
       });
   }, []);
+
+  // Mind Map search handler
+  const handleMindMapSearch = async (e) => {
+    e.preventDefault();
+    if (!profile?.class || !mmSubject.trim() || !mmChapter.trim()) {
+      setMmStatus("Please fill all fields.");
+      return;
+    }
+    setMindMapsLoading(true);
+    setMmStatus("");
+    setMindMaps([]);
+    try {
+      const res = await fetch(`${BASE_API_URL}/mindmaps`);
+      const data = await res.json();
+      if (res.ok && data.mindMaps) {
+        // Filter on frontend for now (can optimize with backend query if needed)
+        const filtered = data.mindMaps.filter(m =>
+          m.class === profile.class.toLowerCase() &&
+          m.subject === mmSubject.trim().toLowerCase() &&
+          m.chapter === mmChapter.trim().toLowerCase()
+        );
+        setMindMaps(filtered);
+        if (filtered.length === 0) setMmStatus("No mind maps found.");
+      } else {
+        setMmStatus("No mind maps found.");
+      }
+    } catch {
+      setMmStatus("Failed to fetch mind maps.");
+    }
+    setMindMapsLoading(false);
+  };
+
+  // Search AVLRs
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    setAvlrsLoading(true);
+    setSearchInitiated(true);
+    try {
+      const params = new URLSearchParams();
+      if (search.class) params.append('class', search.class);
+      if (search.subject) params.append('subject', search.subject);
+      if (search.chapter) params.append('chapter', search.chapter);
+      const res = await fetch(`${BASE_API_URL}/avlrs?${params.toString()}`);
+      const data = await res.json();
+      setAvlrs(data.avlrs || []);
+      setAvlrsLoading(false);
+    } catch {
+      setAvlrs([]);
+      setAvlrsLoading(false);
+    }
+  };
+
+  // Search DLRs
+  const handleDlrSearch = async (e) => {
+    e.preventDefault();
+    setDlrsLoading(true);
+    setDlrSearchInitiated(true);
+    try {
+      const params = new URLSearchParams();
+      if (dlrSearch.class) params.append('class', dlrSearch.class);
+      if (dlrSearch.subject) params.append('subject', dlrSearch.subject);
+      if (dlrSearch.chapter) params.append('chapter', dlrSearch.chapter);
+      const res = await fetch(`${BASE_API_URL}/dlrs?${params.toString()}`);
+      const data = await res.json();
+      setDlrs(data.dlrs || []);
+      setDlrsLoading(false);
+    } catch {
+      setDlrs([]);
+      setDlrsLoading(false);
+    }
+  };
+
+  // Fetch creative items for student's class
+  const fetchCreativeItems = useCallback(() => {
+    if (!profile?.class) return;
+    setCcLoading(true);
+    const params = new URLSearchParams();
+    params.append('class', profile.class);
+    if (ccSubject) params.append('subject', ccSubject);
+    if (ccChapter) params.append('chapter', ccChapter);
+    if (ccType) params.append('type', ccType);
+    fetch(`${BASE_API_URL}/creative-corner?${params.toString()}`)
+      .then(res => res.json())
+      .then(data => {
+        setCreativeItems(data.creativeItems || []);
+        setCcLoading(false);
+      })
+      .catch(() => setCcLoading(false));
+  }, [profile, ccSubject, ccChapter, ccType]);
+
+  useEffect(() => {
+    if (selectedMenu === "creative-corner" && profile?.class) {
+      fetchCreativeItems();
+    }
+    // Only run when selectedMenu or filters change
+    // eslint-disable-next-line
+  }, [selectedMenu, profile?.class]);
+
+  // Refetch only when filters change (not on every render)
+  useEffect(() => {
+    if (selectedMenu === "creative-corner" && profile?.class) {
+      fetchCreativeItems();
+    }
+    // eslint-disable-next-line
+  }, [ccSubject, ccChapter, ccType]);
 
   const renderContent = () => {
     if (selectedMenu === "profile") {
@@ -534,14 +693,36 @@ function StudentDashboard() {
                     <input
                       name="class"
                       value={form.class}
-                      onChange={handleChange}
+                      // Make class read-only
+                      readOnly
                       style={{
                         width: "100%",
                         padding: "10px 12px",
                         borderRadius: 6,
                         border: "1.5px solid #e0e0e0",
                         fontSize: 16,
-                        marginTop: 4
+                        marginTop: 4,
+                        background: "#f8f9fa",
+                        color: "#888"
+                      }}
+                    />
+                  </div>
+                  {/* Registered As (read-only) */}
+                  <div>
+                    <label style={{ fontWeight: 600, color: "#1e3c72" }}>Registered As:</label>
+                    <input
+                      name="registeredAs"
+                      value={profile?.registeredAs || ""}
+                      disabled
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        borderRadius: 6,
+                        border: "1.5px solid #e0e0e0",
+                        fontSize: 16,
+                        marginTop: 4,
+                        background: "#f8f9fa",
+                        color: "#666"
                       }}
                     />
                   </div>
@@ -675,6 +856,10 @@ function StudentDashboard() {
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Class:</span>
                   <span style={{ color: "#222", fontSize: 16 }}>{profile.class || "-"}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Registered As:</span>
+                  <span style={{ color: "#222", fontSize: 16 }}>{profile.registeredAs}</span>
                 </div>
               </div>
               <button
@@ -879,7 +1064,12 @@ function StudentDashboard() {
       return (
         <div style={{ padding: 48, maxWidth: 700, margin: "0 auto" }}>
           <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24, color: "#1e3c72" }}>Announcements</h2>
-          {announcementsLoading ? <div>Loading...</div> : (
+          {announcementsLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 120 }}>
+              <div className="spinner" style={{ width: 48, height: 48, border: '6px solid #eee', borderTop: '6px solid #1e3c72', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+              <style>{`@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
+            </div>
+          ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
               {announcements.length === 0 && <div>No announcements yet.</div>}
               {announcements.map(a => (
@@ -1071,11 +1261,60 @@ function StudentDashboard() {
     }
     if (selectedMenu === "avlrs") {
       return (
-        <div style={{ padding: 48, maxWidth: 700, margin: "0 auto" }}>
-          <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24, color: "#1e3c72" }}>AVLRs (Video Resource Learning)</h2>
-          <div style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, textAlign: "center", color: "#888", fontSize: 18 }}>
-            Feature coming soon.
-          </div>
+        <div style={{ padding: 48, maxWidth: 800, margin: "0 auto" }}>
+          <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24, color: "#1e3c72" }}>AVLRs</h2>
+          <form onSubmit={handleSearch} style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32 }}>
+            <div style={{ display: "flex", gap: 18, marginBottom: 18 }}>
+              <input type="text" placeholder="Class" value={search.class} onChange={e => setSearch(f => ({ ...f, class: e.target.value }))} style={{ flex: 1, padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16 }} readOnly />
+              <input type="text" placeholder="Subject" value={search.subject} onChange={e => setSearch(f => ({ ...f, subject: e.target.value }))} style={{ flex: 1, padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16 }} />
+              <input type="text" placeholder="Chapter" value={search.chapter} onChange={e => setSearch(f => ({ ...f, chapter: e.target.value }))} style={{ flex: 2, padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16 }} />
+            </div>
+            <button type="submit" style={{ background: "#1e3c72", color: "#fff", border: "none", borderRadius: 6, padding: "10px 32px", fontWeight: 600, fontSize: 17, cursor: "pointer" }}>Search</button>
+          </form>
+          {avlrsLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 120 }}>
+              <div className="spinner" style={{ width: 48, height: 48, border: '6px solid #eee', borderTop: '6px solid #1e3c72', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+              <style>{`@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
+            </div>
+          ) : (!searchInitiated ? (
+            <div style={{ color: "#888", fontSize: 17 }}>Enter subject/chapter to find AVLRs for your class.</div>
+          ) : avlrs.length === 0 ? (
+            <div style={{ color: "#888", fontSize: 17 }}>No AVLRs found.</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              {avlrs.map(a => {
+                // Extract YouTube video ID if possible
+                let ytId = null;
+                try {
+                  const url = new URL(a.link);
+                  if (url.hostname.includes("youtube.com")) {
+                    const params = new URLSearchParams(url.search);
+                    ytId = params.get("v");
+                  } else if (url.hostname === "youtu.be") {
+                    ytId = url.pathname.slice(1);
+                  }
+                } catch {}
+                const thumbUrl = ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null;
+                return (
+                  <div key={a._id} style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 24, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 18 }}>
+                    {thumbUrl ? (
+                      <img src={thumbUrl} alt="Video thumbnail" style={{ width: 120, height: 80, borderRadius: 8, objectFit: 'cover', border: '1.5px solid #eee' }} />
+                    ) : (
+                      <div style={{ width: 120, height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7fafd', borderRadius: 8, border: '1.5px solid #eee' }}>
+                        <FaFileVideo style={{ fontSize: 38, color: '#1e3c72' }} />
+                      </div>
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, color: "#1e3c72", marginBottom: 8 }}>Class: {a.class} | Subject: {a.subject} | Chapter: {a.chapter}</div>
+                      <div style={{ marginBottom: 8 }}>
+                        <a href={a.link} target="_blank" rel="noopener noreferrer" style={{ color: "#007bff", fontWeight: 600, wordBreak: 'break-all' }}>{a.link}</a>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
       );
     }
@@ -1083,19 +1322,126 @@ function StudentDashboard() {
       return (
         <div style={{ padding: 48, maxWidth: 700, margin: "0 auto" }}>
           <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24, color: "#1e3c72" }}>Mind Maps</h2>
-          <div style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, textAlign: "center", color: "#888", fontSize: 18 }}>
-            Feature coming soon.
-          </div>
+          <form onSubmit={handleMindMapSearch} style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32 }}>
+            <div style={{ display: "flex", gap: 18, marginBottom: 18 }}>
+              <input type="text" value={profile?.class || ""} readOnly placeholder="Class" style={{ flex: 1, padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16, background: "#f7fafd", color: "#888" }} />
+              <input type="text" placeholder="Subject" value={mmSubject} onChange={e => setMmSubject(e.target.value)} required style={{ flex: 1, padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16 }} />
+              <input type="text" placeholder="Chapter" value={mmChapter} onChange={e => setMmChapter(e.target.value)} required style={{ flex: 2, padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16 }} />
+            </div>
+            <button type="submit" style={{ background: "#1e3c72", color: "#fff", border: "none", borderRadius: 6, padding: "10px 32px", fontWeight: 600, fontSize: 17, cursor: "pointer" }}>Search</button>
+            {mmStatus && <div style={{ marginTop: 12, color: mmStatus.includes("found") ? "#c0392b" : "#1e3c72" }}>{mmStatus}</div>}
+          </form>
+          {mindMapsLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 120 }}>
+              <div className="spinner" style={{ width: 48, height: 48, border: '6px solid #eee', borderTop: '6px solid #1e3c72', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+              <style>{`@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
+            </div>
+          ) : mindMaps.length === 0 && mmStatus ? null : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              {mindMaps.map((m, idx) => (
+                <div key={m._id} style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 24, marginBottom: 8 }}>
+                  <div style={{ fontWeight: 600, color: "#1e3c72", marginBottom: 8 }}>Class: {m.class} | Subject: {m.subject} | Chapter: {m.chapter}</div>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    {m.mindmap && m.mindmap.map((img, i) => (
+                      img.fileType === 'pdf'
+                        ? <div key={i} style={{ display: 'inline-block', position: 'relative', width: 120, height: 80, border: '1px solid #eee', borderRadius: 6, background: '#fafafa', textAlign: 'center', verticalAlign: 'middle', lineHeight: '80px', fontWeight: 600, color: '#1e3c72', fontSize: 18, cursor: 'pointer' }} onClick={() => setMmPreview({ open: true, url: img.url, fileType: 'pdf' })}>
+                          <span>PDF</span>
+                          <span style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', zIndex: 2 }}>
+                            <div className="spinner" style={{ width: 24, height: 24, border: '4px solid #eee', borderTop: '4px solid #1e3c72', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                          </span>
+                          <style>{`@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
+                        </div>
+                        : <img key={i} src={img.url} alt="mindmap" style={{ maxWidth: 120, maxHeight: 80, borderRadius: 6, border: "1px solid #eee", cursor: 'pointer' }} onClick={() => setMmPreview({ open: true, url: img.url, fileType: 'image' })} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Preview Modal for image/pdf */}
+          {mmPreview.open && (
+            <div
+              style={{
+                position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
+                background: "rgba(0,0,0,0.92)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center"
+              }}
+              onClick={() => setMmPreview({ open: false, url: '', fileType: '' })}
+            >
+              <div
+                style={{
+                  position: 'relative', width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', boxShadow: 'none', borderRadius: 0, padding: 0
+                }}
+                onClick={e => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => setMmPreview({ open: false, url: '', fileType: '' })}
+                  style={{
+                    position: 'fixed', top: 24, right: 32, background: '#c0392b', color: '#fff', border: 'none',
+                    borderRadius: '50%', width: 44, height: 44, fontSize: 28, fontWeight: 700, cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.18)'
+                  }}
+                  aria-label="Close"
+                >×</button>
+                {mmPreview.fileType === 'pdf' ? (
+                  <PDFWithLoader url={mmPreview.url} fullscreen={true} />
+                ) : (
+                  <img
+                    src={mmPreview.url}
+                    alt="Preview"
+                    style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', objectFit: 'contain', background: '#222', borderRadius: 0, margin: 0, padding: 0, zIndex: 5 }}
+                  />
+                )}
+              </div>
+            </div>
+          )}
         </div>
       );
     }
-    if (selectedMenu === "dlr") {
+    if (selectedMenu === "dlrs") {
       return (
-        <div style={{ padding: 48, maxWidth: 700, margin: "0 auto" }}>
-          <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24, color: "#1e3c72" }}>DLR (Digital Resource Learning)</h2>
-          <div style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, textAlign: "center", color: "#888", fontSize: 18 }}>
-            Feature coming soon.
-          </div>
+        <div style={{ padding: 48, maxWidth: 800, margin: "0 auto" }}>
+          <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24, color: "#1e3c72" }}>DLRs</h2>
+          <form onSubmit={handleDlrSearch} style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32 }}>
+            <div style={{ display: "flex", gap: 18, marginBottom: 18 }}>
+              <input type="text" placeholder="Class" value={dlrSearch.class} onChange={e => setDlrSearch(f => ({ ...f, class: e.target.value }))} style={{ flex: 1, padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16 }} readOnly />
+              <input type="text" placeholder="Subject" value={dlrSearch.subject} onChange={e => setDlrSearch(f => ({ ...f, subject: e.target.value }))} style={{ flex: 1, padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16 }} />
+              <input type="text" placeholder="Chapter" value={dlrSearch.chapter} onChange={e => setDlrSearch(f => ({ ...f, chapter: e.target.value }))} style={{ flex: 2, padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16 }} />
+            </div>
+            <button type="submit" style={{ background: "#1e3c72", color: "#fff", border: "none", borderRadius: 6, padding: "10px 32px", fontWeight: 600, fontSize: 17, cursor: "pointer" }}>Search</button>
+          </form>
+          {dlrsLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 120 }}>
+              <div className="spinner" style={{ width: 48, height: 48, border: '6px solid #eee', borderTop: '6px solid #1e3c72', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+              <style>{`@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
+            </div>
+          ) : (!dlrSearchInitiated ? (
+            <div style={{ color: "#888", fontSize: 17 }}>Enter subject/chapter to find DLRs for your class.</div>
+          ) : dlrs.length === 0 ? (
+            <div style={{ color: "#888", fontSize: 17 }}>No DLRs found.</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              {dlrs.map(dlr => (
+                <div key={dlr._id} style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 24, marginBottom: 8 }}>
+                  <div style={{ fontWeight: 600, color: "#1e3c72", marginBottom: 8 }}>Class: {dlr.class} | Subject: {dlr.subject} | Chapter: {dlr.chapter}</div>
+                  <div style={{ marginBottom: 8, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                    {dlr.pdfs.map((pdf, idx) => (
+                      <div key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }} onClick={() => setPreviewPdf({ open: true, url: pdf.url })}>
+                        <FaFilePdf style={{ fontSize: 20, color: '#e74c3c' }} /> <span style={{ fontWeight: 600 }}>PDF {idx + 1}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+          {/* PDF Preview Modal */}
+          {previewPdf.open && (
+            <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(30,60,114,0.18)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ position: 'relative', width: '90vw', height: '90vh', background: '#fff', borderRadius: 12, boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.13)', display: 'flex', flexDirection: 'column' }}>
+                <button onClick={() => setPreviewPdf({ open: false, url: '' })} style={{ position: 'absolute', top: 16, right: 24, background: '#c0392b', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, fontWeight: 700, fontSize: 22, cursor: 'pointer', zIndex: 2 }}>×</button>
+                <iframe src={previewPdf.url} title="PDF Preview" style={{ width: '100%', height: '100%', border: 'none', borderRadius: 12, background: '#fff' }} />
+              </div>
+            </div>
+          )}
         </div>
       );
     }
@@ -1111,11 +1457,72 @@ function StudentDashboard() {
     }
     if (selectedMenu === "creative-corner") {
       return (
-        <div style={{ padding: 48, maxWidth: 700, margin: "0 auto" }}>
-          <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24, color: "#1e3c72" }}>Creative Corner</h2>
-          <div style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, textAlign: "center", color: "#888", fontSize: 18 }}>
-            Feature coming soon.
+        <div style={{ padding: 48, maxWidth: 900, margin: "0 auto" }}>
+          <h2 style={{ fontWeight: 700, fontSize: 32, marginBottom: 28, color: "#ff0080", letterSpacing: 1, textAlign: "center" }}>
+            <FaPalette style={{ marginRight: 12, color: "#ff0080", fontSize: 28, verticalAlign: "middle" }} />
+            Creative Corner
+          </h2>
+          {/* Filter Bar */}
+          <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center' }}>
+            <input type="text" placeholder="Class" value={profile?.class || ""} readOnly style={{ flex: 1, padding: 8, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 15, background: '#f7fafd', color: '#888' }} />
+            <input type="text" placeholder="Subject" value={ccSubject} onChange={e => setCcSubject(e.target.value)} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 15 }} />
+            <input type="text" placeholder="Chapter" value={ccChapter} onChange={e => setCcChapter(e.target.value)} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 15 }} />
+            <select value={ccType} onChange={e => setCcType(e.target.value)} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 15 }}>
+              <option value="">All Types</option>
+              <option value="project">Project</option>
+              <option value="activity">Activity</option>
+              <option value="poster">Poster</option>
+              <option value="artwork">Artwork</option>
+              <option value="quiz">Quiz</option>
+              <option value="worksheet">Worksheet</option>
+              <option value="poem">Poem</option>
+              <option value="story">Story</option>
+              <option value="other">Other</option>
+            </select>
+            <button type="button" onClick={fetchCreativeItems} style={{ background: '#1e3c72', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}>Filter</button>
+            <button type="button" onClick={() => { setCcSubject(""); setCcChapter(""); setCcType(""); }} style={{ background: '#bbb', color: '#222', border: 'none', borderRadius: 6, padding: '8px 12px', fontWeight: 600, cursor: 'pointer' }}>Clear</button>
           </div>
+          <h3 style={{ fontWeight: 700, fontSize: 22, marginBottom: 18, color: "#1e3c72" }}>Creative Items for Class {profile?.class}</h3>
+          {ccLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 120 }}>
+              <div className="spinner" style={{ width: 48, height: 48, border: '6px solid #eee', borderTop: '6px solid #ff0080', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+              <style>{`@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
+            </div>
+          ) : creativeItems.length === 0 ? (
+            <div style={{ color: "#888", fontSize: 17 }}>No creative items found for your class.</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              {creativeItems.map(item => (
+                <div key={item._id} style={{ background: "#fff", borderRadius: 10, boxShadow: "0 2px 8px rgba(30,60,114,0.06)", padding: 18, display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ fontWeight: 600, color: "#ff0080" }}>Subject: {item.subject} | Chapter: {item.chapter} | Type: {item.type} | Title: {item.title}</div>
+                  <div style={{ color: "#222", marginBottom: 6 }}>{item.description}</div>
+                  <div style={{ fontSize: 13, color: "#888", marginBottom: 6 }}>By: {item.createdBy} | {new Date(item.createdAt).toLocaleString()}</div>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    {item.files && item.files.map((f, idx) => (
+                      f.fileType === 'pdf'
+                        ? <div key={idx} style={{ display: 'inline-block', position: 'relative', width: 120, height: 80, border: '1px solid #eee', borderRadius: 6, background: '#fafafa', textAlign: 'center', verticalAlign: 'middle', lineHeight: '80px', fontWeight: 600, color: '#1e3c72', fontSize: 18, cursor: 'pointer' }} onClick={() => setCcPreviewModal({ open: true, url: f.url, fileType: 'pdf', name: f.originalName })}>
+                          <span>PDF</span>
+                        </div>
+                        : <img key={idx} src={f.url} alt={f.originalName} style={{ maxWidth: 120, maxHeight: 80, borderRadius: 6, border: "1px solid #eee", cursor: 'pointer' }} onClick={() => setCcPreviewModal({ open: true, url: f.url, fileType: 'image', name: f.originalName })} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Preview Modal for image/pdf */}
+          {ccPreviewModal.open && (
+            <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(0,0,0,0.92)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setCcPreviewModal({ open: false, url: '', fileType: '', name: '' })}>
+              <div style={{ position: 'relative', width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', boxShadow: 'none', borderRadius: 0, padding: 0 }} onClick={e => e.stopPropagation()}>
+                <button onClick={() => setCcPreviewModal({ open: false, url: '', fileType: '', name: '' })} style={{ position: 'fixed', top: 24, right: 32, background: '#c0392b', color: '#fff', border: 'none', borderRadius: '50%', width: 44, height: 44, fontSize: 28, fontWeight: 700, cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.18)' }} aria-label="Close">×</button>
+                {ccPreviewModal.fileType === 'pdf' ? (
+                  <iframe src={ccPreviewModal.url} title={ccPreviewModal.name} style={{ width: '80vw', height: '90vh', border: 'none', borderRadius: 8, background: '#fff' }} />
+                ) : (
+                  <img src={ccPreviewModal.url} alt={ccPreviewModal.name} style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 8 }} />
+                )}
+              </div>
+            </div>
+          )}
         </div>
       );
     }

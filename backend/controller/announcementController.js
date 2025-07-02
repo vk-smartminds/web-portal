@@ -20,12 +20,28 @@ export const announcementUpload = multer({
 // Create announcement (images and pdfs as Buffer)
 export const createAnnouncement = async (req, res) => {
   try {
-    const { text, createdBy, classes } = req.body;
+    const { text, createdBy, classes, announcementFor } = req.body;
     if (!text || text.trim() === "") {
       return res.status(400).json({ message: 'Announcement text is required' });
     }
-    if (!classes || !Array.isArray(classes) || classes.length === 0) {
-      return res.status(400).json({ message: 'At least one class is required' });
+    if (!announcementFor || !Array.isArray(announcementFor) || announcementFor.length === 0) {
+      return res.status(400).json({ message: 'At least one announcementFor is required' });
+    }
+    // Normalize announcementFor for logic (lowercase)
+    let announcementForArr = Array.isArray(announcementFor) ? announcementFor : [];
+    const announcementForLower = announcementForArr.map(a => a && typeof a === 'string' ? a.trim().toLowerCase() : a);
+    // For storage, capitalize first letter of each role
+    const announcementForStored = announcementForLower.map(role => role.charAt(0).toUpperCase() + role.slice(1));
+    let finalClasses = classes;
+    if (announcementForLower.includes("student")) {
+      if (!classes || !Array.isArray(classes) || classes.length === 0 || (classes.length === 1 && (!classes[0] || classes[0].trim() === ""))) {
+        finalClasses = ["ALL"];
+      } else {
+        finalClasses = classes.map(c => c && typeof c === 'string' && c.trim().toLowerCase() === 'all' ? 'ALL' : c);
+      }
+    }
+    if (Array.isArray(finalClasses)) {
+      finalClasses = finalClasses.map(c => c && typeof c === 'string' && c.trim().toLowerCase() === 'all' ? 'ALL' : c);
     }
     let images = [];
     if (req.files && req.files.length > 0) {
@@ -42,7 +58,8 @@ export const createAnnouncement = async (req, res) => {
     const announcement = await Announcement.create({
       text,
       images,
-      classes,
+      classes: announcementForLower.includes("student") ? finalClasses : [],
+      announcementFor: announcementForStored,
       createdBy: creatorEmail
     });
     res.status(201).json({ message: 'Announcement created', announcement });
@@ -52,45 +69,45 @@ export const createAnnouncement = async (req, res) => {
 };
 
 // Get all announcements (convert images and pdfs to base64 or download link)
-// Accepts optional ?class=10 parameter to filter for students
+// Accepts optional ?class=10&registeredAs=Student parameter to filter
 export const getAnnouncements = async (req, res) => {
   try {
     let studentClass = req.query.class;
+    let registeredAs = req.query.registeredAs;
     let announcements = await Announcement.find({}).sort({ createdAt: -1 });
 
-    console.log("Backend: Received class from frontend:", studentClass); // <-- log class received
+    // Log the query parameters
+    console.log('Fetching announcements for:', { registeredAs, class: studentClass });
 
-    // Only include announcements where the student's class is in the announcement's classes array
-    if (studentClass) {
-      announcements = announcements.filter(a =>
-        Array.isArray(a.classes) && a.classes.includes(studentClass)
-      );
+    // Filter by announcementFor
+    if (registeredAs) {
+      announcements = announcements.filter(a => {
+        // Always include announcements for Parent
+        if (Array.isArray(a.announcementFor) && a.announcementFor.includes("Parent")) return true;
+
+        // If class param is present, also include Student announcements for that class
+        if (
+          studentClass &&
+          Array.isArray(a.announcementFor) && a.announcementFor.includes("Student") &&
+          Array.isArray(a.classes) && (a.classes.includes("ALL") || a.classes.includes(studentClass))
+        ) {
+          return true;
+        }
+
+        // Fallback to original logic
+        return Array.isArray(a.announcementFor) && (a.announcementFor.includes(registeredAs) || a.announcementFor.includes("All"));
+      });
     }
-
-    // Log the announcements being sent back
-    console.log(
-      "Backend: Announcements being sent for class",
-      studentClass,
-      announcements.map(a => ({
-        _id: a._id,
-        text: a.text,
-        classes: a.classes,
-        createdBy: a.createdBy,
-        createdAt: a.createdAt
-      }))
-    );
 
     const announcementsWithBase64 = announcements.map(a => {
       const images = (a.images || []).map(img => {
         if (!img || !img.data) return null;
         if (img.contentType === 'application/pdf') {
-          // For PDFs, return a base64 data URL with fileType
           return {
             url: `data:application/pdf;base64,${img.data.toString('base64')}`,
             fileType: 'pdf'
           };
         }
-        // For images
         return {
           url: `data:${img.contentType};base64,${img.data.toString('base64')}`,
           fileType: 'image'
@@ -101,6 +118,7 @@ export const getAnnouncements = async (req, res) => {
         text: a.text,
         images,
         classes: a.classes,
+        announcementFor: a.announcementFor,
         createdBy: a.createdBy,
         createdAt: a.createdAt,
         updatedAt: a.updatedAt
@@ -117,21 +135,47 @@ export const updateAnnouncement = async (req, res) => {
   try {
     const { id } = req.params;
     const { text } = req.body;
+    
+    // Handle announcementFor field
+    let announcementFor = req.body['announcementFor[]'] || req.body.announcementFor;
+    if (typeof announcementFor === "string") {
+      announcementFor = [announcementFor];
+    }
+    
     // Accept classes[] as array or string (from form-data)
     let classes = req.body['classes[]'] || req.body.classes;
     if (typeof classes === "string") {
-      // If only one class, it will be a string, else array
       classes = [classes];
     }
+    // Normalize announcementFor for logic (lowercase)
+    let announcementForArr = Array.isArray(announcementFor) ? announcementFor : [];
+    const announcementForLower = announcementForArr.map(a => a && typeof a === 'string' ? a.trim().toLowerCase() : a);
+    // For storage, capitalize first letter of each role
+    const announcementForStored = announcementForLower.map(role => role.charAt(0).toUpperCase() + role.slice(1));
+    if (announcementForLower.includes("student") && (!classes || classes.length === 0 || (classes.length === 1 && (!classes[0] || classes[0].trim() === "")))) {
+      classes = ["ALL"];
+    }
+    if (Array.isArray(classes)) {
+      classes = classes.map(c => c && typeof c === 'string' && c.trim().toLowerCase() === 'all' ? 'ALL' : c);
+    }
+    
     const announcement = await Announcement.findById(id);
     if (!announcement) {
       return res.status(404).json({ message: 'Announcement not found' });
     }
+    
     if (typeof text === 'string') announcement.text = text;
+    
+    // Update announcementFor if provided
+    if (announcementForStored && Array.isArray(announcementForStored) && announcementForStored.length > 0) {
+      announcement.announcementFor = announcementForStored;
+    }
+    
     // Update classes if provided
     if (classes && Array.isArray(classes) && classes.length > 0) {
       announcement.classes = classes;
     }
+    
     // Add new images
     if (req.files && req.files.length > 0) {
       const newImages = req.files.map(f => ({
@@ -141,8 +185,24 @@ export const updateAnnouncement = async (req, res) => {
       }));
       announcement.images = [...(announcement.images || []), ...newImages];
     }
+    
+    // Handle removed images
+    if (req.body.removeImages) {
+      const removeIndices = Array.isArray(req.body.removeImages) 
+        ? req.body.removeImages.map(idx => parseInt(idx))
+        : [parseInt(req.body.removeImages)];
+      
+      // Remove images at specified indices (in reverse order to maintain indices)
+      removeIndices.sort((a, b) => b - a).forEach(idx => {
+        if (idx >= 0 && idx < announcement.images.length) {
+          announcement.images.splice(idx, 1);
+        }
+      });
+    }
+    
     announcement.updatedAt = Date.now();
     await announcement.save();
+    
     // Convert images to base64 for response
     const images = (announcement.images || []).map(img =>
       img && img.data
@@ -154,6 +214,7 @@ export const updateAnnouncement = async (req, res) => {
           }
         : null
     ).filter(Boolean);
+    
     res.json({
       message: 'Announcement updated',
       announcement: {
@@ -161,6 +222,7 @@ export const updateAnnouncement = async (req, res) => {
         text: announcement.text,
         images,
         classes: announcement.classes,
+        announcementFor: announcement.announcementFor,
         createdBy: announcement.createdBy,
         createdAt: announcement.createdAt,
         updatedAt: announcement.updatedAt

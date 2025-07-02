@@ -16,7 +16,7 @@
 
 3. **Create `.env` file:**
    ```env
-   # Database
+   # Database used
    MONGODB_URI=your_mongodb_connection_string
    
    # Server

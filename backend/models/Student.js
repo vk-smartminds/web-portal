@@ -38,6 +38,11 @@ const studentSchema = new mongoose.Schema({
     type: "array",
     default: ""
   },
+  childClass: {
+    type: String,
+    // Only required for Parent, so not globally required
+    default: ""
+  },
   photo: {
     data: Buffer,
     contentType: String
