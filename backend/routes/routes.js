@@ -15,6 +15,8 @@ import { createDLR, getDLRs, updateDLR, deleteDLR, removeDLRPdf, dlrUpload } fro
 import { addCreativeItem, getCreativeItems, deleteCreativeItem, creativeCornerUpload, updateCreativeItem } from '../controller/creativeCornerController.js';
 import { verifyChildEmail, verifyChildOtp as verifyGuardianChildOtp } from '../controller/guardianController';
 import { checkGuardianEmail, validateGuardianPassword } from '../controller/guardianController';
+import * as discussionController from '../controller/discussionController.js';
+import { threadUpload, postUpload, getDiscussionNotifications, markDiscussionNotificationRead, deleteDiscussionNotification } from '../controller/discussionController.js';
 
 const router = express.Router();
 
@@ -129,5 +131,24 @@ router.post('/api/guardian/verify-child-email', verifyChildEmail);
 router.post('/api/guardian/verify-child-otp', verifyGuardianChildOtp);
 router.post('/api/guardian/check-email', checkGuardianEmail);
 router.post('/api/guardian/validate-password', validateGuardianPassword);
+
+
+// Discussion routes
+router.post('/api/discussion/threads', authenticateToken, threadUpload.array('images', 5), discussionController.createThread);
+router.put('/api/discussion/threads/:threadId', authenticateToken, threadUpload.array('images', 5), discussionController.editThread);
+router.delete('/api/discussion/threads/:threadId', authenticateToken, discussionController.deleteThread);
+router.get('/api/discussion/threads', discussionController.getThreads);
+router.get('/api/discussion/threads/:threadId', discussionController.getThread);
+router.post('/api/discussion/threads/:threadId/posts', authenticateToken, postUpload.array('images', 5), discussionController.addPost);
+router.put('/api/discussion/threads/:threadId/posts/:postId', authenticateToken, postUpload.array('images', 5), discussionController.editPost);
+router.delete('/api/discussion/threads/:threadId/posts/:postId', authenticateToken, discussionController.deletePost);
+router.post('/api/discussion/threads/:threadId/vote', authenticateToken, discussionController.voteThread);
+router.post('/api/discussion/threads/:threadId/posts/:postId/vote', authenticateToken, discussionController.votePost);
+
+// Discussion notification routes
+router.get('/api/discussion/notifications', authenticateToken, getDiscussionNotifications);
+router.post('/api/discussion/notifications/:id/read', authenticateToken, markDiscussionNotificationRead);
+router.delete('/api/discussion/notifications/:id', authenticateToken, deleteDiscussionNotification);
+
 
 export default router;

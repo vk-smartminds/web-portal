@@ -1,10 +1,12 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { FaUsers, FaUserTie, FaBook, FaRegListAlt, FaCog, FaBullhorn, FaChartBar, FaUserShield, FaBars, FaTimes, FaUser, FaBookOpen, FaLaptop, FaFilePdf, FaPalette, FaFileAlt, FaImage, FaBookReader, FaPenFancy, FaTasks, FaFileVideo } from "react-icons/fa";
+import { FaUsers, FaUserTie, FaBook, FaRegListAlt, FaCog, FaBullhorn, FaChartBar, FaUserShield, FaBars, FaTimes, FaUser, FaBookOpen, FaLaptop, FaFilePdf, FaPalette, FaFileAlt, FaImage, FaBookReader, FaPenFancy, FaTasks, FaFileVideo, FaBell } from "react-icons/fa";
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { BASE_API_URL } from '../apiurl.js';
 import { getUserData, getToken, isAuthenticated, isTokenExpired, logout } from "../../utils/auth.js";
-
+import DiscussionPanel from '../discussion';
+import NotificationPanel from '../../components/NotificationPanel';
+// 
 function AdminSidebar({ userEmail, userPhoto, onMenuSelect, selectedMenu, isSuperAdmin, setShowAddAdmin, setShowRemoveAdmin, setShowViewAdmins }) {
   const menuItems = [
     ...(isSuperAdmin ? [
@@ -24,6 +26,8 @@ function AdminSidebar({ userEmail, userPhoto, onMenuSelect, selectedMenu, isSupe
     { key: "avlrs", label: "AVLRs", icon: <FaLaptop style={{ fontSize: 18 }} /> },
     { key: "dlrs", label: "DLRs", icon: <FaFilePdf style={{ fontSize: 18 }} /> },
     { key: "creative-corner", label: "Creative Corner", icon: <FaPalette style={{ fontSize: 18, color: '#ff0080' }} /> },
+    { key: "discussion-panel", label: "Discussion Panel", icon: <FaUser style={{ fontSize: 18 }} /> },
+    { key: "notifications", label: "Notifications", icon: <FaBell style={{ fontSize: 18 }} /> },
   ];
   return (
     <aside style={{
@@ -1730,6 +1734,12 @@ function AdminDashboard() {
           )}
         </div>
       );
+    }
+    if (selectedMenu === "discussion-panel") {
+      return <DiscussionPanel />;
+    }
+    if (selectedMenu === "notifications") {
+      return <NotificationPanel />;
     }
     // Main content for other menu items
     return (
