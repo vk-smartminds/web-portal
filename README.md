@@ -1,4 +1,4 @@
-# VK WebPortal
+## VK WebPortal
 
 ## Setup Instructions
 
