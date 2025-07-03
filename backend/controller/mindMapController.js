@@ -46,7 +46,13 @@ export const addMindMap = async (req, res) => {
 // Get all MindMaps
 export const getMindMaps = async (req, res) => {
   try {
-    const mindMaps = await MindMap.find({}).sort({ createdAt: -1 });
+    const { class: className, subject, chapter } = req.query;
+    const filter = {};
+    if (className) filter.class = className.trim().toLowerCase();
+    if (subject) filter.subject = subject.trim().toLowerCase();
+    if (chapter) filter.chapter = chapter.trim().toLowerCase();
+
+    const mindMaps = await MindMap.find(filter).sort({ createdAt: -1 });
     const mindMapsWithBase64 = mindMaps.map(m => ({
       _id: m._id,
       class: m.class,

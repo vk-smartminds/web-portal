@@ -19,6 +19,9 @@ const mindMapSchema = new mongoose.Schema({
   }]
 });
 
+mindMapSchema.index({ class: 1 });
+mindMapSchema.index({ subject: 1 });
+mindMapSchema.index({ chapter: 1 });
 mindMapSchema.index({ class: 1, subject: 1, chapter: 1 });
 
 const MindMap = mongoose.model('MindMap', mindMapSchema);

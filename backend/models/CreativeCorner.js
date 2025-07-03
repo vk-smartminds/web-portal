@@ -23,6 +23,9 @@ const creativeCornerSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+creativeCornerSchema.index({ class: 1 });
+creativeCornerSchema.index({ subject: 1 });
+creativeCornerSchema.index({ chapter: 1 });
 creativeCornerSchema.index({ class: 1, subject: 1, chapter: 1 });
 
 export default mongoose.model('CreativeCorner', creativeCornerSchema); 

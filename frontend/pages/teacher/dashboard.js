@@ -11,19 +11,19 @@ import ProtectedRoute from '../../components/ProtectedRoute';
 function TeacherSidebar({ userEmail, userPhoto, userName, onMenuSelect, selectedMenu, onLogout }) {
   const menuItems = [
     { key: "test-generator", label: "Test Generator", icon: <FaClipboardList style={{ fontSize: 18 }} /> },
-    { key: "cbse-updates", label: "CBSE Updates", icon: <FaBullhorn style={{ fontSize: 18 }} /> }, // <-- Changed icon to FaBullhorn for consistency
+    { key: "cbse-updates", label: "CBSE Updates", icon: <FaBullhorn style={{ fontSize: 18 }} />, action: () => window.location.href = "/cbse-updates" },
     { key: "student-performance", label: "Student Performance", icon: <FaChartBar style={{ fontSize: 18 }} /> },
     { key: "book-solutions", label: "Book Solutions", icon: <FaBookOpen style={{ fontSize: 18 }} /> },
-    { key: "announcements", label: "Announcements", icon: <FaBullhorn style={{ fontSize: 18 }} /> },
+    { key: "announcements", label: "Announcements", icon: <FaBullhorn style={{ fontSize: 18 }} />, action: () => window.location.href = "/announcement" },
     { key: "timetable", label: "Timetable", icon: <FaCalendarAlt style={{ fontSize: 18 }} /> },
     { key: "messages", label: "Messages", icon: <FaEnvelope style={{ fontSize: 18 }} /> },
     { key: "resources", label: "Digital Resources", icon: <FaLaptop style={{ fontSize: 18 }} /> },
     { key: "profile", label: "Profile", icon: <FaUser style={{ fontSize: 18 }} /> },
     { key: "delete-account", label: "Delete Account", icon: <span style={{fontSize:18, color:'#c00'}}>🗑️</span> },
-    { key: "mind-maps", label: "Mind Maps", icon: <FaChartBar style={{ fontSize: 18 }} /> },
-    { key: "avlrs", label: "AVLRs", icon: <FaLaptop style={{ fontSize: 18 }} /> },
-    { key: "dlrs", label: "DLRs", icon: <FaFilePdf style={{ fontSize: 18 }} /> },
-    { key: "creative-corner", label: "Creative Corner", icon: <FaPalette style={{ fontSize: 18, color: '#ff0080' }} /> },
+    { key: "mind-maps", label: "Mind Maps", icon: <FaChartBar style={{ fontSize: 18 }} />, action: () => window.location.href = "/mindmaps" },
+    { key: "avlrs", label: "AVLRs", icon: <FaLaptop style={{ fontSize: 18 }} />, action: () => window.location.href = "/avlrs" },
+    { key: "dlrs", label: "DLRs", icon: <FaFilePdf style={{ fontSize: 18 }} />, action: () => window.location.href = "/dlrs" },
+    { key: "creative-corner", label: "Creative Corner", icon: <FaPalette style={{ fontSize: 18, color: '#ff0080' }} />, action: () => window.location.href = "/creative-corner" },
   ];
   return (
     <aside style={{
@@ -54,7 +54,7 @@ function TeacherSidebar({ userEmail, userPhoto, userName, onMenuSelect, selected
           {menuItems.map(item => (
             <button
               key={item.key}
-              onClick={() => { onMenuSelect(item.key); }}
+              onClick={() => { item.action ? item.action() : onMenuSelect(item.key); }}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -153,43 +153,6 @@ function TeacherDashboard() {
   const [userPhoto, setUserPhoto] = useState('');
   const [userName, setUserName] = useState("");
 
-  // Announcements state
-  const [announcements, setAnnouncements] = useState([]);
-  const [announcementsLoading, setAnnouncementsLoading] = useState(false);
-
-  // CBSE Updates state
-  const [cbseUpdates, setCbseUpdates] = useState([]);
-  const [cbseLoading, setCbseLoading] = useState(false);
-
-  // Add this line to define previewModal state at the top level of TeacherDashboard
-  const [previewModal, setPreviewModal] = useState({ open: false, url: '', fileType: '' });
-
-  // Add this state for mind maps
-  const [mindMaps, setMindMaps] = useState([]);
-  const [mindMapsLoading, setMindMapsLoading] = useState(false);
-  const [mmPreview, setMmPreview] = useState({ open: false, url: '', fileType: '' });
-
-  // Add state for Mind Map search fields
-  const [mmClass, setMmClass] = useState("");
-  const [mmSubject, setMmSubject] = useState("");
-  const [mmChapter, setMmChapter] = useState("");
-  const [mmStatus, setMmStatus] = useState("");
-
-  // Add state for AVLRs
-  const [avlrs, setAvlrs] = useState([]);
-  const [avlrsLoading, setAvlrsLoading] = useState(false);
-  const [search, setSearch] = useState({ class: '', subject: '', chapter: '' });
-  const [searchInitiated, setSearchInitiated] = useState(false);
-
-  // Add state for DLRs
-  const [dlrs, setDlrs] = useState([]);
-  const [dlrsLoading, setDlrsLoading] = useState(false);
-  const [dlrSearch, setDlrSearch] = useState({ class: '', subject: '', chapter: '' });
-  const [dlrSearchInitiated, setDlrSearchInitiated] = useState(false);
-
-  // Add previewPdf state and modal as in admin dashboard
-  const [previewPdf, setPreviewPdf] = useState({ open: false, url: '' });
-
   // Creative Corner state
   const [ccClass, setCcClass] = useState("");
   const [ccSubject, setCcSubject] = useState("");
@@ -261,59 +224,6 @@ function TeacherDashboard() {
     }
   }, [userEmail]);
 
-  // Fetch announcements for all teachers (read-only)
-  const fetchAnnouncements = useCallback(() => {
-    setAnnouncementsLoading(true);
-    fetch(`${BASE_API_URL}/getannouncements?registeredAs=Teacher`, {
-      headers: {
-        'Authorization': `Bearer ${getToken()}`
-      }
-    })
-      .then(res => res.json())
-      .then(data => {
-        const filtered = (data.announcements || []).filter(a => {
-          if (a.announcementFor && Array.isArray(a.announcementFor) && !a.announcementFor.some(role => role.toLowerCase() === 'teacher' || role.toLowerCase() === 'all')) return false;
-          return true;
-        });
-        setAnnouncements(filtered);
-        setAnnouncementsLoading(false);
-      })
-      .catch(() => setAnnouncementsLoading(false));
-  }, []);
-
-  // Mark announcement as viewed
-  const markAsViewed = async (announcementId) => {
-    try {
-      await fetch(`${BASE_API_URL}/announcement/${announcementId}/view`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${getToken()}`
-        }
-      });
-    } catch {}
-  };
-
-  // Mark announcements as viewed when they're displayed
-  useEffect(() => {
-    announcements.forEach(announcement => {
-      if (announcement.isNew) {
-        markAsViewed(announcement._id);
-      }
-    });
-  }, [announcements]);
-
-  // Fetch CBSE updates
-  const fetchCbseUpdates = useCallback(() => {
-    setCbseLoading(true);
-    fetch(`${BASE_API_URL}/cbse-updates`)
-      .then(res => res.json())
-      .then(data => {
-        setCbseUpdates(data.updates || []);
-        setCbseLoading(false);
-      })
-      .catch(() => setCbseLoading(false));
-  }, []);
-
   useEffect(() => {
     setUserEmail(localStorage.getItem("userEmail") || "");
   }, []);
@@ -322,27 +232,6 @@ function TeacherDashboard() {
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
-
-  // Fetch profile again when switching to profile tab (to ensure latest data after edit)
-  useEffect(() => {
-    if (selectedMenu === "profile" && userEmail) {
-      fetchProfile();
-    }
-  }, [selectedMenu, userEmail, fetchProfile]);
-
-  // Fetch announcements when "Announcements" is selected
-  useEffect(() => {
-    if (selectedMenu === "announcements") {
-      fetchAnnouncements();
-    }
-  }, [selectedMenu, fetchAnnouncements]);
-
-  // Fetch CBSE updates when "CBSE Updates" is selected
-  useEffect(() => {
-    if (selectedMenu === "cbse-updates") {
-      fetchCbseUpdates();
-    }
-  }, [selectedMenu, fetchCbseUpdates]);
 
   // Show preview when photo changes
   useEffect(() => {
@@ -447,76 +336,6 @@ function TeacherDashboard() {
         router.replace("/Login");
       });
   }, []);
-
-  // Mind Map search handler
-  const handleMindMapSearch = async (e) => {
-    e.preventDefault();
-    if (!mmClass.trim() || !mmSubject.trim() || !mmChapter.trim()) {
-      setMmStatus("Please fill all fields.");
-      return;
-    }
-    setMindMapsLoading(true);
-    setMmStatus("");
-    setMindMaps([]);
-    try {
-      const res = await fetch(`${BASE_API_URL}/mindmaps`);
-      const data = await res.json();
-      if (res.ok && data.mindMaps) {
-        const filtered = data.mindMaps.filter(m =>
-          m.class === mmClass.trim().toLowerCase() &&
-          m.subject === mmSubject.trim().toLowerCase() &&
-          m.chapter === mmChapter.trim().toLowerCase()
-        );
-        setMindMaps(filtered);
-        if (filtered.length === 0) setMmStatus("No mind maps found.");
-      } else {
-        setMmStatus("No mind maps found.");
-      }
-    } catch {
-      setMmStatus("Failed to fetch mind maps.");
-    }
-    setMindMapsLoading(false);
-  };
-
-  // Search AVLRs
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    setAvlrsLoading(true);
-    setSearchInitiated(true);
-    try {
-      const params = new URLSearchParams();
-      if (search.class) params.append('class', search.class);
-      if (search.subject) params.append('subject', search.subject);
-      if (search.chapter) params.append('chapter', search.chapter);
-      const res = await fetch(`${BASE_API_URL}/avlrs?${params.toString()}`);
-      const data = await res.json();
-      setAvlrs(data.avlrs || []);
-      setAvlrsLoading(false);
-    } catch {
-      setAvlrs([]);
-      setAvlrsLoading(false);
-    }
-  };
-
-  // Search DLRs
-  const handleDlrSearch = async (e) => {
-    e.preventDefault();
-    setDlrsLoading(true);
-    setDlrSearchInitiated(true);
-    try {
-      const params = new URLSearchParams();
-      if (dlrSearch.class) params.append('class', dlrSearch.class);
-      if (dlrSearch.subject) params.append('subject', dlrSearch.subject);
-      if (dlrSearch.chapter) params.append('chapter', dlrSearch.chapter);
-      const res = await fetch(`${BASE_API_URL}/dlrs?${params.toString()}`);
-      const data = await res.json();
-      setDlrs(data.dlrs || []);
-      setDlrsLoading(false);
-    } catch {
-      setDlrs([]);
-      setDlrsLoading(false);
-    }
-  };
 
   // Fetch creative items with filters
   const fetchCreativeItems = useCallback(() => {
@@ -1096,312 +915,6 @@ function TeacherDashboard() {
         </>
       );
     }
-    if (selectedMenu === "announcements") {
-      return (
-        <div style={{ padding: 48, maxWidth: 700, margin: "0 auto" }}>
-          <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24, color: "#1e3c72" }}>Announcements</h2>
-          {announcementsLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 120 }}>
-              <div className="spinner" style={{ width: 48, height: 48, border: '6px solid #eee', borderTop: '6px solid #1e3c72', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-              <style>{`@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-              {announcements.length === 0 && <div>No announcements yet.</div>}
-              {announcements.map(a => (
-                <div key={a._id} style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 24, marginBottom: 8, position: 'relative' }}>
-                  {/* NEW indicator */}
-                  {a.isNew && (
-                    <div style={{
-                      position: 'absolute',
-                      top: 8,
-                      left: 8,
-                      background: '#ff0080',
-                      color: '#fff',
-                      padding: '4px 8px',
-                      borderRadius: 12,
-                      fontSize: 12,
-                      fontWeight: 700,
-                      zIndex: 2
-                    }}>
-                      NEW
-                    </div>
-                  )}
-                  <div style={{ fontSize: 17, color: "#222", marginBottom: 12, whiteSpace: "pre-line" }}>{a.text}</div>
-                  {a.images && a.images.length > 0 && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 8 }}>
-                      {a.images.map((img, idx) => (
-                        typeof img === "object" && img.url ? (
-                          img.fileType === "pdf" ? (
-                            <div
-                              key={idx}
-                              style={{ cursor: "pointer", position: "relative", display: "inline-block" }}
-                              onClick={() => setPreviewModal({ open: true, url: img.url, fileType: "pdf" })}
-                            >
-                              <iframe
-                                src={img.url}
-                                title={`Announcement PDF ${idx + 1}`}
-                                style={{ width: 180, height: 120, border: "1px solid #e0e0e0", borderRadius: 8, boxShadow: "0 2px 8px rgba(30,60,114,0.10)" }}
-                              />
-                              <div style={{
-                                position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
-                                background: "rgba(255,255,255,0.01)", borderRadius: 8
-                              }} />
-                            </div>
-                          ) : (
-                            <img
-                              key={idx}
-                              src={img.url}
-                              alt="Announcement"
-                              style={{ maxWidth: 180, maxHeight: 120, borderRadius: 8, boxShadow: "0 2px 8px rgba(30,60,114,0.10)", cursor: "pointer" }}
-                              onClick={() => setPreviewModal({ open: true, url: img.url, fileType: "image" })}
-                            />
-                          )
-                        ) : (
-                          // fallback for old data: just show as image
-                          <img key={idx} src={img} alt="Announcement" style={{ maxWidth: 180, maxHeight: 120, borderRadius: 8, boxShadow: "0 2px 8px rgba(30,60,114,0.10)" }} />
-                        )
-                      ))}
-                    </div>
-                  )}
-                  <div style={{ fontSize: 13, color: "#888", marginTop: 8 }}>
-                    {new Date(a.createdAt).toLocaleString()}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {/* Preview Modal for image/pdf */}
-          {previewModal.open && (
-            <div
-              style={{
-                position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
-                background: "rgba(0,0,0,0.7)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center"
-              }}
-              onClick={() => setPreviewModal({ open: false, url: '', fileType: '' })}
-            >
-              <div
-                style={{
-                  background: "#fff", borderRadius: 12, padding: 16, maxWidth: "90vw", maxHeight: "90vh",
-                  boxShadow: "0 4px 24px rgba(30,60,114,0.18)", position: "relative", display: "flex", alignItems: "center", justifyContent: "center"
-                }}
-                onClick={e => e.stopPropagation()}
-              >
-                <button
-                  onClick={() => setPreviewModal({ open: false, url: '', fileType: '' })}
-                  style={{
-                    position: "absolute", top: 8, right: 12, background: "#c0392b", color: "#fff", border: "none",
-                    borderRadius: "50%", width: 32, height: 32, fontSize: 22, fontWeight: 700, cursor: "pointer", zIndex: 2
-                  }}
-                  aria-label="Close"
-                >×</button>
-                {previewModal.fileType === "pdf" ? (
-                  <PDFWithLoader url={previewModal.url} />
-                ) : (
-                  <img
-                    src={previewModal.url}
-                    alt="Preview"
-                    style={{ maxWidth: "80vw", maxHeight: "80vh", borderRadius: 8 }}
-                  />
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-    if (selectedMenu === "mind-maps") {
-      return (
-        <div style={{ padding: 48, maxWidth: 900, margin: "0 auto" }}>
-          <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24, color: "#1e3c72" }}>Search Mind Maps</h2>
-          <form onSubmit={handleMindMapSearch} style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32 }}>
-            <div style={{ display: "flex", flexDirection: 'column', gap: 18, marginBottom: 18 }}>
-              <div style={{ flex: 1 }}>
-                <input type="text" placeholder="Class" value={mmClass} onChange={e => setMmClass(e.target.value)} required style={{ width: '100%', padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16, marginBottom: 12 }} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <input type="text" placeholder="Subject" value={mmSubject} onChange={e => setMmSubject(e.target.value)} required style={{ width: '100%', padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16, marginBottom: 12 }} />
-              </div>
-              <div style={{ flex: 2 }}>
-                <input type="text" placeholder="Chapter" value={mmChapter} onChange={e => setMmChapter(e.target.value)} required style={{ width: '100%', padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16 }} />
-              </div>
-            </div>
-            <button type="submit" style={{ background: "#1e3c72", color: "#fff", border: "none", borderRadius: 6, padding: "10px 32px", fontWeight: 600, fontSize: 17, cursor: "pointer" }}>Search</button>
-            {mmStatus && <div style={{ marginTop: 12, color: mmStatus.includes("found") ? "#c0392b" : "#1e3c72" }}>{mmStatus}</div>}
-          </form>
-          {mindMapsLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 120 }}>
-              <div className="spinner" style={{ width: 48, height: 48, border: '6px solid #eee', borderTop: '6px solid #1e3c72', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-              <style>{`@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
-            </div>
-          ) : mindMaps.length === 0 && mmStatus ? null : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-              {mindMaps.map((m, idx) => (
-                <div key={m._id} style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 24, marginBottom: 8 }}>
-                  <div style={{ fontWeight: 600, color: "#1e3c72", marginBottom: 8 }}>Class: {m.class} | Subject: {m.subject} | Chapter: {m.chapter}</div>
-                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                    {m.mindmap && m.mindmap.map((img, i) => (
-                      img.fileType === 'pdf'
-                        ? <div key={i} style={{ display: 'inline-block', position: 'relative', width: 120, height: 80, border: '1px solid #eee', borderRadius: 6, background: '#fafafa', textAlign: 'center', verticalAlign: 'middle', lineHeight: '80px', fontWeight: 600, color: '#1e3c72', fontSize: 18, cursor: 'pointer' }} onClick={() => setMmPreview({ open: true, url: img.url, fileType: 'pdf' })}>
-                          <span>PDF</span>
-                          <span style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', zIndex: 2 }}>
-                            <div className="spinner" style={{ width: 24, height: 24, border: '4px solid #eee', borderTop: '4px solid #1e3c72', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                          </span>
-                          <style>{`@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
-                        </div>
-                        : <img key={i} src={img.url} alt="mindmap" style={{ maxWidth: 120, maxHeight: 80, borderRadius: 6, border: "1px solid #eee", cursor: 'pointer' }} onClick={() => setMmPreview({ open: true, url: img.url, fileType: 'image' })} />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {/* Preview Modal for image/pdf */}
-          {mmPreview.open && (
-            <div
-              style={{
-                position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
-                background: "rgba(0,0,0,0.92)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center"
-              }}
-              onClick={() => setMmPreview({ open: false, url: '', fileType: '' })}
-            >
-              <div
-                style={{
-                  position: 'relative', width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', boxShadow: 'none', borderRadius: 0, padding: 0
-                }}
-                onClick={e => e.stopPropagation()}
-              >
-                <button
-                  onClick={() => setMmPreview({ open: false, url: '', fileType: '' })}
-                  style={{
-                    position: 'fixed', top: 24, right: 32, background: '#c0392b', color: '#fff', border: 'none',
-                    borderRadius: '50%', width: 44, height: 44, fontSize: 28, fontWeight: 700, cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.18)'
-                  }}
-                  aria-label="Close"
-                >×</button>
-                {mmPreview.fileType === 'pdf' ? (
-                  <PDFWithLoader url={mmPreview.url} fullscreen={true} />
-                ) : (
-                  <img
-                    src={mmPreview.url}
-                    alt="Preview"
-                    style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', objectFit: 'contain', background: '#222', borderRadius: 0, margin: 0, padding: 0, zIndex: 5 }}
-                  />
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-    if (selectedMenu === "avlrs") {
-      return (
-        <div style={{ padding: 48, maxWidth: 800, margin: "0 auto" }}>
-          <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24, color: "#1e3c72" }}>AVLRs</h2>
-          <form onSubmit={handleSearch} style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32 }}>
-            <div style={{ display: "flex", gap: 18, marginBottom: 18 }}>
-              <input type="text" placeholder="Class" value={search.class} onChange={e => setSearch(f => ({ ...f, class: e.target.value }))} style={{ flex: 1, padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16 }} />
-              <input type="text" placeholder="Subject" value={search.subject} onChange={e => setSearch(f => ({ ...f, subject: e.target.value }))} style={{ flex: 1, padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16 }} />
-              <input type="text" placeholder="Chapter" value={search.chapter} onChange={e => setSearch(f => ({ ...f, chapter: e.target.value }))} style={{ flex: 2, padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16 }} />
-            </div>
-            <button type="submit" style={{ background: "#1e3c72", color: "#fff", border: "none", borderRadius: 6, padding: "10px 32px", fontWeight: 600, fontSize: 17, cursor: "pointer" }}>Search</button>
-          </form>
-          {avlrsLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 120 }}>
-              <div className="spinner" style={{ width: 48, height: 48, border: '6px solid #eee', borderTop: '6px solid #1e3c72', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-              <style>{`@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
-            </div>
-          ) : (!searchInitiated ? (
-            <div style={{ color: "#888", fontSize: 17 }}>Enter search criteria to find AVLRs.</div>
-          ) : avlrs.length === 0 ? (
-            <div style={{ color: "#888", fontSize: 17 }}>No AVLRs found.</div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-              {avlrs.map(a => {
-                // Extract YouTube video ID if possible
-                let ytId = null;
-                try {
-                  const url = new URL(a.link);
-                  if (url.hostname.includes("youtube.com")) {
-                    const params = new URLSearchParams(url.search);
-                    ytId = params.get("v");
-                  } else if (url.hostname === "youtu.be") {
-                    ytId = url.pathname.slice(1);
-                  }
-                } catch {}
-                const thumbUrl = ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null;
-                return (
-                  <div key={a._id} style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 24, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 18 }}>
-                    {thumbUrl ? (
-                      <img src={thumbUrl} alt="Video thumbnail" style={{ width: 120, height: 80, borderRadius: 8, objectFit: 'cover', border: '1.5px solid #eee' }} />
-                    ) : (
-                      <div style={{ width: 120, height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7fafd', borderRadius: 8, border: '1.5px solid #eee' }}>
-                        <FaFileVideo style={{ fontSize: 38, color: '#1e3c72' }} />
-                      </div>
-                    )}
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, color: "#1e3c72", marginBottom: 8 }}>Class: {a.class} | Subject: {a.subject} | Chapter: {a.chapter}</div>
-                      <div style={{ marginBottom: 8 }}>
-                        <a href={a.link} target="_blank" rel="noopener noreferrer" style={{ color: "#007bff", fontWeight: 600, wordBreak: 'break-all' }}>{a.link}</a>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      );
-    }
-    if (selectedMenu === "dlrs") {
-      return (
-        <div style={{ padding: 48, maxWidth: 800, margin: "0 auto" }}>
-          <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24, color: "#1e3c72" }}>DLRs</h2>
-          <form onSubmit={handleDlrSearch} style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32 }}>
-            <div style={{ display: "flex", gap: 18, marginBottom: 18 }}>
-              <input type="text" placeholder="Class" value={dlrSearch.class} onChange={e => setDlrSearch(f => ({ ...f, class: e.target.value }))} style={{ flex: 1, padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16 }} />
-              <input type="text" placeholder="Subject" value={dlrSearch.subject} onChange={e => setDlrSearch(f => ({ ...f, subject: e.target.value }))} style={{ flex: 1, padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16 }} />
-              <input type="text" placeholder="Chapter" value={dlrSearch.chapter} onChange={e => setDlrSearch(f => ({ ...f, chapter: e.target.value }))} style={{ flex: 2, padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16 }} />
-            </div>
-            <button type="submit" style={{ background: "#1e3c72", color: "#fff", border: "none", borderRadius: 6, padding: "10px 32px", fontWeight: 600, fontSize: 17, cursor: "pointer" }}>Search</button>
-          </form>
-          {dlrsLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 120 }}>
-              <div className="spinner" style={{ width: 48, height: 48, border: '6px solid #eee', borderTop: '6px solid #1e3c72', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-              <style>{`@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
-            </div>
-          ) : (!dlrSearchInitiated ? (
-            <div style={{ color: "#888", fontSize: 17 }}>Enter search criteria to find DLRs.</div>
-          ) : dlrs.length === 0 ? (
-            <div style={{ color: "#888", fontSize: 17 }}>No DLRs found.</div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-              {dlrs.map(dlr => (
-                <div key={dlr._id} style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 24, marginBottom: 8 }}>
-                  <div style={{ fontWeight: 600, color: "#1e3c72", marginBottom: 8 }}>Class: {dlr.class} | Subject: {dlr.subject} | Chapter: {dlr.chapter}</div>
-                  <div style={{ marginBottom: 8, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                    {dlr.pdfs.map((pdf, idx) => (
-                      <div key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }} onClick={() => setPreviewPdf({ open: true, url: pdf.url })}>
-                        <FaFilePdf style={{ fontSize: 20, color: '#e74c3c' }} /> <span style={{ fontWeight: 600 }}>PDF {idx + 1}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ))}
-          {/* PDF Preview Modal */}
-          {previewPdf.open && (
-            <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(30,60,114,0.18)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ position: 'relative', width: '90vw', height: '90vh', background: '#fff', borderRadius: 12, boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.13)', display: 'flex', flexDirection: 'column' }}>
-                <button onClick={() => setPreviewPdf({ open: false, url: '' })} style={{ position: 'absolute', top: 16, right: 24, background: '#c0392b', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, fontWeight: 700, fontSize: 22, cursor: 'pointer', zIndex: 2 }}>×</button>
-                <iframe src={previewPdf.url} title="PDF Preview" style={{ width: '100%', height: '100%', border: 'none', borderRadius: 12, background: '#fff' }} />
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
     if (selectedMenu === "creative-corner") {
       return (
         <div style={{ padding: 48, maxWidth: 900, margin: "0 auto" }}>
@@ -1557,52 +1070,7 @@ function TeacherDashboard() {
       );
     }
     // Main content for other menu items
-    return (
-      <div style={{
-        padding: 48,
-        minHeight: "calc(100vh - 80px)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center"
-      }}>
-        <div style={{
-          background: "#fff",
-          borderRadius: 18,
-          boxShadow: "0 4px 24px rgba(30,60,114,0.08)",
-          padding: "48px 32px",
-          maxWidth: 480,
-          width: "100%",
-          textAlign: "center"
-        }}>
-          <h2 style={{
-            fontWeight: 700,
-            fontSize: 28,
-            marginBottom: 16,
-            letterSpacing: 1,
-            color: "#1e3c72"
-          }}>
-            {{
-              "test-generator": "Test Generator",
-              "cbse-updates": "CBSE Updates",
-              "student-performance": "Student Performance",
-              "book-solutions": "Book Solutions",
-              "announcements": "Announcements",
-              "timetable": "Timetable",
-              "messages": "Messages",
-              "resources": "Digital Resources"
-            }[selectedMenu] || "Welcome"}
-          </h2>
-          <p style={{
-            fontSize: "1.1rem",
-            marginBottom: 32,
-            color: "#444"
-          }}>
-            Feature coming soon.
-          </p>
-        </div>
-      </div>
-    );
+    return null;
   };
 
   useEffect(() => {
