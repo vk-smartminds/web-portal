@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 
 const creativeCornerSchema = new mongoose.Schema({
-  class: { type: String, required: true, index: true },
-  subject: { type: String, required: true, index: true },
-  chapter: { type: String, required: true, index: true },
+  class: { type: String, required: true },
+  subject: { type: String, required: true},
+  chapter: { type: String, required: true },
   type: {
     type: String,
     required: true,
