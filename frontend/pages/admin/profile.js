@@ -119,8 +119,8 @@ function AdminProfilePage() {
   };
 
   const handleSave = async () => {
-    if (!form.phone || form.phone.length !== 10) {
-      setStatus('Phone number must be exactly 10 digits');
+    if (form.phone && form.phone.length !== 10) {
+      setStatus('Phone number must be exactly 10 digits or left empty');
       return;
     }
     setStatus('Saving...');

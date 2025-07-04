@@ -119,8 +119,8 @@ function GuardianProfilePage() {
   };
 
   const handleSave = async () => {
-    if (!form.phone || form.phone.length !== 10) {
-      setStatus('Phone number must be exactly 10 digits');
+    if (form.phone && form.phone.length !== 10) {
+      setStatus('Phone number must be exactly 10 digits or left empty');
       return;
     }
     setStatus('Saving...');
@@ -228,33 +228,6 @@ function GuardianProfilePage() {
                     onChange={val => setForm(f => ({ ...f, phone: val }))}
                   />
                 </div>
-                <div>
-                  <label style={{ fontWeight: 600, color: "#1e3c72" }}>School:</label>
-                  <input
-                    name="school"
-                    value={form.school}
-                    onChange={handleChange}
-                    style={{ width: "100%", padding: "10px 12px", borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16, marginTop: 4 }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontWeight: 600, color: "#1e3c72" }}>Class:</label>
-                  <input
-                    name="class"
-                    value={form.class}
-                    readOnly
-                    style={{ width: "100%", padding: "10px 12px", borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16, marginTop: 4, background: "#f8f9fa", color: "#888" }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontWeight: 600, color: "#1e3c72" }}>Registered As:</label>
-                  <input
-                    name="registeredAs"
-                    value={profile?.registeredAs || ""}
-                    disabled
-                    style={{ width: "100%", padding: "10px 12px", borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16, marginTop: 4, background: "#f8f9fa", color: "#666" }}
-                  />
-                </div>
               </div>
               <div style={{ display: "flex", gap: 12, marginTop: 18 }}>
                 <button
@@ -297,19 +270,30 @@ function GuardianProfilePage() {
                   <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Phone:</span>
                   <span style={{ color: "#222", fontSize: 16 }}>{profile.phone || "-"}</span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>School:</span>
-                  <span style={{ color: "#222", fontSize: 16 }}>{profile.school || "-"}</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Class:</span>
-                  <span style={{ color: "#222", fontSize: 16 }}>{profile.class || "-"}</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Registered As:</span>
-                  <span style={{ color: "#222", fontSize: 16 }}>{profile.registeredAs}</span>
-                </div>
               </div>
+              {profile.child && Array.isArray(profile.child) && profile.child.filter(child => child.class !== 'Not specified').length > 0 && (
+                <div style={{ marginTop: 24, width: '100%' }}>
+                  <h3 style={{ fontWeight: 700, fontSize: 18, color: '#1e3c72', marginBottom: 8 }}>Children</h3>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', background: '#f7fafd', borderRadius: 8 }}>
+                    <thead>
+                      <tr style={{ background: '#e0e7ff' }}>
+                        <th style={{ padding: 8, textAlign: 'left', fontWeight: 600 }}>Email</th>
+                        <th style={{ padding: 8, textAlign: 'left', fontWeight: 600 }}>Class</th>
+                        <th style={{ padding: 8, textAlign: 'left', fontWeight: 600 }}>Role</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {profile.child.filter(child => child.class !== 'Not specified').map((child, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #e0e0e0' }}>
+                          <td style={{ padding: 8 }}>{child.email}</td>
+                          <td style={{ padding: 8 }}>{child.class}</td>
+                          <td style={{ padding: 8 }}>{child.role}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
               <button
                 onClick={handleEdit}
                 style={{ marginTop: 18, padding: "10px 32px", borderRadius: 8, background: "linear-gradient(90deg,#1e3c72 0%,#2a5298 100%)", color: "#fff", border: "none", fontWeight: 600, fontSize: 16, cursor: "pointer", boxShadow: "0 2px 8px rgba(30,60,114,0.08)", transition: "background 0.2s" }}

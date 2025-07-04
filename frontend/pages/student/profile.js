@@ -119,8 +119,8 @@ function StudentProfilePage() {
   };
 
   const handleSave = async () => {
-    if (!form.phone || form.phone.length !== 10) {
-      setStatus('Phone number must be exactly 10 digits');
+    if (form.phone && form.phone.length !== 10) {
+      setStatus('Phone number must be exactly 10 digits or left empty');
       return;
     }
     setStatus('Saving...');
@@ -246,15 +246,6 @@ function StudentProfilePage() {
                     style={{ width: "100%", padding: "10px 12px", borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16, marginTop: 4, background: "#f8f9fa", color: "#888" }}
                   />
                 </div>
-                <div>
-                  <label style={{ fontWeight: 600, color: "#1e3c72" }}>Registered As:</label>
-                  <input
-                    name="registeredAs"
-                    value={profile?.registeredAs || ""}
-                    disabled
-                    style={{ width: "100%", padding: "10px 12px", borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16, marginTop: 4, background: "#f8f9fa", color: "#666" }}
-                  />
-                </div>
               </div>
               <div style={{ display: "flex", gap: 12, marginTop: 18 }}>
                 <button
@@ -304,10 +295,6 @@ function StudentProfilePage() {
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Class:</span>
                   <span style={{ color: "#222", fontSize: 16 }}>{profile.class || "-"}</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Registered As:</span>
-                  <span style={{ color: "#222", fontSize: 16 }}>{profile.registeredAs}</span>
                 </div>
               </div>
               <button
