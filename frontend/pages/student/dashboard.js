@@ -1,10 +1,13 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { FaClipboardList, FaBookOpen, FaChartBar, FaBullhorn, FaCalendarAlt, FaEnvelope, FaLaptop, FaUser, FaTrashAlt, FaFilePdf, FaPalette, FaFileVideo } from "react-icons/fa";
+import { FaClipboardList, FaBookOpen, FaChartBar, FaBullhorn, FaCalendarAlt, FaEnvelope, FaLaptop, FaUser, FaTrashAlt, FaFilePdf, FaPalette, FaFileVideo, FaBell } from "react-icons/fa";
 import { BASE_API_URL } from '../apiurl.js';
 import { getToken, logout } from "../../utils/auth.js";
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useRouter } from 'next/navigation';
+import DiscussionPanel from '../discussion';
+import NotificationPanel from '../../components/NotificationPanel';
+// 
 
 // Sidebar component for Student (always visible, no hamburger)
 function StudentSidebar({ userEmail, userPhoto, userName, onMenuSelect, selectedMenu }) {
@@ -21,7 +24,9 @@ function StudentSidebar({ userEmail, userPhoto, userName, onMenuSelect, selected
     { key: "books", label: "Books", icon: <FaBookOpen style={{ fontSize: 18 }} /> },
     { key: "performance", label: "Performance", icon: <FaChartBar style={{ fontSize: 18 }} /> },
     { key: "profile", label: "Profile", icon: <FaUser style={{ fontSize: 18 }} /> },
-    { key: "delete-account", label: "Delete Account", icon: <span style={{fontSize:18, color:'#c00'}}>🗑️</span> }
+    { key: "delete-account", label: "Delete Account", icon: <span style={{fontSize:18, color:'#c00'}}>🗑️</span> },
+    { key: "notifications", label: "Notifications", icon: <FaBell style={{ fontSize: 18 }} /> },
+  
   ];
   return (
     <aside style={{
@@ -1532,6 +1537,9 @@ function StudentDashboard() {
           )}
         </div>
       );
+    }
+    if (selectedMenu === "notifications") {
+      return <NotificationPanel />;
     }
     // Main content for other menu items
     return (

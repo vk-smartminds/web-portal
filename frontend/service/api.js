@@ -74,3 +74,55 @@ export const deleteVideo = async (id, token) => {
 };
 
 
+// Discussion API
+export async function createDiscussionThread(data, token) {
+  let config = { headers: { Authorization: `Bearer ${token}` } };
+  if (typeof FormData !== 'undefined' && data instanceof FormData) {
+    // Let browser set Content-Type for FormData
+    delete config.headers['Content-Type'];
+  }
+  return api.post('/discussion/threads', data, config);
+}
+
+export async function fetchDiscussionThreads() {
+  return api.get('/discussion/threads');
+}
+
+export async function fetchDiscussionThread(threadId) {
+  return api.get(`/discussion/threads/${threadId}`);
+}
+
+export async function addDiscussionPost(threadId, data, token) {
+  let config = { headers: { Authorization: `Bearer ${token}` } };
+  if (typeof FormData !== 'undefined' && data instanceof FormData) {
+    // Let browser set Content-Type for FormData
+    delete config.headers['Content-Type'];
+  }
+  return api.post(`/discussion/threads/${threadId}/posts`, data, config);
+}
+
+export async function voteThread(threadId, value, token) {
+  return api.post(`/discussion/threads/${threadId}/vote`, { value }, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function votePost(threadId, postId, value, token) {
+  return api.post(`/discussion/threads/${threadId}/posts/${postId}/vote`, { value }, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function editDiscussionPost(threadId, postId, data, token) {
+  let config = { headers: { Authorization: `Bearer ${token}` } };
+  if (typeof FormData !== 'undefined' && data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
+  return api.put(`/discussion/threads/${threadId}/posts/${postId}`, data, config);
+}
+
+export async function deleteDiscussionPost(threadId, postId, token) {
+  return api.delete(`/discussion/threads/${threadId}/posts/${postId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}

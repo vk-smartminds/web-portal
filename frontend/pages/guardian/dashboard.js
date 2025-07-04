@@ -1,10 +1,13 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { FaUser, FaBars, FaTimes, FaChild, FaClipboardList, FaEnvelope, FaBookOpen, FaBullhorn, FaCalendarAlt, FaLaptop, FaTrashAlt } from "react-icons/fa";
+import { FaUser, FaBars, FaTimes, FaChild, FaClipboardList, FaEnvelope, FaBookOpen, FaBullhorn, FaCalendarAlt, FaLaptop, FaTrashAlt, FaBell } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { BASE_API_URL } from '../apiurl.js';
 import { getToken, logout } from "../../utils/auth.js";
 import ProtectedRoute from '../../components/ProtectedRoute';
+import DiscussionPanel from '../discussion';
+import NotificationPanel from '../../components/NotificationPanel';
+// .
 
 // Sidebar component for Parent (always visible, no hamburger)
 function ParentSidebar({ userEmail, userPhoto, userName, onMenuSelect, selectedMenu }) {
@@ -19,6 +22,9 @@ function ParentSidebar({ userEmail, userPhoto, userName, onMenuSelect, selectedM
     { key: "resources", label: "Digital Resources", icon: <FaLaptop style={{ fontSize: 18 }} /> },
     { key: "profile", label: "Profile", icon: <FaUser style={{ fontSize: 18 }} /> },
     { key: "delete-account", label: "Delete Account", icon: <span style={{fontSize:18, color:'#c00'}}>🗑️</span> },
+    { key: "discussion-panel", label: "Discussion Panel", icon: <FaUser style={{ fontSize: 18 }} /> },
+    { key: "notifications", label: "Notifications", icon: <FaBell style={{ fontSize: 18 }} /> },
+    
   ];
   return (
     <aside style={{
@@ -1192,6 +1198,12 @@ function ParentDashboard() {
           )}
         </div>
       );
+    }
+    if (selectedMenu === "discussion-panel") {
+      return <DiscussionPanel />;
+    }
+    if (selectedMenu === "notifications") {
+      return <NotificationPanel />;
     }
     // Main content for other menu items
     return (
