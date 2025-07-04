@@ -73,6 +73,7 @@ export default function useLogin() {
         setToken(data.token);
         setUserData(data.admin);
         localStorage.setItem("userEmail", cleanEmail);
+        localStorage.setItem("isSuperAdmin", data.admin.isSuperAdmin ? "true" : "false");
         setMsg("Admin login successful!");
         setError("");
         router.push("/admin/dashboard");

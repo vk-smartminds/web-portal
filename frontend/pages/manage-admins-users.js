@@ -27,6 +27,27 @@ function ManageAdminsUsersPage() {
     setIsSuperAdmin(localStorage.getItem("isSuperAdmin") === "true");
   }, []);
 
+  // Ensure isSuperAdmin is set and read correctly from localStorage (client-side only)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      function updateIsSuperAdmin() {
+        const isSuper = localStorage.getItem("isSuperAdmin") === "true";
+        setIsSuperAdmin(isSuper);
+      }
+      updateIsSuperAdmin();
+      window.addEventListener('storage', updateIsSuperAdmin);
+      return () => window.removeEventListener('storage', updateIsSuperAdmin);
+    }
+  }, []);
+
+  // Debug state for localStorage value
+  const [debugLocalStorage, setDebugLocalStorage] = useState("");
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setDebugLocalStorage(localStorage.getItem("isSuperAdmin"));
+    }
+  }, [isSuperAdmin]);
+
   // Fetch admins for View Admins
   useEffect(() => {
     if (activeBox === "view-admins") {
@@ -177,22 +198,27 @@ function ManageAdminsUsersPage() {
   return (
     <ProtectedRoute>
       <div style={{ padding: 48, maxWidth: 900, margin: "0 auto" }}>
+       
         <h2 style={{ fontWeight: 700, fontSize: 32, marginBottom: 28, color: "#1e3c72", letterSpacing: 1, textAlign: "center" }}>
           Manage Admins and Users
         </h2>
         <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", marginBottom: 32 }}>
-          <div style={boxStyle(activeBox === "add-admin")}
-            onClick={() => setActiveBox("add-admin")}
-          >
-            <FaUserPlus style={{ fontSize: 36, marginBottom: 10 }} />
-            Add Admin
-          </div>
-          <div style={boxStyle(activeBox === "remove-admin")}
-            onClick={() => setActiveBox("remove-admin")}
-          >
-            <FaUserMinus style={{ fontSize: 36, marginBottom: 10, color: "#c0392b" }} />
-            Remove Admin
-          </div>
+          {isSuperAdmin && (
+            <div style={boxStyle(activeBox === "add-admin")}
+              onClick={() => setActiveBox("add-admin")}
+            >
+              <FaUserPlus style={{ fontSize: 36, marginBottom: 10 }} />
+              Add Admin
+            </div>
+          )}
+          {isSuperAdmin && (
+            <div style={boxStyle(activeBox === "remove-admin")}
+              onClick={() => setActiveBox("remove-admin")}
+            >
+              <FaUserMinus style={{ fontSize: 36, marginBottom: 10, color: "#c0392b" }} />
+              Remove Admin
+            </div>
+          )}
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", marginBottom: 32 }}>
           <div style={boxStyle(activeBox === "view-admins")}
@@ -201,16 +227,18 @@ function ManageAdminsUsersPage() {
             <FaUsers style={{ fontSize: 36, marginBottom: 10 }} />
             View Admins
           </div>
-          <div style={boxStyle(activeBox === "manage-users")}
-            onClick={() => setActiveBox("manage-users")}
-          >
-            <FaUserShield style={{ fontSize: 36, marginBottom: 10 }} />
-            Manage Users
-          </div>
+          {isSuperAdmin && (
+            <div style={boxStyle(activeBox === "manage-users")}
+              onClick={() => setActiveBox("manage-users")}
+            >
+              <FaUserShield style={{ fontSize: 36, marginBottom: 10 }} />
+              Manage Users
+            </div>
+          )}
         </div>
 
         {/* Feature sections */}
-        {activeBox === "add-admin" && (
+        {activeBox === "add-admin" && isSuperAdmin && (
           <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32 }}>
             <h3 style={{ fontWeight: 700, fontSize: 22, marginBottom: 18, color: "#1e3c72" }}>Add Admin</h3>
             <form onSubmit={handleAddAdmin}>
@@ -242,7 +270,7 @@ function ManageAdminsUsersPage() {
           </div>
         )}
 
-        {activeBox === "remove-admin" && (
+        {activeBox === "remove-admin" && isSuperAdmin && (
           <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32 }}>
             <h3 style={{ fontWeight: 700, fontSize: 22, marginBottom: 18, color: "#c0392b" }}>Remove Admin</h3>
             <form onSubmit={handleRemoveAdmin}>
@@ -295,7 +323,7 @@ function ManageAdminsUsersPage() {
           </div>
         )}
 
-        {activeBox === "manage-users" && (
+        {activeBox === "manage-users" && isSuperAdmin && (
           <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32, maxWidth: 600, margin: "0 auto" }}>
             <h3 style={{ fontWeight: 700, fontSize: 22, marginBottom: 18, color: "#1e3c72" }}>Manage Users</h3>
             <form onSubmit={handleUserSearch} style={{ display: "flex", gap: 12, marginBottom: 24 }}>
