@@ -71,17 +71,36 @@ const AnnouncementPage = () => {
     const email = (typeof window !== 'undefined' && localStorage.getItem('userEmail')) || '';
     const isSuperAdminLS = (typeof window !== 'undefined' && localStorage.getItem('isSuperAdmin')) || '';
     setUser(u => ({ ...(u || {}), email }));
-    // If userData exists, use its role, else fallback to localStorage-based detection
+    
+    // If userData exists, use its role, else fallback to detection methods
     const u = getUserData();
     if (u && u.role) {
       setRole(u.role.toLowerCase());
-    } else if (typeof window !== "undefined") {
-      if (window.location.pathname.includes("admin")) setRole("admin");
-      else if (window.location.pathname.includes("teacher")) setRole("teacher");
-      else if (window.location.pathname.includes("student")) setRole("student");
-      else if (window.location.pathname.includes("guardian")) setRole("parent");
-      else setRole("");
+    } else {
+      // Check if user is admin by JWT token or localStorage
+      try {
+        const token = getToken();
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          if (payload.role) {
+            setRole(payload.role.toLowerCase());
+          } else if (isSuperAdminLS === 'true' || isSuperAdminLS === 'false') {
+            // If isSuperAdmin is set in localStorage, user is admin
+            setRole("admin");
+          }
+        }
+      } catch (err) {
+        // Token parsing failed, try path-based detection
+        if (typeof window !== "undefined") {
+          if (window.location.pathname.includes("admin")) setRole("admin");
+          else if (window.location.pathname.includes("teacher")) setRole("teacher");
+          else if (window.location.pathname.includes("student")) setRole("student");
+          else if (window.location.pathname.includes("guardian")) setRole("parent");
+          else setRole("");
+        }
+      }
     }
+    
     // Set isSuperAdmin from localStorage (string comparison)
     setIsSuperAdminState(isSuperAdminLS === 'true');
   }, []);
@@ -90,9 +109,18 @@ const AnnouncementPage = () => {
   const fetchAnnouncements = useCallback(() => {
     setLoading(true);
     let url = `${BASE_API_URL}/getannouncements`;
-    if (role === "admin" && !isSuperAdminState) {
+    
+    // Add registeredAs parameter based on role
+    if (role === "admin") {
       url += `?registeredAs=Admin`;
+    } else if (role === "teacher") {
+      url += `?registeredAs=Teacher`;
+    } else if (role === "student") {
+      url += `?registeredAs=Student`;
+    } else if (role === "parent" || role === "guardian") {
+      url += `?registeredAs=Parent`;
     }
+    
     fetch(url, {
       headers: {
         'Authorization': `Bearer ${getToken()}`
@@ -104,7 +132,7 @@ const AnnouncementPage = () => {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [role, isSuperAdminState]);
+  }, [role]);
 
   useEffect(() => {
     if (role) {
