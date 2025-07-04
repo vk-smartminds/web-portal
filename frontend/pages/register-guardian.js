@@ -192,27 +192,20 @@ export default function RegisterGuardian() {
     }
   }, [childVerified, childEmail]);
   useEffect(() => {
-    async function checkChildVerified() {
-      if (childEmail) {
-        try {
-          const res = await fetch(`${BASE_API_URL}/check-child-verified?childEmail=${encodeURIComponent(childEmail)}`, {
-            credentials: 'include'
-          });
-          const data = await res.json();
-          setChildVerified(!!data.verified);
-        } catch {
-          setChildVerified(false);
-        }
-      }
-    }
-    checkChildVerified();
-  }, [childEmail]);
-  useEffect(() => {
     setChildVerified(false);
     setChildOtpSent(false);
     setChildOtp(["", "", "", "", "", ""]);
     setChildOtpTimer(0);
   }, []);
+  // Reset all child verification state if childEmail changes
+  useEffect(() => {
+    setChildOtp(["", "", "", "", "", ""]);
+    setChildOtpSent(false);
+    setChildOtpTimer(0);
+    setChildVerified(false);
+    setError("");
+    setMsg("");
+  }, [childEmail]);
 
   // Check if guardian exists after entering email
   const handleEmailBlur = async () => {
@@ -258,9 +251,10 @@ export default function RegisterGuardian() {
   return (
     <div style={{ maxWidth: 420, margin: "40px auto", background: "#f8fafc", borderRadius: 18, padding: 36, boxShadow: "0 4px 32px 0 rgba(31, 38, 135, 0.13)", fontFamily: 'Segoe UI, sans-serif', transition: 'box-shadow 0.2s' }}>
       <h2 style={{ color: "#1e3c72", marginBottom: 22, fontWeight: 700, letterSpacing: 1 }}>Guardian Registration</h2>
+      {/* Only show child email/OTP UI until childVerified is true */}
       {!childVerified ? (
         <form onSubmit={childOtpSent ? handleVerifyChildOtp : handleSendChildOtp}>
-          <input style={{ ...inputStyle, background: '#fff', border: '1.5px solid #b6c6e3' }} name="childEmail" placeholder="Child Email (required)" value={childEmail} onChange={e => setChildEmail(e.target.value)} required disabled={childOtpSent || childVerified} readOnly={childVerified} />
+          <input style={{ ...inputStyle, background: '#fff', border: '1.5px solid #b6c6e3' }} name="childEmail" placeholder="Child Email (required)" value={childEmail} onChange={e => setChildEmail(e.target.value)} required disabled={childOtpSent} />
           {(!childVerified && (!childEmail || !childVerified) && !error) && (
             <div style={{
               background: '#fffbe6',
@@ -281,6 +275,7 @@ export default function RegisterGuardian() {
               </span>
             </div>
           )}
+          {/* Show OTP input and verify button only after OTP is sent */}
           {!childOtpSent ? (
             <button type="submit" style={{ ...btnStyle, width: '100%', marginTop: 8 }}>{loading ? 'Sending OTP...' : 'Send OTP to Child'}</button>
           ) : (
@@ -326,18 +321,32 @@ export default function RegisterGuardian() {
           {msg && <div style={{ background: '#e0f7fa', color: '#047857', borderRadius: 8, padding: '10px 14px', marginTop: 14, fontWeight: 500, fontSize: 15, boxShadow: '0 1px 4px #b2f5ea' }}>{msg}</div>}
         </form>
       ) : (
+        // Only show guardian registration form if childVerified is true
         <form onSubmit={handleRegister}>
+          <input
+            style={{ ...inputStyle, background: '#f1f5f9', border: '1.5px solid #b6c6e3', color: '#64748b' }}
+            name="child"
+            placeholder="Child Email (required)"
+            value={childEmail}
+            readOnly
+            required
+          />
           <input
             style={{ ...inputStyle, background: '#fff', border: '1.5px solid #b6c6e3' }}
             name="email"
             type="email"
-            placeholder="Email"
+            placeholder="Parent Email (required)"
             value={form.email}
-            onChange={handleChange}
-            onBlur={handleEmailBlur}
+            onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
             required
+            onBlur={handleEmailBlur}
             disabled={guardianExists && passwordChecked}
           />
+          {form.email && form.email.trim().toLowerCase() === childEmail.trim().toLowerCase() && (
+            <div style={{ color: '#c00', marginBottom: 8, fontWeight: 600 }}>
+              Parent email cannot be the same as child email.
+            </div>
+          )}
           {guardianExists && !passwordChecked && (
             <>
               <input
@@ -379,7 +388,12 @@ export default function RegisterGuardian() {
               </select>
               <input style={{ ...inputStyle, background: '#f1f5f9', border: '1.5px solid #b6c6e3', color: '#64748b' }} name="child" placeholder="Child Email (required)" value={childEmail} readOnly required />
               {!otpSent ? (
-                <button type="button" style={{ ...btnStyle, width: '100%', marginTop: 8 }} onClick={handleSendOtp} disabled={loading}>Send OTP</button>
+                <>
+                  <button type="button" style={{ ...btnStyle, width: '100%', marginTop: 8 }} onClick={handleSendOtp} disabled={loading || !form.email || form.email.trim().toLowerCase() === childEmail.trim().toLowerCase()}>{loading ? 'Sending OTP...' : 'Send OTP'}</button>
+                  {loading && (
+                    <div style={{ color: '#2563eb', marginTop: 10, fontWeight: 500, fontSize: 15 }}>Sending OTP...</div>
+                  )}
+                </>
               ) : (
                 <>
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'center', margin: '16px 0' }}>
@@ -403,7 +417,7 @@ export default function RegisterGuardian() {
                   {otpSent && otpTimer <= 0 && (
                     <button type="button" onClick={handleSendOtp} style={{ marginBottom: 10, color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, display: 'block', width: '100%' }}>Resend OTP</button>
                   )}
-                  <button type="submit" style={{ ...btnStyle, width: '100%' }} disabled={loading || otpTimer <= 0 || !childVerified}>Register</button>
+                  <button type="submit" style={{ ...btnStyle, width: '100%' }} disabled={loading || otpTimer <= 0 || !childVerified || !form.email || form.email.trim().toLowerCase() === childEmail.trim().toLowerCase()}>Register</button>
                   {!childVerified && (
                     <div style={{ background: '#fffbe6', color: '#b45309', borderRadius: 8, padding: '10px 14px', marginTop: 10, fontWeight: 500, fontSize: 15, boxShadow: '0 1px 4px #f3e8d2', textAlign: 'center' }}>
                       Please verify your child's email before completing registration.
