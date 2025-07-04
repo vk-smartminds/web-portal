@@ -7,14 +7,9 @@ import { getUserData, getToken, isAuthenticated, isTokenExpired, logout } from "
 import DiscussionPanel from '../discussion';
 import NotificationPanel from '../../components/NotificationPanel';
 // 
-function AdminSidebar({ userEmail, userPhoto, onMenuSelect, selectedMenu, isSuperAdmin, setShowAddAdmin, setShowRemoveAdmin, setShowViewAdmins }) {
+function AdminSidebar({ userEmail, userPhoto, onMenuSelect, selectedMenu, isSuperAdmin }) {
   const menuItems = [
-    ...(isSuperAdmin ? [
-      { key: "add-admin", label: "Add Admin", icon: <FaUserShield style={{ fontSize: 18 }} />, action: () => setShowAddAdmin(true) },
-      { key: "remove-admin", label: "Remove Admin", icon: <FaUserShield style={{ fontSize: 18, color: '#c0392b' }} />, action: () => setShowRemoveAdmin(true) },
-      { key: "manage-users", label: "Manage Users", icon: <FaUsers style={{ fontSize: 18 }} /> },
-    ] : []),
-    { key: "view-admins", label: "View Admins", icon: <FaUsers style={{ fontSize: 18 }} />, action: () => setShowViewAdmins(true) },
+    { key: "manage-admins-users", label: "Manage Admins and Users", icon: <FaUserShield style={{ fontSize: 18 }} />, action: () => window.location.href = "/manage-admins-users" },
     { key: "manage-books", label: "Manage Books", icon: <FaBook style={{ fontSize: 18 }} /> },
     { key: "records", label: "Records", icon: <FaRegListAlt style={{ fontSize: 18 }} /> },
     { key: "announcements", label: "Announcements", icon: <FaBullhorn style={{ fontSize: 18 }} />, action: () => window.location.href = "/announcement" },
@@ -1001,7 +996,7 @@ function AdminDashboard() {
         </div>
       );
     }
-    if (selectedMenu === "manage-users" && isSuperAdmin) {
+    if (selectedMenu === "manage-users") {
       return (
         <div style={{ padding: 48, maxWidth: 600, margin: "0 auto" }}>
           <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24, color: "#1e3c72" }}>Manage Users</h2>
@@ -1388,9 +1383,6 @@ function AdminDashboard() {
           onMenuSelect={setSelectedMenu}
           selectedMenu={selectedMenu}
           isSuperAdmin={isSuperAdmin}
-          setShowAddAdmin={setShowAddAdmin}
-          setShowRemoveAdmin={setShowRemoveAdmin}
-          setShowViewAdmins={setShowViewAdmins}
         />
         <main style={{ marginLeft: 260, flex: 1, minHeight: "100vh", background: "#f4f7fa", transition: "margin-left 0.25s cubic-bezier(.4,0,.2,1)" }}>
           {renderContent()}
