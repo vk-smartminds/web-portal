@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { FaUsers, FaUserTie, FaBook, FaRegListAlt, FaCog, FaBullhorn, FaChartBar, FaUserShield, FaBars, FaTimes, FaUser, FaBookOpen, FaLaptop, FaFilePdf, FaPalette, FaFileAlt, FaImage, FaBookReader, FaPenFancy, FaTasks, FaFileVideo, FaBell } from "react-icons/fa";
+import { FaUsers, FaUserTie, FaBook, FaRegListAlt, FaCog, FaBullhorn, FaChartBar, FaUserShield, FaBars, FaTimes, FaUser, FaBookOpen, FaLaptop, FaFilePdf, FaPalette, FaFileAlt, FaImage, FaBookReader, FaPenFancy, FaTasks, FaFileVideo, FaBell, FaTrashAlt } from "react-icons/fa";
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { BASE_API_URL } from '../apiurl.js';
 import { getUserData, getToken, isAuthenticated, isTokenExpired, logout } from "../../utils/auth.js";
@@ -23,6 +23,7 @@ function AdminSidebar({ userEmail, userPhoto, onMenuSelect, selectedMenu, isSupe
     { key: "creative-corner", label: "Creative Corner", icon: <FaPalette style={{ fontSize: 18, color: '#ff0080' }} />, action: () => window.location.href = "/creative-corner" },
     { key: "discussion-panel", label: "Discussion Panel", icon: <FaUser style={{ fontSize: 18 }} /> },
     { key: "notifications", label: "Notifications", icon: <FaBell style={{ fontSize: 18 }} /> },
+    { key: "delete-account", label: "Delete Account", icon: <FaTrashAlt style={{ fontSize: 18, color: '#c00' }} />, action: () => window.location.href = "/delete-account" },
   ];
   return (
     <aside style={{

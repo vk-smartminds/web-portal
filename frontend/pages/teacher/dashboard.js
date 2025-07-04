@@ -21,7 +21,7 @@ function TeacherSidebar({ userEmail, userPhoto, userName, onMenuSelect, selected
     { key: "messages", label: "Messages", icon: <FaEnvelope style={{ fontSize: 18 }} /> },
     { key: "resources", label: "Digital Resources", icon: <FaLaptop style={{ fontSize: 18 }} /> },
     { key: "profile", label: "Profile", icon: <FaUser style={{ fontSize: 18 }} /> },
-    { key: "delete-account", label: "Delete Account", icon: <span style={{fontSize:18, color:'#c00'}}>🗑️</span> },
+    { key: "delete-account", label: "Delete Account", icon: <FaTrashAlt style={{ fontSize: 18, color: '#c00' }} />, action: () => window.location.href = "/delete-account" },
     { key: "mind-maps", label: "Mind Maps", icon: <FaChartBar style={{ fontSize: 18 }} />, action: () => window.location.href = "/mindmaps" },
     { key: "avlrs", label: "AVLRs", icon: <FaLaptop style={{ fontSize: 18 }} />, action: () => window.location.href = "/avlrs" },
     { key: "dlrs", label: "DLRs", icon: <FaFilePdf style={{ fontSize: 18 }} />, action: () => window.location.href = "/dlrs" },
@@ -150,7 +150,7 @@ function TeacherDashboard() {
   const [form, setForm] = useState({ name: '', phone: '', school: '', class: '', photo: null });
   const [status, setStatus] = useState('');
   const [preview, setPreview] = useState('');
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  // All delete account logic and UI removed. Only sidebar/menu link to /delete-account remains.
   const fileInputRef = React.useRef();
 
   // Add userPhoto state to track the current photo for sidebar
@@ -499,7 +499,11 @@ function TeacherDashboard() {
                     alignItems: "center",
                     gap: 8
                   }}
-                  onClick={() => setShowDeleteModal(true)}
+                  onClick={() => {
+                    if (typeof window !== "undefined") {
+                      window.location.href = "/delete-account";
+                    }
+                  }}
                 >
                   <FaTrashAlt style={{ fontSize: 18, marginBottom: -2 }} />
                   Delete Account
@@ -522,89 +526,6 @@ function TeacherDashboard() {
               </div>
             </div>
           </div>
-          {showDeleteModal && (
-            <div style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: "100vw",
-              height: "100vh",
-              background: "rgba(0,0,0,0.25)",
-              zIndex: 4000,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}>
-              <div style={{
-                background: "#fff",
-                borderRadius: 20,
-                padding: 36,
-                minWidth: 340,
-                boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.18)",
-                textAlign: "center",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center"
-              }}>
-                <FaTrashAlt style={{ fontSize: 54, color: "#c00", marginBottom: 18 }} />
-                <div style={{ fontWeight: 700, fontSize: 22, color: "#c00", marginBottom: 12 }}>
-                  Confirm Account Deletion
-                </div>
-                <div style={{ color: "#333", marginBottom: 28, fontSize: 16 }}>
-                  This action is <b>permanent</b>.<br />Do you really want to delete your account?
-                </div>
-                <div style={{ display: "flex", gap: 18, justifyContent: "center" }}>
-                  <button
-                    style={{
-                      padding: "10px 32px",
-                      borderRadius: 8,
-                      background: "#c00",
-                      color: "#fff",
-                      border: "none",
-                      fontWeight: 600,
-                      fontSize: 16,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8
-                    }}
-                    onClick={async () => {
-                      const res = await fetch(`${BASE_API_URL}/user/delete`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ email: userEmail })
-                      });
-                      if (res.ok) {
-                        localStorage.clear();
-                        window.location.href = "/Login";
-                      } else {
-                        alert("Failed to delete account.");
-                        setShowDeleteModal(false);
-                      }
-                    }}
-                  >
-                    <FaTrashAlt style={{ fontSize: 18, marginBottom: -2 }} />
-                    Yes, Delete
-                  </button>
-                  <button
-                    style={{
-                      padding: "10px 32px",
-                      borderRadius: 8,
-                      background: "#bbb",
-                      color: "#222",
-                      border: "none",
-                      fontWeight: 600,
-                      fontSize: 16,
-                      cursor: "pointer"
-                    }}
-                    onClick={() => setShowDeleteModal(false)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </>
       );
     }

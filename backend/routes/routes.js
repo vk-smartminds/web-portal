@@ -17,6 +17,7 @@ import { verifyChildEmail, verifyChildOtp as verifyGuardianChildOtp } from '../c
 import { checkGuardianEmail, validateGuardianPassword } from '../controller/guardianController';
 import * as discussionController from '../controller/discussionController.js';
 import { threadUpload, postUpload, getDiscussionNotifications, markDiscussionNotificationRead, deleteDiscussionNotification } from '../controller/discussionController.js';
+import { deleteAccount } from '../controller/deleteAccountController.js';
 
 const router = express.Router();
 
@@ -60,6 +61,7 @@ router.get('/api/verify-token', authenticateToken, verifyToken);
 router.get('/api/profile', authenticateToken, getProfile);
 router.put('/api/profile', authenticateToken, memoryUpload.single('photo'), updateProfile);
 router.post('/api/user/delete', authenticateToken, deleteUser);
+router.delete('/api/delete-account', authenticateToken, deleteAccount);
 
 // Admin routes
 router.get('/api/getadmins', getAdmins);
