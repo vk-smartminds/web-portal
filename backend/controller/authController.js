@@ -59,8 +59,8 @@ export const sendRegisterOtp = async (req, res) => {
       Guardian.findOne({ email: cleanEmail }),
       Admin.findOne({ email: cleanEmail })
     ]);
-    // Only block if email exists in Student, Teacher, or Admin
-    if (existingStudent || existingTeacher || existingAdmin) {
+    // Block if email exists in any user table
+    if (existingStudent || existingTeacher || existingGuardian || existingAdmin) {
       return res.status(409).json({ message: 'A user with this email already exists' });
     }
     const otp = generateOtp();
@@ -210,6 +210,7 @@ export const registerTeacher = async (req, res) => {
       Guardian.findOne({ email: cleanEmail }),
       Admin.findOne({ email: cleanEmail })
     ]);
+    console.log('DEBUG registerTeacher: existingGuardian =', existingGuardian);
     if (existingStudent || existingTeacher || existingGuardian || existingAdmin) {
       return res.status(409).json({ message: 'A user with this email already exists' });
     }
