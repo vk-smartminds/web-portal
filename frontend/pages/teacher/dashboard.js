@@ -1,12 +1,14 @@
 "use client";
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect, useCallback } from "react";
-import { FaClipboardList, FaNewspaper, FaChartBar, FaBookOpen, FaBullhorn, FaCalendarAlt, FaEnvelope, FaLaptop, FaUser, FaTrashAlt, FaFilePdf, FaPalette, FaFileVideo } from "react-icons/fa";
+import { FaClipboardList, FaNewspaper, FaChartBar, FaBookOpen, FaBullhorn, FaCalendarAlt, FaEnvelope, FaLaptop, FaUser, FaTrashAlt, FaFilePdf, FaPalette, FaFileVideo, FaBell } from "react-icons/fa";
 import ProfileMenu from '../ProfileMenu'; // If you want to use the same ProfileMenu as admin
 import { BASE_API_URL } from '../apiurl.js';
 import { getToken, logout } from "../../utils/auth.js";
 import ProtectedRoute from '../../components/ProtectedRoute';
-
+import DiscussionPanel from '../discussion';
+import NotificationPanel from '../../components/NotificationPanel';
+// ...
 // Sidebar component for Teacher with feature buttons (always visible, no hamburger)
 function TeacherSidebar({ userEmail, userPhoto, userName, onMenuSelect, selectedMenu, onLogout }) {
   const menuItems = [
@@ -24,6 +26,8 @@ function TeacherSidebar({ userEmail, userPhoto, userName, onMenuSelect, selected
     { key: "avlrs", label: "AVLRs", icon: <FaLaptop style={{ fontSize: 18 }} />, action: () => window.location.href = "/avlrs" },
     { key: "dlrs", label: "DLRs", icon: <FaFilePdf style={{ fontSize: 18 }} />, action: () => window.location.href = "/dlrs" },
     { key: "creative-corner", label: "Creative Corner", icon: <FaPalette style={{ fontSize: 18, color: '#ff0080' }} />, action: () => window.location.href = "/creative-corner" },
+    { key: "discussion-panel", label: "Discussion Panel", icon: <FaUser style={{ fontSize: 18 }} /> },
+    { key: "notifications", label: "Notifications", icon: <FaBell style={{ fontSize: 18 }} /> },
   ];
   return (
     <aside style={{
@@ -1068,6 +1072,12 @@ function TeacherDashboard() {
           )}
         </div>
       );
+    }
+    if (selectedMenu === "discussion-panel") {
+      return <DiscussionPanel />;
+    }
+    if (selectedMenu === "notifications") {
+      return <NotificationPanel />;
     }
     // Main content for other menu items
     return null;
