@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 
 const creativeCornerSchema = new mongoose.Schema({
-  class: { type: String, required: true, index: true },
-  subject: { type: String, required: true, index: true },
-  chapter: { type: String, required: true, index: true },
+  class: { type: String, required: true },
+  subject: { type: String, required: true},
+  chapter: { type: String, required: true },
   type: {
     type: String,
     required: true,
@@ -23,6 +23,9 @@ const creativeCornerSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+creativeCornerSchema.index({ class: 1 });
+creativeCornerSchema.index({ subject: 1 });
+creativeCornerSchema.index({ chapter: 1 });
 creativeCornerSchema.index({ class: 1, subject: 1, chapter: 1 });
 
 export default mongoose.model('CreativeCorner', creativeCornerSchema); 

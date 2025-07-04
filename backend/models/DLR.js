@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 
 const DLRSchema = new mongoose.Schema({
-  class: { type: String, required: true, index: true },
-  subject: { type: String, required: true, index: true },
-  chapter: { type: String, required: true, index: true },
+  class: { type: String, required: true },
+  subject: { type: String, required: true },
+  chapter: { type: String, required: true },
   pdfs: [
     {
       data: Buffer,
@@ -13,6 +13,9 @@ const DLRSchema = new mongoose.Schema({
   ]
 });
 
+DLRSchema.index({ class: 1 });
+DLRSchema.index({ subject: 1 });
+DLRSchema.index({ chapter: 1 });
 DLRSchema.index({ class: 1, subject: 1, chapter: 1 });
 
 export default mongoose.model('DLR', DLRSchema); 
