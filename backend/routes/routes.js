@@ -28,6 +28,7 @@ import { addMindMap, getMindMaps, deleteMindMap, mindMapUpload, updateMindMap } 
 import { addAVLR, getAVLRs, updateAVLR, deleteAVLR } from '../controller/avlrController.js';
 import { createDLR, getDLRs, updateDLR, deleteDLR, removeDLRPdf, dlrUpload } from '../controller/dlrController.js';
 import { addCreativeItem, getCreativeItems, deleteCreativeItem, creativeCornerUpload, updateCreativeItem } from '../controller/creativeCornerController.js';
+import { getStudentById, getStudentPhoto } from '../controller/studentController.js';
 
 const router = express.Router();
 
@@ -60,6 +61,9 @@ router.post('/api/send-login-otp', sendLoginOtp);
 router.post('/api/student/send-otp', studentController.sendOtp);
 router.post('/api/student/register', studentController.register);
 router.post('/api/student/find', studentController.find);
+router.get('/api/student/class/:id', studentController.getClassByStudentId); // New endpoint for fetching student class by student ID
+router.get('/api/student/:id', getStudentById);
+router.get('/api/student/:id/photo', getStudentPhoto);
 
 // Teacher routes
 router.post('/api/teacher/send-otp', teacherController.sendOtp);
@@ -130,6 +134,14 @@ router.put('/api/creative-corner/:id', authenticateToken, creativeCornerUpload.a
 router.delete('/api/creative-corner/:id', authenticateToken, deleteCreativeItem);
 
 // Serve announcement images
+
+// Serve announcement images
 router.use('/uploads/announcements', express.static('backend/public/uploads/announcements'));
+
+// --- QUIZ/QUESTION ADMIN & STUDENT ROUTES ---
+import adminQuizRoutes from '../quiz/routes/adminQuizRoutes.js';
+import quizRoutes from '../quiz/routes/quizRoutes.js';
+router.use('/api/admin/quiz', adminQuizRoutes);
+router.use('/api/quiz', quizRoutes);
 
 export default router;

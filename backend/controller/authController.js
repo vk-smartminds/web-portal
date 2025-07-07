@@ -113,6 +113,11 @@ export const registerStudent = async (req, res) => {
       return res.status(409).json({ message: 'A user with this email already exists' });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
+    // Validate class
+    const allowedClasses = ['6','7','8','9','10','11','12','JEE','NEET','CUET'];
+    if (!userClass || !allowedClasses.includes(String(userClass))) {
+      return res.status(400).json({ message: 'Invalid or missing class. Allowed: ' + allowedClasses.join(', ') });
+    }
     const student = new Student({
       name,
       email: cleanEmail,

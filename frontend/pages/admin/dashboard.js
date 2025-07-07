@@ -17,7 +17,8 @@ function AdminSidebar({ userEmail, userPhoto, onMenuSelect, selectedMenu, isSupe
     { key: "records", label: "Records", icon: <FaRegListAlt style={{ fontSize: 18 }} /> },
     { key: "announcements", label: "Announcements", icon: <FaBullhorn style={{ fontSize: 18 }} /> },
     { key: "cbse-updates", label: "CBSE Updates", icon: <FaBullhorn style={{ fontSize: 18 }} /> },
-    { key: "mindmap", label: "Mind Map", icon: <FaBookOpen style={{ fontSize: 18 }} /> }, // <-- Mind Map option
+    { key: "mindmap", label: "Mind Map", icon: <FaBookOpen style={{ fontSize: 18 }} /> },
+    { key: "quiz", label: "Quiz", icon: <FaRegListAlt style={{ fontSize: 18, color: '#2563eb' }} />, action: () => window.location.href = '/quiz/admin' },
     { key: "reports", label: "Reports", icon: <FaChartBar style={{ fontSize: 18 }} /> },
     { key: "settings", label: "Settings", icon: <FaCog style={{ fontSize: 18 }} /> },
     { key: "profile", label: "Profile", icon: <FaUser style={{ fontSize: 18 }} /> },

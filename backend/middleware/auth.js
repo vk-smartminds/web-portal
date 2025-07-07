@@ -44,8 +44,9 @@ export const authenticateToken = async (req, res, next) => {
   }
 };
 
+// Always include _id as well as userId for compatibility with frontend
 export const generateToken = (userId, role) => {
-  return jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ _id: userId, userId, role }, JWT_SECRET, { expiresIn: '7d' });
 };
 
 export const verifyToken = (token) => {

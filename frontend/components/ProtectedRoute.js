@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/router';
 import { isAuthenticated, isTokenExpired, getToken, logout } from '../utils/auth.js';
 import { BASE_API_URL } from '../pages/apiurl.js';
 
@@ -18,7 +18,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isValid, setIsValid] = useState(false);
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = router.pathname;
 
   // Map dashboard routes to roles
   const roleDashboardMap = {

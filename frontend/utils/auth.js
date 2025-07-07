@@ -63,3 +63,14 @@ export const isTokenExpired = (token) => {
     return true;
   }
 };
+
+export const getStudentIdFromJWT = () => {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload._id || payload.userId || null;
+  } catch (error) {
+    return null;
+  }
+};

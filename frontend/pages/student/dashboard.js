@@ -1243,8 +1243,12 @@ function StudentDashboard() {
       return (
         <div style={{ padding: 48, maxWidth: 700, margin: "0 auto" }}>
           <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24, color: "#1e3c72" }}>Quizzes</h2>
-          <div style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, textAlign: "center", color: "#888", fontSize: 18 }}>
-            Feature coming soon.
+          <div style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, textAlign: "center", color: "#222", fontSize: 18 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24, alignItems: 'center' }}>
+              <a href="/quiz/attempt" target="_blank" rel="noopener noreferrer" style={{ background: '#2563eb', color: '#fff', padding: '14px 36px', borderRadius: 8, fontWeight: 600, fontSize: 18, textDecoration: 'none', boxShadow: '0 2px 8px rgba(30,60,114,0.08)' }}>Attempt Quiz</a>
+              <a href="/quiz/past" target="_blank" rel="noopener noreferrer" style={{ background: '#fff', color: '#2563eb', border: '2px solid #2563eb', padding: '14px 36px', borderRadius: 8, fontWeight: 600, fontSize: 18, textDecoration: 'none' }}>View Past Quizzes</a>
+            </div>
+            <div style={{ marginTop: 32, color: '#888', fontSize: 15 }}>Quiz portal opens in a new tab for a focused experience.</div>
           </div>
         </div>
       );
@@ -1464,7 +1468,7 @@ function StudentDashboard() {
           </h2>
           {/* Filter Bar */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center' }}>
-            <input type="text" placeholder="Class" value={profile?.class || ""} readOnly style={{ flex: 1, padding: 8, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 15, background: '#f7fafd', color: '#888' }} />
+            <input type="text" placeholder="Class" value={profile?.class || ""} readOnly style={{ flex: 1, padding: 8, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 15 }} />
             <input type="text" placeholder="Subject" value={ccSubject} onChange={e => setCcSubject(e.target.value)} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 15 }} />
             <input type="text" placeholder="Chapter" value={ccChapter} onChange={e => setCcChapter(e.target.value)} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 15 }} />
             <select value={ccType} onChange={e => setCcType(e.target.value)} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 15 }}>
