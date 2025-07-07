@@ -3,6 +3,17 @@ import ProtectedRoute from '../components/ProtectedRoute';
 import { BASE_API_URL } from '../utils/apiurl.js';
 import { getUserData, getToken, logout } from "../utils/auth.js";
 
+// Add this style block at the top of the file (or in a global CSS if preferred)
+const blinkStyle = `
+@keyframes blink-badge {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.blink-badge {
+  animation: blink-badge 1s steps(1, end) infinite;
+}
+`;
+
 export default function DashboardCommon({
   SidebarComponent,
   menuItems,
@@ -24,6 +35,7 @@ export default function DashboardCommon({
   const [userPhoto, setUserPhoto] = useState('');
   const [userName, setUserName] = useState("");
   const [newAnnouncementCount, setNewAnnouncementCount] = useState(0);
+  const [blink, setBlink] = useState(true);
 
   // Fetch profile logic (can be overridden)
   const fetchProfile = useCallback(() => {
@@ -84,6 +96,18 @@ export default function DashboardCommon({
       });
   }, [userType]);
 
+  // Blinking effect for announcement count
+  useEffect(() => {
+    if (newAnnouncementCount > 0) {
+      const interval = setInterval(() => {
+        setBlink(prev => !prev);
+      }, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setBlink(true);
+    }
+  }, [newAnnouncementCount]);
+
   const handleEdit = () => setEditMode(true);
   const handleCancel = () => {
     setEditMode(false);
@@ -106,6 +130,24 @@ export default function DashboardCommon({
     }
   };
 
+  // Render badge function to be used by all sidebars
+  const renderAnnouncementBadge = (count) => (
+    count > 0 ? (
+      <span className="blink-badge" style={{
+        marginLeft: 8,
+        background: "#1e3c72",
+        color: "#fff",
+        borderRadius: "50%",
+        padding: "2px 8px",
+        fontSize: 13,
+        fontWeight: 700,
+        minWidth: 22,
+        textAlign: "center",
+        display: "inline-block"
+      }}>{count}</span>
+    ) : null
+  );
+
   // Sidebar props
   const sidebarProps = {
     userEmail,
@@ -115,11 +157,13 @@ export default function DashboardCommon({
     selectedMenu,
     profile,
     newAnnouncementCount,
+    renderAnnouncementBadge,
     ...customSidebarProps
   };
 
   return (
     <ProtectedRoute>
+      <style>{blinkStyle}</style>
       <div style={{ display: "flex", minHeight: "100vh", background: "#f4f7fa", flexDirection: "column" }}>
         <div style={{ display: "flex", flex: 1 }}>
           {SidebarComponent && <SidebarComponent {...sidebarProps} />}

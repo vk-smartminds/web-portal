@@ -1,15 +1,26 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { FaClipboardList, FaNewspaper, FaChartBar, FaBookOpen, FaBullhorn, FaCalendarAlt, FaEnvelope, FaLaptop, FaUser, FaTrashAlt, FaFilePdf, FaPalette, FaFileVideo, FaBell } from "react-icons/fa";
+import { FaClipboardList, FaNewspaper, FaChartBar, FaBookOpen, FaBullhorn, FaCalendarAlt, FaEnvelope, FaLaptop, FaUser, FaTrashAlt, FaFilePdf, FaPalette, FaFileVideo, FaBell, FaRegListAlt } from "react-icons/fa";
 import DashboardCommon from "../DashboardCommon";
 import { getToken, logout } from "../../utils/auth.js";
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { BASE_API_URL } from "../../utils/apiurl";
 
-function TeacherSidebar({ userEmail, userPhoto, userName, onMenuSelect, selectedMenu, newAnnouncementCount }) {
+// Add this style block at the top of the file (or in a global CSS if preferred)
+const blinkStyle = `
+@keyframes blink-badge {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.blink-badge {
+  animation: blink-badge 1s steps(1, end) infinite;
+}
+`;
+
+function TeacherSidebar({ userEmail, userPhoto, userName, onMenuSelect, selectedMenu, newAnnouncementCount, renderAnnouncementBadge }) {
   const menuItems = [
     { key: "test-generator", label: "Test Generator", icon: <FaClipboardList style={{ fontSize: 18 }} /> },
-    { key: "cbse-updates", label: "CBSE Updates", icon: <FaBullhorn style={{ fontSize: 18 }} />, action: () => window.location.href = "/cbse-updates" },
+    { key: "cbse-updates", label: "CBSE Updates", icon: <FaRegListAlt style={{ fontSize: 18 }} />, action: () => window.location.href = "/cbse-updates" },
     { key: "student-performance", label: "Student Performance", icon: <FaChartBar style={{ fontSize: 18 }} /> },
     { key: "book-solutions", label: "Book Solutions", icon: <FaBookOpen style={{ fontSize: 18 }} /> },
     { key: "announcements", label: "Announcements", icon: <FaBullhorn style={{ fontSize: 18 }} />, action: () => window.location.href = "/announcement" },
@@ -26,95 +37,81 @@ function TeacherSidebar({ userEmail, userPhoto, userName, onMenuSelect, selected
     { key: "notifications", label: "Notifications", icon: <FaBell style={{ fontSize: 18 }} /> },
   ];
   return (
-    <aside style={{
-      width: 260,
-      background: "#fff",
-      borderRight: "1px solid #e0e0e0",
-      minHeight: "100vh",
-      padding: "32px 0 0 0",
-      position: "fixed",
-      left: 0,
-      top: 0,
-      zIndex: 2000,
-      boxShadow: "2px 0 16px rgba(30,60,114,0.07)",
-      overflow: "hidden"
-    }}>
-      <div style={{ height: "calc(100vh - 120px)", overflowY: "auto", paddingBottom: 24, display: "flex", flexDirection: "column" }}>
-        <div style={{ padding: "0 24px", marginBottom: 32, display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 6, alignSelf: "flex-start", color: "#1e3c72" }}>Teacher Panel</div>
-          <img
-            src={userPhoto || "/default-avatar.png"}
-            alt="Profile"
-            style={{ width: 72, height: 72, borderRadius: "50%", margin: "14px 0", objectFit: "cover", boxShadow: "0 2px 8px rgba(30,60,114,0.10)" }}
-          />
-          {userName && <div style={{ fontWeight: 600, fontSize: 16, color: "#1e3c72", marginBottom: 2 }}>{userName}</div>}
-          <div style={{ fontSize: 14, color: "#888", marginBottom: 6 }}>{userEmail}</div>
+    <>
+      <style>{blinkStyle}</style>
+      <aside style={{
+        width: 300,
+        background: "#fff",
+        borderRight: "1px solid #e0e0e0",
+        minHeight: "100vh",
+        padding: "32px 0 0 0",
+        position: "fixed",
+        left: 0,
+        top: 0,
+        zIndex: 2000,
+        boxShadow: "2px 0 16px rgba(30,60,114,0.07)",
+        overflow: "hidden"
+      }}>
+        <div style={{ height: "calc(100vh - 120px)", overflowY: "auto", paddingBottom: 24, display: "flex", flexDirection: "column" }}>
+          <div style={{ padding: "0 24px", marginBottom: 32, display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 6, alignSelf: "flex-start", color: "#1e3c72" }}>Teacher Panel</div>
+            <img
+              src={userPhoto || "/default-avatar.png"}
+              alt="Profile"
+              style={{ width: 72, height: 72, borderRadius: "50%", margin: "14px 0", objectFit: "cover", boxShadow: "0 2px 8px rgba(30,60,114,0.10)" }}
+            />
+            {userName && <div style={{ fontWeight: 600, fontSize: 16, color: "#1e3c72", marginBottom: 2 }}>{userName}</div>}
+            <div style={{ fontSize: 14, color: "#888", marginBottom: 6 }}>{userEmail}</div>
+          </div>
+          <nav>
+            {menuItems.map(item => (
+              <button
+                key={item.key}
+                onClick={() => { item.action ? item.action() : onMenuSelect(item.key); }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 14,
+                  width: "100%",
+                  background: selectedMenu === item.key ? "linear-gradient(90deg,#e0e7ff 0%,#f7fafd 100%)" : "none",
+                  border: "none",
+                  textAlign: "left",
+                  padding: "14px 28px",
+                  fontSize: 17,
+                  color: selectedMenu === item.key ? "#1e3c72" : "#444",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  borderLeft: selectedMenu === item.key ? "4px solid #1e3c72" : "4px solid transparent",
+                  transition: "background 0.18s, color 0.18s",
+                  position: "relative"
+                }}
+              >
+                <span style={{ display: "flex", alignItems: "center" }}>{item.icon}</span>
+                <span style={{ display: "flex", alignItems: "center" }}>{item.label}</span>
+                {item.key === "announcements" && renderAnnouncementBadge && renderAnnouncementBadge(newAnnouncementCount)}
+              </button>
+            ))}
+          </nav>
+          <button
+            onClick={() => { logout(); window.location.href = "/login"; }}
+            style={{
+              margin: "32px auto 0 auto",
+              width: "80%",
+              background: "#ff0080",
+              color: "#fff",
+              border: "none",
+              borderRadius: 8,
+              padding: "10px 0",
+              fontWeight: 600,
+              cursor: "pointer",
+              alignSelf: "center"
+            }}
+          >
+            Logout
+          </button>
         </div>
-        <nav>
-          {menuItems.map(item => (
-            <button
-              key={item.key}
-              onClick={() => { item.action ? item.action() : onMenuSelect(item.key); }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
-                width: "100%",
-                background: selectedMenu === item.key ? "linear-gradient(90deg,#e0e7ff 0%,#f7fafd 100%)" : "none",
-                border: "none",
-                textAlign: "left",
-                padding: "14px 28px",
-                fontSize: 17,
-                color: selectedMenu === item.key ? "#1e3c72" : "#444",
-                cursor: "pointer",
-                fontWeight: 600,
-                borderLeft: selectedMenu === item.key ? "4px solid #1e3c72" : "4px solid transparent",
-                transition: "background 0.18s, color 0.18s",
-                position: "relative"
-              }}
-            >
-              {item.icon}
-              <span style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                {item.label}
-                {item.key === "announcements" && newAnnouncementCount > 0 && (
-                  <span style={{
-                    marginLeft: 8,
-                    background: "#1e3c72",
-                    color: "#fff",
-                    borderRadius: "50%",
-                    padding: "2px 8px",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    minWidth: 22,
-                    textAlign: "center",
-                    display: "inline-block"
-                  }}>
-                    {newAnnouncementCount}
-                  </span>
-                )}
-              </span>
-            </button>
-          ))}
-        </nav>
-        <button
-          onClick={() => { logout(); window.location.href = "/login"; }}
-          style={{
-            margin: "32px auto 0 auto",
-            width: "80%",
-            background: "#ff0080",
-            color: "#fff",
-            border: "none",
-            borderRadius: 8,
-            padding: "10px 0",
-            fontWeight: 600,
-            cursor: "pointer",
-            alignSelf: "center"
-          }}
-        >
-          Logout
-        </button>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }
 
