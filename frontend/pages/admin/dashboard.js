@@ -1,11 +1,12 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FaUsers, FaUserTie, FaBook, FaRegListAlt, FaCog, FaBullhorn, FaChartBar, FaUserShield, FaBars, FaTimes, FaUser, FaBookOpen, FaLaptop, FaFilePdf, FaPalette, FaFileAlt, FaImage, FaBookReader, FaPenFancy, FaTasks, FaFileVideo, FaBell, FaTrashAlt } from "react-icons/fa";
 import DashboardCommon from "../DashboardCommon";
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { getToken, logout } from "../../utils/auth.js";
+import { BASE_API_URL } from "../../utils/apiurl";
 
-function AdminSidebar({ userEmail, userPhoto, onMenuSelect, selectedMenu, isSuperAdmin }) {
+function AdminSidebar({ userEmail, userPhoto, onMenuSelect, selectedMenu, isSuperAdmin, newAnnouncementCount }) {
   const menuItems = [
     { key: "manage-admins-users", label: "Manage Admins and Users", icon: <FaUserShield style={{ fontSize: 18 }} />, action: () => window.location.href = "/manage-admins-users" },
     { key: "manage-books", label: "Manage Books", icon: <FaBook style={{ fontSize: 18 }} /> },
@@ -66,11 +67,30 @@ function AdminSidebar({ userEmail, userPhoto, onMenuSelect, selectedMenu, isSupe
                 cursor: "pointer",
                 fontWeight: 600,
                 borderLeft: selectedMenu === item.key ? "4px solid #1e3c72" : "4px solid transparent",
-                transition: "background 0.18s, color 0.18s"
+                transition: "background 0.18s, color 0.18s",
+                position: "relative"
               }}
             >
               {item.icon}
-              {item.label}
+              <span style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                {item.label}
+                {item.key === "announcements" && newAnnouncementCount > 0 && (
+                  <span style={{
+                    marginLeft: 8,
+                    background: "#1e3c72",
+                    color: "#fff",
+                    borderRadius: "50%",
+                    padding: "2px 8px",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    minWidth: 22,
+                    textAlign: "center",
+                    display: "inline-block"
+                  }}>
+                    {newAnnouncementCount}
+                  </span>
+                )}
+              </span>
             </button>
           ))}
         </nav>
@@ -120,7 +140,6 @@ export default function AdminDashboardPage() {
       SidebarComponent={AdminSidebar}
       menuItems={menuItems}
       userType="Admin"
-      // You can pass renderContent or children for main content if needed
     />
   );
 }

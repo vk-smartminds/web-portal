@@ -1,11 +1,12 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FaClipboardList, FaNewspaper, FaChartBar, FaBookOpen, FaBullhorn, FaCalendarAlt, FaEnvelope, FaLaptop, FaUser, FaTrashAlt, FaFilePdf, FaPalette, FaFileVideo, FaBell } from "react-icons/fa";
 import DashboardCommon from "../DashboardCommon";
 import { getToken, logout } from "../../utils/auth.js";
 import ProtectedRoute from '../../components/ProtectedRoute';
+import { BASE_API_URL } from "../../utils/apiurl";
 
-function TeacherSidebar({ userEmail, userPhoto, userName, onMenuSelect, selectedMenu }) {
+function TeacherSidebar({ userEmail, userPhoto, userName, onMenuSelect, selectedMenu, newAnnouncementCount }) {
   const menuItems = [
     { key: "test-generator", label: "Test Generator", icon: <FaClipboardList style={{ fontSize: 18 }} /> },
     { key: "cbse-updates", label: "CBSE Updates", icon: <FaBullhorn style={{ fontSize: 18 }} />, action: () => window.location.href = "/cbse-updates" },
@@ -68,11 +69,30 @@ function TeacherSidebar({ userEmail, userPhoto, userName, onMenuSelect, selected
                 cursor: "pointer",
                 fontWeight: 600,
                 borderLeft: selectedMenu === item.key ? "4px solid #1e3c72" : "4px solid transparent",
-                transition: "background 0.18s, color 0.18s"
+                transition: "background 0.18s, color 0.18s",
+                position: "relative"
               }}
             >
               {item.icon}
-              {item.label}
+              <span style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                {item.label}
+                {item.key === "announcements" && newAnnouncementCount > 0 && (
+                  <span style={{
+                    marginLeft: 8,
+                    background: "#1e3c72",
+                    color: "#fff",
+                    borderRadius: "50%",
+                    padding: "2px 8px",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    minWidth: 22,
+                    textAlign: "center",
+                    display: "inline-block"
+                  }}>
+                    {newAnnouncementCount}
+                  </span>
+                )}
+              </span>
             </button>
           ))}
         </nav>
@@ -123,7 +143,6 @@ export default function TeacherDashboardPage() {
       SidebarComponent={TeacherSidebar}
       menuItems={menuItems}
       userType="Teacher"
-      // You can pass renderContent or children for main content if needed
     />
   );
 }

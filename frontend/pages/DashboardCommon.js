@@ -23,6 +23,7 @@ export default function DashboardCommon({
   const fileInputRef = useRef();
   const [userPhoto, setUserPhoto] = useState('');
   const [userName, setUserName] = useState("");
+  const [newAnnouncementCount, setNewAnnouncementCount] = useState(0);
 
   // Fetch profile logic (can be overridden)
   const fetchProfile = useCallback(() => {
@@ -68,6 +69,21 @@ export default function DashboardCommon({
     }
   }, [form.photo]);
 
+  useEffect(() => {
+    let registeredAs = userType;
+    if (userType === 'Guardian') registeredAs = 'Parent';
+    fetch(`${BASE_API_URL}/getannouncements?registeredAs=${registeredAs}`, {
+      headers: { 'Authorization': `Bearer ${getToken()}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.announcements) {
+          const count = data.announcements.filter(a => a.isNew).length;
+          setNewAnnouncementCount(count);
+        }
+      });
+  }, [userType]);
+
   const handleEdit = () => setEditMode(true);
   const handleCancel = () => {
     setEditMode(false);
@@ -98,6 +114,7 @@ export default function DashboardCommon({
     onMenuSelect: setSelectedMenu,
     selectedMenu,
     profile,
+    newAnnouncementCount,
     ...customSidebarProps
   };
 
