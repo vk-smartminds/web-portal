@@ -147,6 +147,31 @@ function StudentProfilePage() {
     </div>
   ) : null;
 
+  // --- Show guardians table if any guardians are linked ---
+  const guardiansTable = profile && Array.isArray(profile.guardian) && profile.guardian.length > 0 ? (
+    <div style={{ marginTop: 24, width: '100%' }}>
+      <h3 style={{ fontWeight: 700, fontSize: 18, color: '#1e3c72', marginBottom: 8 }}>Guardians</h3>
+      <table style={{ width: '100%', borderCollapse: 'collapse', background: '#f7fafd', borderRadius: 8 }}>
+        <thead>
+          <tr style={{ background: '#e0e7ff' }}>
+            <th style={{ padding: 8, textAlign: 'left', fontWeight: 600 }}>Name</th>
+            <th style={{ padding: 8, textAlign: 'left', fontWeight: 600 }}>Email</th>
+            <th style={{ padding: 8, textAlign: 'left', fontWeight: 600 }}>Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          {profile.guardian.map((g, idx) => (
+            <tr key={idx} style={{ borderBottom: '1px solid #e0e0e0' }}>
+              <td style={{ padding: 8 }}>{g.name || "-"}</td>
+              <td style={{ padding: 8 }}>{g.email}</td>
+              <td style={{ padding: 8 }}>{g.role}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  ) : null;
+
   return (
     <ProtectedRoute>
       <ProfileCommon
@@ -165,9 +190,10 @@ function StudentProfilePage() {
         handleSave={handleSave}
         fetchProfile={fetchProfile}
         customFields={classField}
+        children={!editMode ? guardiansTable : null}
       />
     </ProtectedRoute>
   );
 }
 
-export default StudentProfilePage; 
+export default StudentProfilePage;

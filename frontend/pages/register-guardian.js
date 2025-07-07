@@ -14,6 +14,7 @@ const inputStyle = {
 
 export default function RegisterGuardian() {
   const [form, setForm] = useState({
+    name: '', // <-- add name field
     email: '', password: '', otp: '', child: '', role: 'Guardian'
   });
   const [childEmail, setChildEmail] = useState("");
@@ -55,9 +56,10 @@ export default function RegisterGuardian() {
     e.preventDefault();
     setMsg(""); setError(""); setLoading(true);
     try {
+      // --- Allow sending OTP if guardian exists, block only for student/teacher/admin ---
       const res = await fetch(`${BASE_API_URL}/send-register-otp`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: form.email.trim().toLowerCase() })
+        body: JSON.stringify({ email: form.email.trim().toLowerCase(), allowGuardian: true }) // pass flag
       });
       if (res.ok) {
         setOtpSent(true); setMsg("OTP sent to your email.");
@@ -76,6 +78,12 @@ export default function RegisterGuardian() {
   const handleRegister = async e => {
     e.preventDefault();
     setMsg(""); setError(""); setLoading(true);
+    // --- Require name ---
+    if (!form.name.trim()) {
+      setError("Parent name is required.");
+      setLoading(false);
+      return;
+    }
     try {
       const verifyRes = await fetch(`${BASE_API_URL}/verify-register-otp`, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -89,6 +97,7 @@ export default function RegisterGuardian() {
         method: "POST", headers: { "Content-Type": "application/json" },
         credentials: 'include',
         body: JSON.stringify({
+          name: form.name, // <-- send name
           email: form.email.trim().toLowerCase(),
           password: form.password,
           otp: otpBlocks.join(""),
@@ -323,6 +332,16 @@ export default function RegisterGuardian() {
       ) : (
         // Only show guardian registration form if childVerified is true
         <form onSubmit={handleRegister}>
+          {/* --- Parent Name Field --- */}
+          <input
+            style={{ ...inputStyle, background: '#fff', border: '1.5px solid #b6c6e3' }}
+            name="name"
+            type="text"
+            placeholder="Parent Name (required)"
+            value={form.name}
+            onChange={handleChange}
+            required
+          />
           <input
             style={{ ...inputStyle, background: '#f1f5f9', border: '1.5px solid #b6c6e3', color: '#64748b' }}
             name="child"

@@ -50,7 +50,7 @@ function generateOtp() {
 // --- Registration ---
 export const sendRegisterOtp = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, allowGuardian } = req.body;
     const cleanEmail = email.trim().toLowerCase();
     // Check all user tables for existing email
     const [existingStudent, existingTeacher, existingGuardian, existingAdmin] = await Promise.all([
@@ -59,8 +59,12 @@ export const sendRegisterOtp = async (req, res) => {
       Guardian.findOne({ email: cleanEmail }),
       Admin.findOne({ email: cleanEmail })
     ]);
-    // Block if email exists in any user table
-    if (existingStudent || existingTeacher || existingGuardian || existingAdmin) {
+    // Block if email exists in Student, Teacher, or Admin
+    if (existingStudent || existingTeacher || existingAdmin) {
+      return res.status(409).json({ message: 'A user with this email already exists' });
+    }
+    // If guardian exists and allowGuardian is not set, block (for legacy, but frontend always sends allowGuardian)
+    if (existingGuardian && !allowGuardian) {
       return res.status(409).json({ message: 'A user with this email already exists' });
     }
     const otp = generateOtp();
@@ -132,7 +136,11 @@ export const registerStudent = async (req, res) => {
 
 export const registerGuardian = async (req, res) => {
   try {
-    const { email, password, otp, child, role } = req.body;
+    const { name, email, password, otp, child, role } = req.body;
+    // --- Require name ---
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Parent name is required' });
+    }
     const cleanEmail = email.trim().toLowerCase();
     // Child email is required and must be a non-empty string
     if (!child || !Array.isArray(child) || child.length === 0 || !child[0]) {
@@ -166,11 +174,29 @@ export const registerGuardian = async (req, res) => {
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     if (existingGuardian) {
+      // Validate password before adding child
+      const isMatch = await bcrypt.compare(password, existingGuardian.password);
+      if (!isMatch) {
+        return res.status(401).json({ message: "Your password is incorrect." });
+      }
       // Add new child to existing guardian if not already present
       const alreadyLinked = existingGuardian.child.some(c => c.email === childEmail);
       if (!alreadyLinked) {
         existingGuardian.child.push({ email: childEmail, role });
+        // --- Update guardian name if not set ---
+        if (!existingGuardian.name) existingGuardian.name = name;
         await existingGuardian.save();
+      }
+      // --- Add/Update guardian info in Student's guardian array ---
+      const student = await Student.findOne({ email: childEmail });
+      if (student) {
+        student.guardian = (student.guardian || []).filter(g => g.email !== cleanEmail);
+        student.guardian.push({
+          name: existingGuardian.name || name,
+          email: cleanEmail,
+          role
+        });
+        await student.save();
       }
       delete otpStore[cleanEmail];
       delete childVerificationTokens[token];
@@ -179,12 +205,24 @@ export const registerGuardian = async (req, res) => {
     }
     // Create new guardian
     const guardian = new Guardian({
+      name: name.trim(), // <-- set name
       email: cleanEmail,
       password: hashedPassword,
       userRole: 'Guardian',
       child: [{ email: childEmail, role }]
     });
     await guardian.save();
+    // --- Add/Update guardian info in Student's guardian array ---
+    const student = await Student.findOne({ email: childEmail });
+    if (student) {
+      student.guardian = (student.guardian || []).filter(g => g.email !== cleanEmail);
+      student.guardian.push({
+        name: guardian.name,
+        email: cleanEmail,
+        role
+      });
+      await student.save();
+    }
     delete otpStore[cleanEmail];
     delete childVerificationTokens[token];
     res.clearCookie('vk_child_verified');

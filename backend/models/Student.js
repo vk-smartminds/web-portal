@@ -34,9 +34,14 @@ const studentSchema = new mongoose.Schema({
     type: String,
     default: 'Student'
   },
-  guardianIds: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Guardian'
+  guardian: [{
+    name: String,
+    email: String,
+    role: {
+      type: String,
+      enum: ['Father', 'Mother', 'Guardian'],
+      required: true
+    }
   }],
   quizIds: [{
     type: String
