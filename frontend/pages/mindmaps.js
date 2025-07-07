@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
-import { BASE_API_URL } from "./apiurl";
+import { BASE_API_URL } from "../utils/apiurl";
 import { getUserData, getToken, setUserData } from "../utils/auth";
 import { FaBookOpen } from "react-icons/fa";
 

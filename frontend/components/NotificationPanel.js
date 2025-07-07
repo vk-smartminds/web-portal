@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { BASE_API_URL } from '../pages/apiurl';
+import { BASE_API_URL } from '../utils/apiurl';
 import { getToken } from '../utils/auth';
 import { useRouter } from 'next/navigation';
 

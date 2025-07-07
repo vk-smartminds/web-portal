@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BASE_API_URL } from "./apiurl";
+import { BASE_API_URL } from "../utils/apiurl";
 import { FaBullhorn, FaBookOpen } from "react-icons/fa";
 
 const CBSEUpdatesPage = () => {

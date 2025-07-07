@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import ProtectedRoute from '../components/ProtectedRoute';
-import { BASE_API_URL } from './apiurl.js';
+import { BASE_API_URL } from '../utils/apiurl.js';
 import { getUserData, getToken, logout } from "../utils/auth.js";
 
 export default function DashboardCommon({

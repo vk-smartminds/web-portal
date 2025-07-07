@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaUserShield, FaUsers, FaUserMinus, FaUserPlus } from "react-icons/fa";
-import { BASE_API_URL } from "./apiurl";
+import { BASE_API_URL } from "../utils/apiurl";
 import { getToken, getUserData, logout } from "../utils/auth";
 import ProtectedRoute from "../components/ProtectedRoute";
 

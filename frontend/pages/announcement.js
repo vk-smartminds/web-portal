@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
-import { BASE_API_URL } from "./apiurl";
+import { BASE_API_URL } from "../utils/apiurl";
 import { getUserData, getToken } from "../utils/auth";
 
 // PDFWithLoader helper

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getToken, logout } from '../utils/auth';
-import { BASE_API_URL } from './apiurl';
+import { BASE_API_URL } from '../utils/apiurl';
 
 export default function DeleteAccountPage() {
   const [status, setStatus] = useState('');

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { BASE_API_URL } from "../../pages/apiurl";
+import { BASE_API_URL } from "../../utils/apiurl";
 import { setToken, setUserData, getToken, isAuthenticated, isTokenExpired } from "../../utils/auth";
 import useOtpTimer from "./useOtpTimer";
 
