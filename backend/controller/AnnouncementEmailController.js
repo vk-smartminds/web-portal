@@ -19,7 +19,6 @@ const transporter = nodemailer.createTransport({
 export const sendAnnouncementEmails = async (announcementFor, classes, announcementText, createdBy) => {
     try {
       if (!emailUser || !emailPass) {
-        console.error('EMAIL_USER or EMAIL_PASS missing for announcement emails');
         return { successful: 0, failed: 0, total: 0, error: 'Email credentials not configured' };
       }
   
@@ -224,7 +223,6 @@ export const sendAnnouncementEmails = async (announcementFor, classes, announcem
         };
   
         return transporter.sendMail(mailOptions).catch(error => {
-          console.error(`Failed to send email to ${recipient.email}:`, error);
           return null; // Return null instead of throwing to continue with other emails
         });
       });
@@ -236,10 +234,11 @@ export const sendAnnouncementEmails = async (announcementFor, classes, announcem
       const successful = results.filter(result => result.status === 'fulfilled' && result.value !== null).length;
       const failed = results.filter(result => result.status === 'rejected' || result.value === null).length;
       
+      // Collect all recipient emails
+      const emails = uniqueRecipients.map(r => r.email);
       
-      return { successful, failed, total: uniqueRecipients.length };
+      return { successful, failed, total: uniqueRecipients.length, emails };
     } catch (error) {
-      console.error('Error sending announcement emails:', error);
       throw error;
     }
   };
