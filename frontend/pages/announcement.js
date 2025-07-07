@@ -50,7 +50,7 @@ const blinkStyle = `
 }
 `;
 
-const AnnouncementPage = () => {
+const AnnouncementPage = ({ newAnnouncementCount, setNewAnnouncementCount }) => {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [role, setRole] = useState("");
@@ -370,6 +370,10 @@ const AnnouncementPage = () => {
           'Authorization': `Bearer ${getToken()}`
         }
       });
+      // Decrement the count if possible
+      if (setNewAnnouncementCount) {
+        setNewAnnouncementCount((prev) => (prev > 0 ? prev - 1 : 0));
+      }
     } catch {}
   };
 

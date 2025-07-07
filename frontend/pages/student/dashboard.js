@@ -136,6 +136,11 @@ export default function StudentDashboardPage() {
       SidebarComponent={StudentSidebar}
       menuItems={menuItems}
       userType="Student"
+      renderContent={({ selectedMenu, ...rest }) =>
+        selectedMenu === "announcements"
+          ? <AnnouncementPage {...rest} />
+          : null
+      }
     />
   );
 }

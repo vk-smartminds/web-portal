@@ -137,6 +137,11 @@ export default function AdminDashboardPage() {
       SidebarComponent={AdminSidebar}
       menuItems={menuItems}
       userType="Admin"
+      renderContent={({ selectedMenu, ...rest }) =>
+        selectedMenu === "announcements"
+          ? <AnnouncementPage {...rest} />
+          : null
+      }
     />
   );
 }

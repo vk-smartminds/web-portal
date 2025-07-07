@@ -140,6 +140,11 @@ export default function TeacherDashboardPage() {
       SidebarComponent={TeacherSidebar}
       menuItems={menuItems}
       userType="Teacher"
+      renderContent={({ selectedMenu, ...rest }) =>
+        selectedMenu === "announcements"
+          ? <AnnouncementPage {...rest} />
+          : null
+      }
     />
   );
 }

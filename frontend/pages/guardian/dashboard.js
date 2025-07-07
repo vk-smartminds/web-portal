@@ -134,6 +134,11 @@ export default function ParentDashboardPage() {
       SidebarComponent={ParentSidebar}
       menuItems={menuItems}
       userType="Guardian"
+      renderContent={({ selectedMenu, ...rest }) =>
+        selectedMenu === "announcements"
+          ? <AnnouncementPage {...rest} />
+          : null
+      }
     />
   );
 }

@@ -186,8 +186,14 @@ export default function DashboardCommon({
               handleEdit,
               handleCancel,
               handleChange,
-              fetchProfile
-            }) : children}
+              fetchProfile,
+              newAnnouncementCount,
+              setNewAnnouncementCount
+            }) : React.Children.map(children, child =>
+              React.isValidElement(child)
+                ? React.cloneElement(child, { newAnnouncementCount, setNewAnnouncementCount })
+                : child
+            )}
           </main>
         </div>
       </div>
