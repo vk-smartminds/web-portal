@@ -18,6 +18,7 @@ import { checkGuardianEmail, validateGuardianPassword } from '../controller/guar
 import * as discussionController from '../controller/discussionController.js';
 import { threadUpload, postUpload, getDiscussionNotifications, markDiscussionNotificationRead, deleteDiscussionNotification } from '../controller/discussionController.js';
 import { deleteAccount } from '../controller/deleteAccountController.js';
+import * as forgotPasswordController from '../controller/forgotPasswordController.js';
 
 const router = express.Router();
 
@@ -29,6 +30,11 @@ router.post('/api/send-register-otp', sendRegisterOtp);
 router.post('/api/verify-register-otp', verifyRegisterOtp);
 router.post('/api/send-child-otp', sendChildOtp);
 router.post('/api/verify-child-otp', verifyChildOtp);
+
+// Forgot Password routes
+router.post('/api/forgot-password/send-otp', forgotPasswordController.sendForgotPasswordOtp);
+router.post('/api/forgot-password/verify-otp', forgotPasswordController.verifyForgotPasswordOtp);
+router.post('/api/forgot-password/reset', forgotPasswordController.resetPassword);
 
 // Registration
 router.post('/api/register-student', registerStudent);
