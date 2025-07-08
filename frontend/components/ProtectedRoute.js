@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { isAuthenticated, isTokenExpired, getToken, logout } from '../utils/auth.js';
-import { BASE_API_URL } from '../pages/apiurl.js';
+import { BASE_API_URL } from '../utils/apiurl';
 
 function getRoleFromToken(token) {
   if (!token) return null;

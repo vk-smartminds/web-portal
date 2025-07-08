@@ -2,6 +2,9 @@ import Admin from '../models/Admin.js';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import Student from '../models/Student.js';
+import Teacher from '../models/Teacher.js';
+import Guardian from '../models/Guardian.js';
 dotenv.config();
 
 // Helper to generate random password of length 5-10, different each time
@@ -81,6 +84,16 @@ export const addAdmin = async (req, res) => {
     // Check if already an admin
     const exists = await Admin.findOne({ email });
     if (exists) return res.status(409).json({ message: 'Admin already exists' });
+
+    // Check if email exists as Student, Teacher, or Guardian
+    const [student, teacher, guardian] = await Promise.all([
+      Student.findOne({ email: email.trim().toLowerCase() }),
+      Teacher.findOne({ email: email.trim().toLowerCase() }),
+      Guardian.findOne({ email: email.trim().toLowerCase() })
+    ]);
+    if (student) return res.status(409).json({ message: 'This email is already registered as a Student.' });
+    if (teacher) return res.status(409).json({ message: 'This email is already registered as a Teacher.' });
+    if (guardian) return res.status(409).json({ message: 'This email is already registered as a Guardian.' });
 
     // Generate random password
     const randomPassword = generateRandomPassword();

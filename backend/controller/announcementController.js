@@ -86,12 +86,10 @@ export const createAnnouncement = async (req, res) => {
     
     // Send announcement emails
     try {
-      console.log(`Sending announcement emails for: ${announcementForStored.join(', ')}`);
       const emailResult = await sendAnnouncementEmails(announcementForStored, finalClasses, text, creatorEmail);
-      console.log(`Email sending completed:`, emailResult);
+      if (emailResult.emails && Array.isArray(emailResult.emails)) {
+      }
     } catch (emailError) {
-      console.error('Failed to send announcement emails:', emailError);
-      // Don't fail the announcement creation if email fails
     }
     
     res.status(201).json({ message: 'Announcement created', announcement });

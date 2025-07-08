@@ -1,4 +1,6 @@
 import React from "react";
+import ForgotPasswordModal from "./ForgotPasswordModal";
+import { BASE_API_URL } from '../../utils/apiurl';
 
 export default function LoginForm(props) {
   const {
@@ -14,6 +16,8 @@ export default function LoginForm(props) {
     isAdminOtp, adminOtpSent, router
   } = props;
 
+  const [showForgotModal, setShowForgotModal] = React.useState(false);
+
   // VK-themed colors
   const vkPrimary = "#4a69bb";
   const vkAccent = "#222f5b";
@@ -21,6 +25,36 @@ export default function LoginForm(props) {
   const vkShadow = "0 8px 32px 0 rgba(31, 38, 135, 0.18)";
   const vkLogo = "/vk-logo.png"; // Use the provided VK logo in public folder
   const vkBgImg = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"; // Placeholder VK-themed image
+  const vkLightBlue = "#7ea6e6";
+
+  // Forgot password API logic (using BASE_API_URL)
+  const apiSendOtp = async (email) => {
+    const res = await fetch(`${BASE_API_URL}/forgot-password/send-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+    if (!res.ok) throw new Error((await res.json()).message || "Failed to send OTP");
+    return res.json();
+  };
+  const apiVerifyOtp = async (email, otp) => {
+    const res = await fetch(`${BASE_API_URL}/forgot-password/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, otp })
+    });
+    if (!res.ok) throw new Error((await res.json()).message || "Failed to verify OTP");
+    return res.json();
+  };
+  const apiResetPassword = async (email, otp, password) => {
+    const res = await fetch(`${BASE_API_URL}/forgot-password/reset`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, otp, password })
+    });
+    if (!res.ok) throw new Error((await res.json()).message || "Failed to reset password");
+    return res.json();
+  };
 
   return (
     <div style={{
@@ -203,6 +237,44 @@ export default function LoginForm(props) {
               </div>
               {error && <div style={{ color: "#e74c3c", marginBottom: 10, fontSize: 14 }}>{error}</div>}
               {msg && <div style={{ color: vkPrimary, marginBottom: 10, fontSize: 14 }}>{msg}</div>}
+              {/* Forgot password link below error */}
+              {error && (
+                <div style={{ marginBottom: 10, textAlign: "right", width: "100%" }}>
+                  <span
+                    style={{
+                      color: vkLightBlue,
+                      fontWeight: 500,
+                      fontSize: 16,
+                      cursor: "pointer",
+                      textDecoration: "none",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontFamily: 'Segoe UI',
+                      transition: 'color 0.18s',
+                    }}
+                    onMouseOver={e => e.currentTarget.style.color = vkPrimary}
+                    onMouseOut={e => e.currentTarget.style.color = vkLightBlue}
+                    onClick={() => setShowForgotModal(true)}
+                  >
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 22,
+                      height: 22,
+                      borderRadius: '50%',
+                      background: '#eaf1fb',
+                      color: vkLightBlue,
+                      fontWeight: 700,
+                      fontSize: 15,
+                      boxShadow: '0 1px 4px #4a69bb11',
+                      marginRight: 2
+                    }}>?</span>
+                    Forgot password?
+                  </span>
+                </div>
+              )}
               <button
                 type="submit"
                 style={{
@@ -407,6 +479,19 @@ export default function LoginForm(props) {
           </div>
         </div>
       )}
+      <ForgotPasswordModal
+        open={showForgotModal}
+        onClose={() => setShowForgotModal(false)}
+        onSuccess={() => setShowForgotModal(false)}
+        apiSendOtp={apiSendOtp}
+        apiVerifyOtp={apiVerifyOtp}
+        apiResetPassword={apiResetPassword}
+        vkPrimary={vkPrimary}
+        vkAccent={vkAccent}
+        vkGradient={vkGradient}
+        vkShadow={vkShadow}
+        vkLightBlue={vkLightBlue}
+      />
     </div>
   );
 }
