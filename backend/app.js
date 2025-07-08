@@ -15,8 +15,8 @@ const corsOptions = {
   origin: [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
-    'http://172.16.201.50:3000'
-    //add frontend URL here
+    'http://172.16.201.50:3000',
+    'https://vk-webportal.onrender.com/'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
