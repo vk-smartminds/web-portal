@@ -21,21 +21,21 @@ export const SUBJECTS_BY_CLASS = {
 export const CHAPTERS_BY_CLASS_SUBJECT = {
   '7': {
     'Mathematics': [
-      { number: '1', name: 'Integers' },
-      { number: '2', name: 'Fractions and Decimals' },
-      { number: '3', name: 'Data Handling' },
-      { number: '4', name: 'Simple Equations' },
-      { number: '5', name: 'Lines and Angles' },
-      { number: '6', name: 'The Triangle and its Properties' },
-      { number: '7', name: 'Congruence of Triangles' },
-      { number: '8', name: 'Comparing Quantities' },
-      { number: '9', name: 'Rational Numbers' },
-      { number: '10', name: 'Practical Geometry' },
-      { number: '11', name: 'Perimeter and Area' },
-      { number: '12', name: 'Algebraic Expressions' },
-      { number: '13', name: 'Exponents and Powers' },
-      { number: '14', name: 'Symmetry' },
-      { number: '15', name: 'Visualising Solid Shapes' }
+      { number: '1', name: 'Integers', weightage: 7 },
+      { number: '2', name: 'Fractions and Decimals', weightage: 8 },
+      { number: '3', name: 'Data Handling', weightage: 6 },
+      { number: '4', name: 'Simple Equations', weightage: 7 },
+      { number: '5', name: 'Lines and Angles', weightage: 5 },
+      { number: '6', name: 'The Triangle and its Properties', weightage: 8 },
+      { number: '7', name: 'Congruence of Triangles', weightage: 6 },
+      { number: '8', name: 'Comparing Quantities', weightage: 7 },
+      { number: '9', name: 'Rational Numbers', weightage: 6 },
+      { number: '10', name: 'Practical Geometry', weightage: 5 },
+      { number: '11', name: 'Perimeter and Area', weightage: 7 },
+      { number: '12', name: 'Algebraic Expressions', weightage: 8 },
+      { number: '13', name: 'Exponents and Powers', weightage: 5 },
+      { number: '14', name: 'Symmetry', weightage: 5 },
+      { number: '15', name: 'Visualising Solid Shapes', weightage: 5 }
     ],
     'Science': [
       { number: '1', name: 'Nutrition in Plants' },

@@ -4,6 +4,7 @@ import express from 'express';
 const router = express.Router();
 import Quiz from '../models/Quiz.js';
 import Question from '../models/Question.js';
+import { CHAPTER_WEIGHTAGE } from '../utils/chapterWeightage.js';
 
 // Subjects and chapters endpoints removed: now handled by frontend content.js only
 // ...existing code..
@@ -36,7 +37,111 @@ router.post('/attempt', async (req, res) => {
     // Estimate number of questions by time (e.g., 1 question per 3 min)
     const numQuestions = Math.max(1, Math.floor(time / 3));
 
-    // --- Balanced chapter selection ---
+    // --- Weightage-based chapter selection (class 7 Mathematics only) ---
+    if (className === '7' && subjects && subjects.length === 1 && subjects[0] === 'Mathematics') {
+      const allQuestions = await Question.find(filter).lean();
+      if (!allQuestions.length) {
+        return res.status(400).json({ error: 'No questions available for the selected filters.' });
+      }
+      const chapterWeightage = CHAPTER_WEIGHTAGE['7']['Mathematics'];
+      // Only consider selected chapters
+      const selectedChapters = chapters.filter(ch => chapterWeightage[ch]);
+      const totalWeight = selectedChapters.reduce((sum, ch) => sum + (chapterWeightage[ch] || 0), 0);
+      // 1. Calculate expected questions per chapter
+      const expected = selectedChapters.map(ch => ({
+        chapter: ch,
+        weight: chapterWeightage[ch],
+        expected: (chapterWeightage[ch] / totalWeight) * numQuestions
+      }));
+      // 2. Assign integer part
+      const assigned = expected.map(e => ({
+        chapter: e.chapter,
+        count: Math.floor(e.expected),
+        fraction: e.expected - Math.floor(e.expected)
+      }));
+      let assignedTotal = assigned.reduce((sum, a) => sum + a.count, 0);
+      let remainder = numQuestions - assignedTotal;
+      // 3. Distribute remainder using weighted random by fraction
+      const fractions = assigned.map(a => a.fraction);
+      const chaptersForRemainder = assigned.map(a => a.chapter);
+      while (remainder > 0) {
+        // Weighted random selection
+        const totalFrac = fractions.reduce((sum, f) => sum + f, 0);
+        if (totalFrac === 0) break;
+        let r = Math.random() * totalFrac;
+        let idx = 0;
+        while (r > 0 && idx < fractions.length) {
+          r -= fractions[idx];
+          if (r <= 0) break;
+          idx++;
+        }
+        if (idx < assigned.length) {
+          assigned[idx].count++;
+          remainder--;
+          fractions[idx] = 0; // Prevent double assignment
+        } else {
+          break;
+        }
+      }
+      // 4. Select questions per chapter
+      let selectedQuestions = [];
+      const questionsByChapter = {};
+      for (const ch of selectedChapters) {
+        questionsByChapter[ch] = allQuestions.filter(q => q.chapter === ch);
+      }
+      for (const a of assigned) {
+        const pool = [...questionsByChapter[a.chapter]];
+        // Shuffle pool
+        for (let i = pool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        selectedQuestions.push(...pool.slice(0, a.count));
+      }
+      // 5. If not enough questions, fill from remaining pool
+      if (selectedQuestions.length < numQuestions) {
+        const already = new Set(selectedQuestions.map(q => q._id.toString()));
+        const remaining = allQuestions.filter(q => !already.has(q._id.toString()));
+        // Shuffle remaining
+        for (let i = remaining.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
+        }
+        selectedQuestions.push(...remaining.slice(0, numQuestions - selectedQuestions.length));
+      }
+      selectedQuestions = selectedQuestions.slice(0, numQuestions);
+      // Extract actual subjects and chapters from selected questions
+      const actualSubjects = [...new Set(selectedQuestions.map(q => q.subject))];
+      const chaptersBySubject = {};
+      for (const subj of actualSubjects) {
+        const chaps = selectedQuestions.filter(q => q.subject === subj).map(q => q.chapter);
+        chaptersBySubject[subj] = [...new Set(chaps)].sort((a, b) => {
+          const numA = parseInt(a);
+          const numB = parseInt(b);
+          if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+          return a.localeCompare(b);
+        });
+      }
+      const quiz = new Quiz({
+        class: className,
+        subjects: actualSubjects,
+        chapters: [].concat(...Object.values(chaptersBySubject)),
+        chaptersBySubject,
+        topics,
+        types,
+        questions: selectedQuestions.map(q => q._id || q._id),
+        time,
+        maxScore: selectedQuestions.reduce((sum, q) => sum + (q.marks || 1), 0),
+        studentId,
+        status: 'in-progress',
+        startedAt: new Date(),
+      });
+      await quiz.save();
+      return res.status(201).json({ quizId: quiz._id, questions: selectedQuestions, subjects: actualSubjects, chaptersBySubject });
+    }
+    // --- END Weightage-based chapter selection ---
+
+    // --- Fallback: old logic for other cases ---
     // 1. Group all matching questions by chapter
     const allQuestions = await Question.find(filter).lean();
     if (!allQuestions.length) {

@@ -10,20 +10,32 @@ export async function getQuestions(filters = {}) {
 }
 
 export async function addQuestion(data) {
+  let body = data;
+  let headers = {};
+  if (!(data instanceof FormData)) {
+    body = JSON.stringify(data);
+    headers['Content-Type'] = 'application/json';
+  }
   const res = await fetch(`${BASE_URL}/question`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
+    headers,
+    body,
   });
   if (!res.ok) throw new Error('Failed to add question');
   return res.json();
 }
 
 export async function updateQuestion(id, data) {
+  let body = data;
+  let headers = {};
+  if (!(data instanceof FormData)) {
+    body = JSON.stringify(data);
+    headers['Content-Type'] = 'application/json';
+  }
   const res = await fetch(`${BASE_URL}/question/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
+    headers,
+    body,
   });
   if (!res.ok) throw new Error('Failed to update question');
   return res.json();
