@@ -7,6 +7,9 @@ import ProfileCommon from "../ProfileCommon";
 function GuardianProfilePage() {
   const [userEmail, setUserEmail] = useState("");
   const [profile, setProfile] = useState(null);
+  const [profileVisibility, setProfileVisibility] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({ name: '', phone: '', school: '', class: '', photo: null });
   const [status, setStatus] = useState('');
@@ -45,8 +48,25 @@ function GuardianProfilePage() {
   }, []);
 
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const [profileRes, visRes] = await Promise.all([
+          fetch(`${BASE_API_URL}/profile`, { headers: { Authorization: `Bearer ${getToken()}` } }),
+          fetch(`${BASE_API_URL}/profile-visibility`, { headers: { Authorization: `Bearer ${getToken()}` } })
+        ]);
+        const profileData = await profileRes.json();
+        const visData = await visRes.json();
+        setProfile(profileData.user);
+        setProfileVisibility(visData.profileVisibility || {});
+      } catch {
+        setError("Failed to load profile");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   useEffect(() => {
     if (form.photo) {
@@ -131,11 +151,18 @@ function GuardianProfilePage() {
   };
 
   const handleEdit = () => {
+    setForm({
+      name: profile?.name || '',
+      phone: profile?.phone || '',
+      photo: null
+    });
+    setPreview(profile?.photo || "/default-avatar.png");
     setEditMode(true);
   };
 
+  const show = (field) => !profileVisibility || profileVisibility[field] !== false;
   // Guardian-specific: children table
-  const childrenTable = profile && profile.child && Array.isArray(profile.child) && profile.child.filter(child => child.class !== 'Not specified').length > 0 ? (
+  const childrenTable = show('child') && profile && profile.child && Array.isArray(profile.child) && profile.child.filter(child => child.class !== 'Not specified').length > 0 ? (
     <div style={{ marginTop: 24, width: '100%' }}>
       <h3 style={{ fontWeight: 700, fontSize: 18, color: '#1e3c72', marginBottom: 8 }}>Children</h3>
       <table style={{ width: '100%', borderCollapse: 'collapse', background: '#f7fafd', borderRadius: 8 }}>
@@ -158,6 +185,10 @@ function GuardianProfilePage() {
       </table>
     </div>
   ) : null;
+
+  if (loading) return <div style={{ padding: 40 }}>Loading...</div>;
+  if (error) return <div style={{ color: '#c00', padding: 40 }}>{error}</div>;
+  if (!profile) return null;
 
   return (
     <ProtectedRoute>

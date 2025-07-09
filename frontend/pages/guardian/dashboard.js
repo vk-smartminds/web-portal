@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { FaUser, FaBars, FaTimes, FaChild, FaClipboardList, FaEnvelope, FaBookOpen, FaBullhorn, FaCalendarAlt, FaLaptop, FaTrashAlt, FaBell, FaPalette, FaRegListAlt } from "react-icons/fa";
+import { FaUser, FaBars, FaTimes, FaChild, FaClipboardList, FaEnvelope, FaBookOpen, FaBullhorn, FaCalendarAlt, FaLaptop, FaTrashAlt, FaBell, FaPalette, FaRegListAlt, FaCog } from "react-icons/fa";
 import DashboardCommon from "../DashboardCommon";
 import { getToken, logout } from "../../utils/auth.js";
 import ProtectedRoute from '../../components/ProtectedRoute';
@@ -28,10 +28,10 @@ function ParentSidebar({ userEmail, userPhoto, userName, onMenuSelect, selectedM
     { key: "timetable", label: "Timetable", icon: <FaCalendarAlt style={{ fontSize: 18 }} /> },
     { key: "resources", label: "Digital Resources", icon: <FaLaptop style={{ fontSize: 18 }} /> },
     { key: "profile", label: "Profile", icon: <FaUser style={{ fontSize: 18 }} />, action: () => window.location.href = "/guardian/profile" },
-    { key: "delete-account", label: "Delete Account", icon: <FaTrashAlt style={{ fontSize: 18, color: '#c00' }} />, action: () => window.location.href = "/delete-account" },
     { key: "creative-corner", label: "Creative Corner", icon: <FaPalette style={{ fontSize: 18, color: '#ff0080' }} />, action: () => window.location.href = "/creative-corner" },
     { key: "discussion-panel", label: "Discussion Panel", icon: <FaUser style={{ fontSize: 18 }} /> },
     { key: "notifications", label: "Notifications", icon: <FaBell style={{ fontSize: 18 }} /> },
+    { key: "settings", label: "Settings", icon: <FaCog style={{ fontSize: 18 }} />, action: () => window.location.href = "/guardian/settings" }
   ];
   return (
     <>
@@ -90,7 +90,7 @@ function ParentSidebar({ userEmail, userPhoto, userName, onMenuSelect, selectedM
             ))}
           </nav>
           <button
-            onClick={() => { logout(); window.location.href = "/login"; }}
+            onClick={async () => { await logout(); window.location.href = "/login"; }}
             style={{
               margin: "32px auto 0 auto",
               width: "80%",
@@ -122,10 +122,10 @@ const menuItems = [
   { key: "timetable", label: "Timetable" },
   { key: "resources", label: "Digital Resources" },
   { key: "profile", label: "Profile" },
-  { key: "delete-account", label: "Delete Account" },
   { key: "creative-corner", label: "Creative Corner" },
   { key: "discussion-panel", label: "Discussion Panel" },
   { key: "notifications", label: "Notifications" },
+  { key: "settings", label: "Settings" }
 ];
 
 export default function ParentDashboardPage() {

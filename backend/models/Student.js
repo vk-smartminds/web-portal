@@ -14,6 +14,10 @@ const studentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  alternativeEmail: {
+    type: String,
+    default: ""
+  },
   username:{
     type: String,
     default: ""
@@ -49,6 +53,23 @@ const studentSchema = new mongoose.Schema({
   photo: {
     data: Buffer,
     contentType: String
+  },
+  profileVisibility: {
+    name: { type: Boolean, default: true },
+    email: { type: Boolean, default: true },
+    phone: { type: Boolean, default: true },
+    school: { type: Boolean, default: true },
+    class: { type: Boolean, default: true },
+    photo: { type: Boolean, default: true },
+    guardian: { type: Boolean, default: true },
+    role: { type: Boolean, default: true }
+  },
+  notificationSettings: {
+    announcements: { type: Boolean, default: true },
+    discussionReplies: { type: Boolean, default: true },
+    assignmentDeadlines: { type: Boolean, default: false },
+    newResources: { type: Boolean, default: true },
+    systemUpdates: { type: Boolean, default: false }
   }
 });
 

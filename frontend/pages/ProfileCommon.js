@@ -141,18 +141,24 @@ export default function ProfileCommon({
               />
             </div>
             <div style={{ width: "100%", background: "#f7fafd", borderRadius: 12, padding: "18px 20px", boxShadow: "0 2px 8px rgba(30,60,114,0.04)", display: "flex", flexDirection: "column", gap: 12 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Name:</span>
-                <span style={{ color: "#222", fontSize: 16 }}>{profile.name}</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Email:</span>
-                <span style={{ color: "#222", fontSize: 16 }}>{profile.email}</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Phone:</span>
-                <span style={{ color: "#222", fontSize: 16 }}>{profile.phone || "-"}</span>
-              </div>
+              {profile.name !== undefined && (
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Name:</span>
+                  <span style={{ color: "#222", fontSize: 16 }}>{profile.name}</span>
+                </div>
+              )}
+              {profile.email !== undefined && (
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Email:</span>
+                  <span style={{ color: "#222", fontSize: 16 }}>{profile.email}</span>
+                </div>
+              )}
+              {profile.phone !== undefined && (
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontWeight: 600, color: "#1e3c72", minWidth: 80 }}>Phone:</span>
+                  <span style={{ color: "#222", fontSize: 16 }}>{profile.phone || "-"}</span>
+                </div>
+              )}
               {children}
             </div>
             <button

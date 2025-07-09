@@ -19,6 +19,11 @@ import * as discussionController from '../controller/discussionController.js';
 import { threadUpload, postUpload, getDiscussionNotifications, markDiscussionNotificationRead, deleteDiscussionNotification } from '../controller/discussionController.js';
 import { deleteAccount } from '../controller/deleteAccountController.js';
 import * as forgotPasswordController from '../controller/forgotPasswordController.js';
+import { changePassword } from '../controller/passwordController.js';
+import * as alternativeEmailController from '../controller/alternativeEmailController.js';
+import * as privacyController from '../controller/privacyController.js';
+import * as notificationSettingsController from '../controller/notificationSettingsController.js';
+import * as loginActivityController from '../controller/loginActivityController.js';
 
 const router = express.Router();
 
@@ -68,6 +73,11 @@ router.get('/api/profile', authenticateToken, getProfile);
 router.put('/api/profile', authenticateToken, memoryUpload.single('photo'), updateProfile);
 router.post('/api/user/delete', authenticateToken, deleteUser);
 router.delete('/api/delete-account', authenticateToken, deleteAccount);
+router.post('/api/change-password', authenticateToken, changePassword);
+router.post('/api/send-alt-email-otp', authenticateToken, alternativeEmailController.sendAltEmailOtp);
+router.post('/api/verify-alt-email-otp', authenticateToken, alternativeEmailController.verifyAltEmailOtp);
+router.get('/api/profile-visibility', authenticateToken, privacyController.getProfileVisibility);
+router.put('/api/profile-visibility', authenticateToken, privacyController.updateProfileVisibility);
 
 // Admin routes
 router.get('/api/getadmins', getAdmins);
@@ -164,5 +174,13 @@ router.get('/api/discussion/notifications', authenticateToken, getDiscussionNoti
 router.post('/api/discussion/notifications/:id/read', authenticateToken, markDiscussionNotificationRead);
 router.delete('/api/discussion/notifications/:id', authenticateToken, deleteDiscussionNotification);
 
+// Notification settings routes
+router.get('/api/notification-settings', authenticateToken, notificationSettingsController.getNotificationSettings);
+router.put('/api/notification-settings', authenticateToken, notificationSettingsController.updateNotificationSettings);
+
+// Login activity route
+router.get('/api/login-activity', authenticateToken, loginActivityController.getLoginActivity);
+// Logout route
+router.post('/api/logout', authenticateToken, loginActivityController.addLogoutEvent);
 
 export default router;
