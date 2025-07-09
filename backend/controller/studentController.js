@@ -7,26 +7,18 @@ import Admin from '../models/Admin.js';
 // Get student class by student ID
 export const getClassByStudentId = async (req, res) => {
   try {
-    // Log every time this endpoint is hit
-    console.log('--- /api/student/class/:id endpoint HIT ---');
     // Only use the MongoDB ObjectId from the URL param 'id'
     const id = req.params.id;
-    // Debug log
-    console.log('Fetching class for studentId (MongoDB _id only):', id);
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      console.log('Invalid student ID received:', id);
       return res.status(400).json({ message: 'Invalid student ID', idReceived: id });
     }
     // Only search by _id field (convert to ObjectId)
     const student = await Student.findOne({ _id: new mongoose.Types.ObjectId(id) });
     if (!student) {
-      console.log('Student not found for id:', id);
       return res.status(404).json({ message: 'Student not found', idReceived: id });
     }
-    console.log('Student found:', student);
     res.json({ class: student.class, _id: student._id });
   } catch (err) {
-    console.error('Error fetching student class:', err);
     res.status(500).json({ message: 'Error fetching student class', error: err.message });
   }
 };

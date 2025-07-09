@@ -21,7 +21,7 @@ function StudentSidebar({ userEmail, userPhoto, userName, onMenuSelect, selected
   const menuItems = [
     { key: "cbse-updates", label: "CBSE Updates", icon: <FaRegListAlt style={{ fontSize: 18 }} />, action: () => window.location.href = "/cbse-updates" },
     { key: "announcements", label: "Announcements", icon: <FaBullhorn style={{ fontSize: 18 }} />, action: () => window.location.href = "/announcement" },
-    { key: "quizzes", label: "Quizzes", icon: <FaClipboardList style={{ fontSize: 18 }} /> },
+    { key: "quiz", label: "Quiz", icon: <FaClipboardList style={{ fontSize: 18 }} />, action: () => window.location.href = "/quiz" },
     { key: "sample-papers", label: "Sample Papers", icon: <FaBookOpen style={{ fontSize: 18 }} /> },
     { key: "avlrs", label: "AVLRs", icon: <FaLaptop style={{ fontSize: 18 }} />, action: () => window.location.href = "/avlrs" },
     { key: "dlrs", label: "DLRs", icon: <FaFilePdf style={{ fontSize: 18 }} />, action: () => window.location.href = "/dlrs" },

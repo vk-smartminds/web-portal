@@ -9,6 +9,7 @@ import { SUBJECTS_BY_CLASS, CHAPTERS_BY_CLASS_SUBJECT, QUESTION_TYPE_MAP, ASSERT
 import { getStudentIdFromJWT } from '../../utils/auth';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import axios from 'axios';
+import { BASE_API_URL } from '../../utils/apiurl';
 
 const questionTypes = [
   'Multiple Choice Questions',
@@ -98,7 +99,7 @@ function AttemptQuiz() {
       }
       try {
         console.log('Fetching class for studentId:', id);
-        const res = await fetch(`/api/student/class/${id}`);
+        const res = await fetch(`${BASE_API_URL}/student/class/${id}`);
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
           throw new Error(errData.message || 'Could not fetch class');
