@@ -1,5 +1,7 @@
 // JWT Token management utilities
 
+import { BASE_API_URL } from './apiurl.js';
+
 export const setToken = (token) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem('jwt_token', token);
@@ -43,9 +45,40 @@ export const removeUserData = () => {
   }
 };
 
-export const logout = () => {
+export const setSessionId = (sessionId) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('session_id', sessionId);
+  }
+};
+
+export const getSessionId = () => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('session_id');
+  }
+  return null;
+};
+
+export const removeSessionId = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('session_id');
+  }
+};
+
+export const logout = async () => {
+  const token = getToken();
+  const sessionId = getSessionId();
+  if (token) {
+    try {
+      await fetch(`${BASE_API_URL}/logout`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId })
+      });
+    } catch (e) { /* ignore errors */ }
+  }
   removeToken();
   removeUserData();
+  removeSessionId();
   localStorage.removeItem('userEmail');
   localStorage.removeItem('isSuperAdmin');
   localStorage.removeItem('parentEmail');

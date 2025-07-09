@@ -7,6 +7,9 @@ import ProfileCommon from "../ProfileCommon";
 function TeacherProfilePage() {
   const [userEmail, setUserEmail] = useState("");
   const [profile, setProfile] = useState(null);
+  const [profileVisibility, setProfileVisibility] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({ name: '', phone: '', school: '', class: '', photo: null });
   const [status, setStatus] = useState('');
@@ -45,8 +48,32 @@ function TeacherProfilePage() {
   }, []);
 
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const [profileRes, visRes] = await Promise.all([
+          fetch(`${BASE_API_URL}/profile`, { headers: { Authorization: `Bearer ${getToken()}` } }),
+          fetch(`${BASE_API_URL}/profile-visibility`, { headers: { Authorization: `Bearer ${getToken()}` } })
+        ]);
+        const profileData = await profileRes.json();
+        const visData = await visRes.json();
+        setProfile(profileData.user);
+        setProfileVisibility(visData.profileVisibility || {});
+        setForm({
+          name: profileData.user.name || '',
+          phone: profileData.user.phone || '',
+          school: profileData.user.school || '',
+          photo: null
+        });
+        setPreview(profileData.user.photo || "/default-avatar.png");
+      } catch {
+        setError("Failed to load profile");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   useEffect(() => {
     if (form.photo) {
@@ -131,27 +158,73 @@ function TeacherProfilePage() {
   };
 
   const handleEdit = () => {
+    setForm({
+      name: profile?.name || '',
+      phone: profile?.phone || '',
+      school: profile?.school || '',
+      photo: null
+    });
+    setPreview(profile?.photo || "/default-avatar.png");
     setEditMode(true);
   };
 
+  if (loading) return <div style={{ padding: 40 }}>Loading...</div>;
+  if (error) return <div style={{ color: '#c00', padding: 40 }}>{error}</div>;
+  if (!profile) return null;
+  const show = (field) => !profileVisibility || profileVisibility[field] !== false;
   return (
     <ProtectedRoute>
-      <ProfileCommon
-        userType="Teacher"
-        profile={profile}
-        editMode={editMode}
-        form={form}
-        setForm={setForm}
-        preview={preview}
-        setPreview={setPreview}
-        fileInputRef={fileInputRef}
-        status={status}
-        handleEdit={handleEdit}
-        handleCancel={handleCancel}
-        handleChange={handleChange}
-        handleSave={handleSave}
-        fetchProfile={fetchProfile}
-      />
+      <div style={{ padding: 48, maxWidth: 600, margin: "0 auto" }}>
+        <h2 style={{ fontWeight: 700, fontSize: 32, marginBottom: 28, color: "#1e3c72", letterSpacing: 1, textAlign: "center" }}>
+          Profile
+        </h2>
+        <div style={{ background: '#fff', borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32 }}>
+          {!editMode ? (
+            <>
+              {show('photo') && (
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+                  <img src={profile.photo || "/default-avatar.png"} alt="Profile" style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e0e0e0' }} />
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                {show('name') && <div><b>Name:</b> {profile.name}</div>}
+                {show('email') && <div><b>Email:</b> {profile.email}</div>}
+                {show('phone') && <div><b>Phone:</b> {profile.phone || '-'}</div>}
+                {show('school') && <div><b>School:</b> {profile.school || '-'}</div>}
+                {show('role') && <div><b>Role:</b> {profile.role || 'Teacher'}</div>}
+              </div>
+              <button onClick={handleEdit} style={{ marginTop: 28, background: '#1e3c72', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 28px', fontWeight: 600, fontSize: 17, cursor: 'pointer' }}>Edit Profile</button>
+            </>
+          ) : (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+                <img src={preview || "/default-avatar.png"} alt="Profile" style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e0e0e0' }} />
+              </div>
+              <input ref={fileInputRef} type="file" name="photo" accept="image/*" onChange={handleChange} style={{ display: 'none' }} />
+              <button onClick={() => fileInputRef.current?.click()} style={{ marginBottom: 18, background: '#eee', color: '#1e3c72', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>Change Photo</button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                <div>
+                  <label><b>Name:</b></label>
+                  <input type="text" name="name" value={form.name} onChange={handleChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16, marginTop: 4 }} />
+                </div>
+                <div>
+                  <label><b>Phone:</b></label>
+                  <input type="text" name="phone" value={form.phone} onChange={handleChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16, marginTop: 4 }} />
+                </div>
+                <div>
+                  <label><b>School:</b></label>
+                  <input type="text" name="school" value={form.school} onChange={handleChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16, marginTop: 4 }} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 12, marginTop: 28 }}>
+                <button onClick={handleSave} style={{ background: '#1e3c72', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 28px', fontWeight: 600, fontSize: 17, cursor: 'pointer' }}>Save</button>
+                <button onClick={handleCancel} style={{ background: '#eee', color: '#1e3c72', border: 'none', borderRadius: 6, padding: '10px 28px', fontWeight: 600, fontSize: 17, cursor: 'pointer' }}>Cancel</button>
+              </div>
+              {status && <div style={{ color: status.includes('success') ? '#28a745' : '#c00', marginTop: 14 }}>{status}</div>}
+            </>
+          )}
+        </div>
+      </div>
     </ProtectedRoute>
   );
 }

@@ -7,6 +7,8 @@ import nodemailer from 'nodemailer';
 import { generateToken } from '../middleware/auth.js';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
+import * as loginActivityController from './loginActivityController.js';
+import { v4 as uuidv4 } from 'uuid';
 dotenv.config();
 
 const otpStore = {};
@@ -277,9 +279,11 @@ export const loginStudent = async (req, res) => {
     if (!student) return res.status(404).json({ message: "Student not found" });
     const isMatch = await bcrypt.compare(password, student.password);
     if (!isMatch) return res.status(401).json({ message: "Incorrect password" });
-    const token = generateToken(student._id, 'student');
-    // Remove cookie logic for students, only return token in response (frontend uses localStorage)
-    res.status(200).json({ message: "Login successful", token, user: { id: student._id, email: student.email, role: 'student', name: student.name } });
+    const sessionId = uuidv4();
+    const token = generateToken(student._id, 'student', sessionId);
+    // Log login event with sessionId
+    await loginActivityController.addLoginEvent({ user: { id: student._id, role: 'student', sessionId }, ip: req.ip, headers: req.headers }, { status: () => ({ json: () => {} }) });
+    res.status(200).json({ message: "Login successful", token, sessionId, user: { id: student._id, email: student.email, role: 'student', name: student.name } });
   } catch (err) {
     res.status(500).json({ message: "Login failed", error: err.message });
   }
@@ -293,8 +297,11 @@ export const loginGuardian = async (req, res) => {
     if (!guardian) return res.status(404).json({ message: "Guardian not found" });
     const isMatch = await bcrypt.compare(password, guardian.password);
     if (!isMatch) return res.status(401).json({ message: "Incorrect password" });
-    const token = generateToken(guardian._id, 'guardian');
-    res.status(200).json({ message: "Login successful", token, user: { id: guardian._id, email: guardian.email, role: 'guardian', name: guardian.name, guardianRole: guardian.role } });
+    const sessionId = uuidv4();
+    const token = generateToken(guardian._id, 'guardian', sessionId);
+    // Log login event with sessionId
+    await loginActivityController.addLoginEvent({ user: { id: guardian._id, role: 'guardian', sessionId }, ip: req.ip, headers: req.headers }, { status: () => ({ json: () => {} }) });
+    res.status(200).json({ message: "Login successful", token, sessionId, user: { id: guardian._id, email: guardian.email, role: 'guardian', name: guardian.name, guardianRole: guardian.role } });
   } catch (err) {
     res.status(500).json({ message: "Login failed", error: err.message });
   }
@@ -308,8 +315,11 @@ export const loginTeacher = async (req, res) => {
     if (!teacher) return res.status(404).json({ message: "Teacher not found" });
     const isMatch = await bcrypt.compare(password, teacher.password);
     if (!isMatch) return res.status(401).json({ message: "Incorrect password" });
-    const token = generateToken(teacher._id, 'teacher');
-    res.status(200).json({ message: "Login successful", token, user: { id: teacher._id, email: teacher.email, role: 'teacher', name: teacher.name } });
+    const sessionId = uuidv4();
+    const token = generateToken(teacher._id, 'teacher', sessionId);
+    // Log login event with sessionId
+    await loginActivityController.addLoginEvent({ user: { id: teacher._id, role: 'teacher', sessionId }, ip: req.ip, headers: req.headers }, { status: () => ({ json: () => {} }) });
+    res.status(200).json({ message: "Login successful", token, sessionId, user: { id: teacher._id, email: teacher.email, role: 'teacher', name: teacher.name } });
   } catch (err) {
     res.status(500).json({ message: "Login failed", error: err.message });
   }

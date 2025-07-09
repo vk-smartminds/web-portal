@@ -26,14 +26,13 @@ function AdminSidebar({ userEmail, userPhoto, onMenuSelect, selectedMenu, isSupe
     { key: "cbse-updates", label: "CBSE Updates", icon: <FaBullhorn style={{ fontSize: 18 }} />, action: () => window.location.href = "/cbse-updates" },
     { key: "mindmap", label: "Mind Map", icon: <FaBookOpen style={{ fontSize: 18 }} />, action: () => window.location.href = "/mindmaps" },
     { key: "reports", label: "Reports", icon: <FaChartBar style={{ fontSize: 18 }} /> },
-    { key: "settings", label: "Settings", icon: <FaCog style={{ fontSize: 18 }} /> },
+    { key: "settings", label: "Settings", icon: <FaCog style={{ fontSize: 18 }} />, action: () => window.location.href = "/admin/settings" },
     { key: "profile", label: "Profile", icon: <FaUser style={{ fontSize: 18 }} />, action: () => window.location.href = "/admin/profile" },
     { key: "avlrs", label: "AVLRs", icon: <FaLaptop style={{ fontSize: 18 }} />, action: () => window.location.href = "/avlrs" },
     { key: "dlrs", label: "DLRs", icon: <FaFilePdf style={{ fontSize: 18 }} />, action: () => window.location.href = "/dlrs" },
     { key: "creative-corner", label: "Creative Corner", icon: <FaPalette style={{ fontSize: 18, color: '#ff0080' }} />, action: () => window.location.href = "/creative-corner" },
     { key: "discussion-panel", label: "Discussion Panel", icon: <FaUser style={{ fontSize: 18 }} /> },
-    { key: "notifications", label: "Notifications", icon: <FaBell style={{ fontSize: 18 }} /> },
-    { key: "delete-account", label: "Delete Account", icon: <FaTrashAlt style={{ fontSize: 18, color: '#c00' }} />, action: () => window.location.href = "/delete-account" },
+    { key: "notifications", label: "Notifications", icon: <FaBell style={{ fontSize: 18 }} /> }
   ];
   return (
     <>
@@ -91,7 +90,7 @@ function AdminSidebar({ userEmail, userPhoto, onMenuSelect, selectedMenu, isSupe
             ))}
           </nav>
           <button
-            onClick={() => { logout(); window.location.href = "/login"; }}
+            onClick={async () => { await logout(); window.location.href = "/login"; }}
             style={{
               margin: "32px auto 0 auto",
               width: "80%",
@@ -121,14 +120,12 @@ const menuItems = [
   { key: "cbse-updates", label: "CBSE Updates" },
   { key: "mindmap", label: "Mind Map" },
   { key: "reports", label: "Reports" },
-  { key: "settings", label: "Settings" },
   { key: "profile", label: "Profile" },
   { key: "avlrs", label: "AVLRs" },
   { key: "dlrs", label: "DLRs" },
   { key: "creative-corner", label: "Creative Corner" },
   { key: "discussion-panel", label: "Discussion Panel" },
-  { key: "notifications", label: "Notifications" },
-  { key: "delete-account", label: "Delete Account" },
+  { key: "notifications", label: "Notifications" }
 ];
 
 export default function AdminDashboardPage() {

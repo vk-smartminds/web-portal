@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { BASE_API_URL } from "../../utils/apiurl";
-import { setToken, setUserData, getToken, isAuthenticated, isTokenExpired } from "../../utils/auth";
+import { setToken, setUserData, getToken, isAuthenticated, isTokenExpired, setSessionId } from "../../utils/auth";
 import useOtpTimer from "./useOtpTimer";
 
 export default function useLogin() {
@@ -71,6 +71,7 @@ export default function useLogin() {
       if (adminRes.ok) {
         const data = await adminRes.json();
         setToken(data.token);
+        if (data.sessionId) setSessionId(data.sessionId);
         setUserData(data.admin);
         localStorage.setItem("userEmail", cleanEmail);
         localStorage.setItem("isSuperAdmin", data.admin.isSuperAdmin ? "true" : "false");
@@ -94,6 +95,7 @@ export default function useLogin() {
       if (studentRes.ok) {
         const data = await studentRes.json();
         setToken(data.token);
+        if (data.sessionId) setSessionId(data.sessionId);
         setUserData(data.user);
         localStorage.setItem("userEmail", cleanEmail);
         setMsg("Student login successful!");
@@ -116,6 +118,7 @@ export default function useLogin() {
       if (teacherRes.ok) {
         const data = await teacherRes.json();
         setToken(data.token);
+        if (data.sessionId) setSessionId(data.sessionId);
         setUserData(data.user);
         localStorage.setItem("userEmail", cleanEmail);
         setMsg("Teacher login successful!");
@@ -138,6 +141,7 @@ export default function useLogin() {
       if (guardianRes.ok) {
         const data = await guardianRes.json();
         setToken(data.token);
+        if (data.sessionId) setSessionId(data.sessionId);
         setUserData(data.user);
         localStorage.setItem("userEmail", cleanEmail);
         setMsg("Parent login successful!");
@@ -227,6 +231,9 @@ export default function useLogin() {
             const superData = await superRes.json();
             isSuperAdmin = !!superData.isSuperAdmin;
           }
+          // Add setSessionId if present
+          const data = await res.json();
+          if (data.sessionId) setSessionId(data.sessionId);
           localStorage.setItem("userEmail", cleanEmail);
           localStorage.setItem("isSuperAdmin", isSuperAdmin ? "true" : "false");
           setMsg("Admin login successful!");
@@ -249,9 +256,8 @@ export default function useLogin() {
       });
       if (res.ok) {
         const data = await res.json();
-        setMsg("OTP login successful!");
-        setError("");
         setToken(data.token);
+        if (data.sessionId) setSessionId(data.sessionId);
         setUserData(data.user);
         localStorage.setItem("userEmail", cleanEmail);
         if (data.user && data.user.role) {

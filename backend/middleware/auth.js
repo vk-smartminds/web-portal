@@ -32,6 +32,7 @@ export const authenticateToken = async (req, res, next) => {
     }
     req.user = user;
     req.user.role = decoded.role; // Attach role from token
+    if (decoded.sessionId) req.user.sessionId = decoded.sessionId;
     next();
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
@@ -44,8 +45,10 @@ export const authenticateToken = async (req, res, next) => {
   }
 };
 
-export const generateToken = (userId, role) => {
-  return jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '7d' });
+export const generateToken = (userId, role, sessionId) => {
+  const payload = { userId, role };
+  if (sessionId) payload.sessionId = sessionId;
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
 };
 
 export const verifyToken = (token) => {

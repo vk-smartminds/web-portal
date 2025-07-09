@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { FaClipboardList, FaBookOpen, FaChartBar, FaBullhorn, FaCalendarAlt, FaEnvelope, FaLaptop, FaUser, FaTrashAlt, FaFilePdf, FaPalette, FaFileVideo, FaBell, FaRegListAlt } from "react-icons/fa";
+import { FaClipboardList, FaBookOpen, FaChartBar, FaBullhorn, FaCalendarAlt, FaEnvelope, FaLaptop, FaUser, FaTrashAlt, FaFilePdf, FaPalette, FaFileVideo, FaBell, FaRegListAlt, FaCog } from "react-icons/fa";
 import DashboardCommon from "../DashboardCommon";
 import { getToken, logout } from "../../utils/auth.js";
 import ProtectedRoute from '../../components/ProtectedRoute';
@@ -31,8 +31,8 @@ function StudentSidebar({ userEmail, userPhoto, userName, onMenuSelect, selected
     { key: "books", label: "Books", icon: <FaBookOpen style={{ fontSize: 18 }} /> },
     { key: "performance", label: "Performance", icon: <FaChartBar style={{ fontSize: 18 }} /> },
     { key: "profile", label: "Profile", icon: <FaUser style={{ fontSize: 18 }} />, action: () => window.location.href = "/student/profile" },
-    { key: "delete-account", label: "Delete Account", icon: <FaTrashAlt style={{ fontSize: 18, color: '#c00' }} />, action: () => window.location.href = "/delete-account" },
     { key: "notifications", label: "Notifications", icon: <FaBell style={{ fontSize: 18 }} /> },
+    { key: "settings", label: "Settings", icon: <FaCog style={{ fontSize: 18 }} />, action: () => window.location.href = "/student/settings" }
   ];
   return (
     <>
@@ -91,7 +91,7 @@ function StudentSidebar({ userEmail, userPhoto, userName, onMenuSelect, selected
             ))}
           </nav>
           <button
-            onClick={() => { logout(); window.location.href = "/login"; }}
+            onClick={async () => { await logout(); window.location.href = "/login"; }}
             style={{
               margin: "32px auto 0 auto",
               width: "80%",
@@ -126,8 +126,8 @@ const menuItems = [
   { key: "books", label: "Books" },
   { key: "performance", label: "Performance" },
   { key: "profile", label: "Profile" },
-  { key: "delete-account", label: "Delete Account" },
   { key: "notifications", label: "Notifications" },
+  { key: "settings", label: "Settings" }
 ];
 
 export default function StudentDashboardPage() {

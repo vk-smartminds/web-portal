@@ -174,8 +174,8 @@ export default function ProfileMenu({ userEmail, userData, avatarStyle, onProfil
     }
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.replace('/login');
   };
 
