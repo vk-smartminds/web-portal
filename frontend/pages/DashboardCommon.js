@@ -66,11 +66,11 @@ export default function DashboardCommon({
           setUserPhoto('');
         });
     }
-  }, [customProfileFetch, profileFields]);
+  }, []); // Only create once
 
   useEffect(() => {
     fetchProfile();
-  }, [fetchProfile]);
+  }, []); // Only run once on mount
 
   useEffect(() => {
     if (form.photo && typeof form.photo === "object" && form.photo instanceof File) {
