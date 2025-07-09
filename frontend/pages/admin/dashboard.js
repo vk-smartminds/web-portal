@@ -32,7 +32,8 @@ function AdminSidebar({ userEmail, userPhoto, onMenuSelect, selectedMenu, isSupe
     { key: "dlrs", label: "DLRs", icon: <FaFilePdf style={{ fontSize: 18 }} />, action: () => window.location.href = "/dlrs" },
     { key: "creative-corner", label: "Creative Corner", icon: <FaPalette style={{ fontSize: 18, color: '#ff0080' }} />, action: () => window.location.href = "/creative-corner" },
     { key: "discussion-panel", label: "Discussion Panel", icon: <FaUser style={{ fontSize: 18 }} /> },
-    { key: "notifications", label: "Notifications", icon: <FaBell style={{ fontSize: 18 }} /> }
+    { key: "notifications", label: "Notifications", icon: <FaBell style={{ fontSize: 18 }} /> },
+    { key: "quiz", label: "QUIZ", icon: <FaTasks style={{ fontSize: 18 }} />, action: () => window.location.href = "/quiz/admin" }
   ];
   return (
     <>
