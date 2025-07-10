@@ -59,6 +59,9 @@ export default function ViewAdmins({ userEmail, isSuperAdmin }) {
       </div>
       {adminViewMode === 'all' && (
         <div style={{ maxHeight: 350, overflowY: 'auto', border: '1px solid #eee', borderRadius: 8, padding: 8 }}>
+          {admins.length > 0 && (
+            <div style={{ fontWeight: 600, color: '#1e3c72', marginBottom: 10 }}>Total number of admins = {admins.length}</div>
+          )}
           {admins.length === 0 ? (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 80 }}>
               <div className="spinner" style={{ width: 40, height: 40, border: '5px solid #eee', borderTop: '5px solid #1e3c72', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />

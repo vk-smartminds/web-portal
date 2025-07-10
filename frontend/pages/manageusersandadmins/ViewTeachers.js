@@ -72,6 +72,9 @@ export default function ViewTeachers({ userEmail, isSuperAdmin }) {
       {teacherViewMode === 'all' && (
         <div>
           {allStatus && <div style={{ color: "#c00", marginBottom: 16 }}>{allStatus}</div>}
+          {allTeachers.length > 0 && (
+            <div style={{ fontWeight: 600, color: '#1e3c72', marginBottom: 10 }}>Total number of teachers = {allTeachers.length}</div>
+          )}
           {allTeachers.length > 0 ? (
             <div style={{ maxHeight: 350, overflowY: 'auto', border: '1px solid #eee', borderRadius: 8, padding: 8 }}>
               {allTeachers.map((teacher, idx) => (
