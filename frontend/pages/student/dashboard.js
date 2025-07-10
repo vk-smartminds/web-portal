@@ -32,7 +32,7 @@ function StudentSidebar({ userEmail, userPhoto, userName, onMenuSelect, selected
     { key: "performance", label: "Performance", icon: <FaChartBar style={{ fontSize: 18 }} /> },
     { key: "profile", label: "Profile", icon: <FaUser style={{ fontSize: 18 }} />, action: () => window.location.href = "/student/profile" },
     { key: "notifications", label: "Notifications", icon: <FaBell style={{ fontSize: 18 }} /> },
-    { key: "settings", label: "Settings", icon: <FaCog style={{ fontSize: 18 }} />, action: () => window.location.href = "/student/settings" }
+    { key: "settings", label: "Settings", icon: <FaCog style={{ fontSize: 18 }} />, action: () => window.location.href = "/settings" }
   ];
   return (
     <>

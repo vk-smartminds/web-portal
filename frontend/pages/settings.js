@@ -1,11 +1,10 @@
 import React, { useRef, useState } from "react";
-import ProtectedRoute from "../../components/ProtectedRoute";
+import ProtectedRoute from "../components/ProtectedRoute";
 import { FaKey, FaEnvelope, FaUserEdit, FaCogs, FaBell, FaPaintBrush, FaShieldAlt, FaCreditCard, FaLifeRing, FaEye, FaEyeSlash, FaInstagram, FaTwitter, FaFacebook, FaYoutube, FaTrashAlt } from "react-icons/fa";
-import { BASE_API_URL } from "../../utils/apiurl";
-import { getToken } from "../../utils/auth";
-import { getUserData } from "../../utils/auth";
-import useOtpTimer from "../../components/Login/useOtpTimer";
-import LoginActivityTable from "../../components/LoginActivityTable";
+import { BASE_API_URL } from "../utils/apiurl";
+import { getToken, getUserData } from "../utils/auth";
+import useOtpTimer from "../components/Login/useOtpTimer";
+import LoginActivityTable from "../components/LoginActivityTable";
 
 const boxStyle = (active) => ({
   background: active ? "linear-gradient(90deg,#e0e7ff 0%,#f7fafd 100%)" : "#fff",
@@ -28,8 +27,22 @@ const boxStyle = (active) => ({
   outline: "none"
 });
 
-export default function GuardianSettingsPage() {
+export default function SettingsPage() {
+  // Add CSS for spinner animation
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
   const [activeFeature, setActiveFeature] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+  
   // Password change state
   const [step, setStep] = useState(1);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -64,6 +77,25 @@ export default function GuardianSettingsPage() {
   const [notifSuccess, setNotifSuccess] = useState("");
   const [notifError, setNotifError] = useState("");
   const handleNotifToggle = (key) => setNotifSettings(s => ({ ...s, [key]: !s[key] }));
+
+  // Privacy settings state
+  const [privacy, setPrivacy] = useState(null);
+  const [privacyLoading, setPrivacyLoading] = useState(false);
+  const [privacyError, setPrivacyError] = useState("");
+  const [privacySuccess, setPrivacySuccess] = useState("");
+
+  // Get user role from JWT token
+  React.useEffect(() => {
+    const token = getToken();
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setUserRole(payload.role ? payload.role.toLowerCase() : null);
+      } catch (err) {
+        console.error('Error parsing token:', err);
+      }
+    }
+  }, []);
 
   React.useEffect(() => {
     if (activeFeature === "notification-settings") {
@@ -113,11 +145,6 @@ export default function GuardianSettingsPage() {
     }
   };
 
-  // Privacy settings state
-  const [privacy, setPrivacy] = useState(null);
-  const [privacyLoading, setPrivacyLoading] = useState(false);
-  const [privacyError, setPrivacyError] = useState("");
-  const [privacySuccess, setPrivacySuccess] = useState("");
   React.useEffect(() => {
     if (activeFeature === "privacy-settings") {
       setPrivacyLoading(true);
@@ -136,19 +163,31 @@ export default function GuardianSettingsPage() {
         });
     }
   }, [activeFeature]);
+
   const handlePrivacyToggle = (key) => setPrivacy(p => ({ ...p, [key]: !p[key] }));
+  
   const handlePrivacySave = async () => {
     setPrivacyLoading(true);
     setPrivacyError("");
     setPrivacySuccess("");
     try {
+      let privacyData = privacy;
+      
+      // For students, filter allowed privacy fields
+      if (userRole === 'student') {
+        const allowedPrivacyFields = ['name', 'email', 'phone', 'school', 'class', 'photo', 'guardian', 'role'];
+        privacyData = Object.fromEntries(
+          Object.entries(privacy || {}).filter(([key]) => allowedPrivacyFields.includes(key))
+        );
+      }
+      
       const res = await fetch(`${BASE_API_URL}/profile-visibility`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${getToken()}`
         },
-        body: JSON.stringify(privacy)
+        body: JSON.stringify(privacyData)
       });
       const data = await res.json();
       if (!res.ok) {
@@ -195,10 +234,21 @@ export default function GuardianSettingsPage() {
     }
   };
 
+  // Get profile URL based on user role
+  const getProfileUrl = () => {
+    switch (userRole) {
+      case 'admin': return "/admin/profile";
+      case 'student': return "/student/profile";
+      case 'teacher': return "/teacher/profile";
+      case 'guardian': return "/guardian/profile";
+      default: return "/";
+    }
+  };
+
   const features = [
     { key: "change-password", label: "Change Password", icon: <FaKey style={{ fontSize: 36, marginBottom: 10, color: '#1e3c72' }} />, desc: "Update your account password", ref: changePasswordRef },
     { key: "alternative-email", label: "Alternative Email", icon: <FaEnvelope style={{ fontSize: 36, marginBottom: 10, color: '#1e3c72' }} />, desc: "Add or update an alternative email", ref: alternativeEmailRef },
-    { key: "update-profile", label: "Update Profile", icon: <FaUserEdit style={{ fontSize: 36, marginBottom: 10, color: '#1e3c72' }} />, desc: "Edit your profile information", ref: updateProfileRef, action: () => window.location.href = "/guardian/profile" },
+    { key: "update-profile", label: "Update Profile", icon: <FaUserEdit style={{ fontSize: 36, marginBottom: 10, color: '#1e3c72' }} />, desc: "Edit your profile information", ref: updateProfileRef, action: () => window.location.href = getProfileUrl() },
     { key: "account-settings", label: "Account Settings", icon: <FaCogs style={{ fontSize: 36, marginBottom: 10, color: '#1e3c72' }} />, desc: "Manage your account settings, delete your account, and view login activity", ref: accountSettingsRef },
     { key: "notification-settings", label: "Notification Settings", icon: <FaBell style={{ fontSize: 36, marginBottom: 10, color: '#1e3c72' }} />, desc: "Control your notifications", ref: notificationSettingsRef },
     { key: "appearance", label: "Appearance", icon: <FaPaintBrush style={{ fontSize: 36, marginBottom: 10, color: '#1e3c72' }} />, desc: "Theme and appearance options", ref: appearanceRef },
@@ -622,49 +672,66 @@ export default function GuardianSettingsPage() {
           </div>
           <div ref={notificationSettingsRef} style={{ display: activeFeature === "notification-settings" ? 'block' : 'none', background: '#fff', borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32 }}>
             <h3 style={{ fontWeight: 700, fontSize: 22, marginBottom: 18, color: "#1e3c72" }}>Notification Settings</h3>
-            <div style={{ maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 22 }}>
-              {notifSettings && [
-                { key: 'announcements', label: 'Announcements' },
-                { key: 'discussionReplies', label: 'Discussion Replies' },
-                { key: 'assignmentDeadlines', label: 'Assignment Deadlines' },
-                { key: 'newResources', label: 'New Resources Added' },
-                { key: 'systemUpdates', label: 'System Updates' }
-              ].map(opt => (
-                <label key={opt.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 17, fontWeight: 600, color: '#1e3c72', background: '#f7f8fa', borderRadius: 8, padding: '12px 18px', border: '1.5px solid #e0e0e0', cursor: 'pointer' }}>
-                  <span>{opt.label}</span>
-                  <span style={{ marginLeft: 18 }}>
-                    <input type="checkbox" checked={!!notifSettings[opt.key]} onChange={() => handleNotifToggle(opt.key)} style={{ display: 'none' }} />
-                    <span style={{
-                      display: 'inline-block',
-                      width: 44,
-                      height: 24,
-                      background: notifSettings[opt.key] ? '#1e3c72' : '#ccc',
-                      borderRadius: 16,
-                      position: 'relative',
-                      transition: 'background 0.18s',
-                      verticalAlign: 'middle',
-                      cursor: 'pointer'
-                    }}>
-                      <span style={{
-                        position: 'absolute',
-                        left: notifSettings[opt.key] ? 22 : 2,
-                        top: 2,
-                        width: 20,
-                        height: 20,
-                        background: '#fff',
-                        borderRadius: '50%',
-                        boxShadow: '0 1px 4px #0002',
-                        transition: 'left 0.18s',
-                        border: '1.5px solid #e0e0e0'
-                      }} />
-                    </span>
-                  </span>
-                </label>
-              ))}
-            </div>
-            <button onClick={handleNotifSave} style={{ background: '#1e3c72', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 28px', fontWeight: 600, fontSize: 17, cursor: 'pointer', minWidth: 120 }} disabled={notifLoading}>Save</button>
-            {notifSuccess && <div style={{ color: '#28a745', marginTop: 10 }}>{notifSuccess}</div>}
-            {notifError && <div style={{ color: '#c00', marginTop: 10 }}>{notifError}</div>}
+            {notifLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px 0' }}>
+                <div style={{ 
+                  width: 40, 
+                  height: 40, 
+                  border: '4px solid #f3f3f3', 
+                  borderTop: '4px solid #1e3c72', 
+                  borderRadius: '50%', 
+                  animation: 'spin 1s linear infinite' 
+                }}></div>
+                <span style={{ marginLeft: 12, fontSize: 16, color: '#1e3c72' }}>Loading notification settings...</span>
+              </div>
+            ) : notifError ? (
+              <div style={{ color: '#c00', padding: '20px 0', fontSize: 16 }}>{notifError}</div>
+            ) : (
+              <>
+                <div style={{ maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 22 }}>
+                  {notifSettings && [
+                    { key: 'announcements', label: 'Announcements' },
+                    { key: 'discussionReplies', label: 'Discussion Replies' },
+                    { key: 'assignmentDeadlines', label: 'Assignment Deadlines' },
+                    { key: 'newResources', label: 'New Resources Added' },
+                    { key: 'systemUpdates', label: 'System Updates' }
+                  ].map(opt => (
+                    <label key={opt.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 17, fontWeight: 600, color: '#1e3c72', background: '#f7f8fa', borderRadius: 8, padding: '12px 18px', border: '1.5px solid #e0e0e0', cursor: 'pointer' }}>
+                      <span>{opt.label}</span>
+                      <span style={{ marginLeft: 18 }}>
+                        <input type="checkbox" checked={!!notifSettings[opt.key]} onChange={() => handleNotifToggle(opt.key)} style={{ display: 'none' }} />
+                        <span style={{
+                          display: 'inline-block',
+                          width: 44,
+                          height: 24,
+                          background: notifSettings[opt.key] ? '#1e3c72' : '#ccc',
+                          borderRadius: 16,
+                          position: 'relative',
+                          transition: 'background 0.18s',
+                          verticalAlign: 'middle',
+                          cursor: 'pointer'
+                        }}>
+                          <span style={{
+                            position: 'absolute',
+                            left: notifSettings[opt.key] ? 22 : 2,
+                            top: 2,
+                            width: 20,
+                            height: 20,
+                            background: '#fff',
+                            borderRadius: '50%',
+                            boxShadow: '0 1px 4px #0002',
+                            transition: 'left 0.18s',
+                            border: '1.5px solid #e0e0e0'
+                          }} />
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <button onClick={handleNotifSave} style={{ background: '#1e3c72', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 28px', fontWeight: 600, fontSize: 17, cursor: 'pointer', minWidth: 120 }} disabled={notifLoading}>Save</button>
+                {notifSuccess && <div style={{ color: '#28a745', marginTop: 10 }}>{notifSuccess}</div>}
+              </>
+            )}
           </div>
           <div ref={appearanceRef} style={{ display: activeFeature === "appearance" ? 'block' : 'none', background: '#fff', borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32 }}>
             <h3 style={{ fontWeight: 700, fontSize: 22, marginBottom: 18, color: "#1e3c72" }}>Appearance</h3>
@@ -672,7 +739,21 @@ export default function GuardianSettingsPage() {
           </div>
           <div ref={privacySettingsRef} style={{ display: activeFeature === "privacy-settings" ? 'block' : 'none', background: '#fff', borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32 }}>
             <h3 style={{ fontWeight: 700, fontSize: 22, marginBottom: 18, color: "#1e3c72" }}>Privacy Settings</h3>
-            {privacyLoading ? <div>Loading...</div> : privacyError ? <div style={{ color: '#c00' }}>{privacyError}</div> : (
+            {privacyLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px 0' }}>
+                <div style={{ 
+                  width: 40, 
+                  height: 40, 
+                  border: '4px solid #f3f3f3', 
+                  borderTop: '4px solid #1e3c72', 
+                  borderRadius: '50%', 
+                  animation: 'spin 1s linear infinite' 
+                }}></div>
+                <span style={{ marginLeft: 12, fontSize: 16, color: '#1e3c72' }}>Loading privacy settings...</span>
+              </div>
+            ) : privacyError ? (
+              <div style={{ color: '#c00', padding: '20px 0', fontSize: 16 }}>{privacyError}</div>
+            ) : (
               <>
                 <div style={{ maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 22, marginBottom: 18 }}>
                   {privacy && Object.entries(privacy).map(([key, value]) => (

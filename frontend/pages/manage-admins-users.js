@@ -587,17 +587,24 @@ function ManageAdminsUsersPage() {
                         />
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        {Object.entries(admin).map(([key, value]) => {
-                          if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds") {
-                            return (
-                              <div key={key} style={{ display: "flex", gap: 10 }}>
-                                <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
-                                <span style={{ color: "#222" }}>{String(value) || "-"}</span>
-                              </div>
-                            );
-                          }
-                          return null;
-                        })}
+                                              {/* Display name at the top */}
+                      {admin.name && (
+                        <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+                          <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>Name:</span>
+                          <span style={{ color: "#222", fontWeight: 500 }}>{admin.name}</span>
+                        </div>
+                      )}
+                      {Object.entries(admin).map(([key, value]) => {
+                        if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds" && key !== "name" && key !== "profileVisibility" && key !== "notificationSettings") {
+                          return (
+                            <div key={key} style={{ display: "flex", gap: 10 }}>
+                              <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
+                              <span style={{ color: "#222" }}>{String(value) || "-"}</span>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })}
                       </div>
                     </div>
                   ))
@@ -632,8 +639,15 @@ function ManageAdminsUsersPage() {
                       />
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {/* Display name at the top */}
+                      {searchedAdmin.name && (
+                        <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+                          <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>Name:</span>
+                          <span style={{ color: "#222", fontWeight: 500 }}>{searchedAdmin.name}</span>
+                        </div>
+                      )}
                       {Object.entries(searchedAdmin).map(([key, value]) => {
-                        if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds") {
+                        if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds" && key !== "name" && key !== "profileVisibility" && key !== "notificationSettings") {
                           return (
                             <div key={key} style={{ display: "flex", gap: 10 }}>
                               <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
@@ -679,19 +693,26 @@ function ManageAdminsUsersPage() {
                     style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e0e0e0', background: '#f7fafd' }}
                   />
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {Object.entries(searchedUser).map(([key, value]) => {
-                    if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds") {
-                      return (
-                        <div key={key} style={{ display: "flex", gap: 10 }}>
-                          <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
-                          <span style={{ color: "#222" }}>{String(value) || "-"}</span>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {/* Display name at the top */}
+                      {searchedUser.name && (
+                        <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+                          <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>Name:</span>
+                          <span style={{ color: "#222", fontWeight: 500 }}>{searchedUser.name}</span>
                         </div>
-                      );
-                    }
-                    return null;
-                  })}
-                </div>
+                      )}
+                      {Object.entries(searchedUser).map(([key, value]) => {
+                        if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds" && key !== "name" && key !== "profileVisibility" && key !== "notificationSettings") {
+                          return (
+                            <div key={key} style={{ display: "flex", gap: 10 }}>
+                              <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
+                              <span style={{ color: "#222" }}>{String(value) || "-"}</span>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
                 <button
                   onClick={() => setShowDeleteModal(true)}
                   style={{ marginTop: 18, background: "#c0392b", color: "#fff", border: "none", borderRadius: 6, padding: "10px 28px", fontWeight: 600, cursor: "pointer" }}
@@ -750,6 +771,13 @@ function ManageAdminsUsersPage() {
                             style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e0e0e0', background: '#f7fafd' }}
                           />
                         </div>
+                        {/* Display name at the top */}
+                        {student.name && (
+                          <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+                            <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>Name:</span>
+                            <span style={{ color: "#222", fontWeight: 500 }}>{student.name}</span>
+                          </div>
+                        )}
                         {Object.entries(student).map(([key, value]) => {
                           if (key === "guardian" && Array.isArray(value) && value.length > 0) {
                             return (
@@ -776,7 +804,7 @@ function ManageAdminsUsersPage() {
                               </div>
                             );
                           }
-                          if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds") {
+                          if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds" && key !== "name" && key !== "profileVisibility" && key !== "notificationSettings") {
                             return (
                               <div key={key} style={{ display: "flex", gap: 10 }}>
                                 <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
@@ -813,6 +841,13 @@ function ManageAdminsUsersPage() {
                           style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e0e0e0', background: '#f7fafd' }}
                         />
                       </div>
+                      {/* Display name at the top */}
+                      {searchedStudent.name && (
+                        <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+                          <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>Name:</span>
+                          <span style={{ color: "#222", fontWeight: 500 }}>{searchedStudent.name}</span>
+                        </div>
+                      )}
                       {Object.entries(searchedStudent).map(([key, value]) => {
                         if (key === "guardian" && Array.isArray(value) && value.length > 0) {
                           return (
@@ -839,7 +874,7 @@ function ManageAdminsUsersPage() {
                             </div>
                           );
                         }
-                        if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds") {
+                        if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds" && key !== "name" && key !== "profileVisibility" && key !== "notificationSettings") {
                           return (
                             <div key={key} style={{ display: "flex", gap: 10 }}>
                               <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
@@ -877,8 +912,15 @@ function ManageAdminsUsersPage() {
                             style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e0e0e0', background: '#f7fafd' }}
                           />
                         </div>
+                        {/* Display name at the top */}
+                        {teacher.name && (
+                          <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+                            <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>Name:</span>
+                            <span style={{ color: "#222", fontWeight: 500 }}>{teacher.name}</span>
+                          </div>
+                        )}
                         {Object.entries(teacher).map(([key, value]) => {
-                          if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds") {
+                          if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds" && key !== "name" && key !== "profileVisibility" && key !== "notificationSettings") {
                             return (
                               <div key={key} style={{ display: "flex", gap: 10 }}>
                                 <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
@@ -915,6 +957,13 @@ function ManageAdminsUsersPage() {
                           style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e0e0e0', background: '#f7fafd' }}
                         />
                       </div>
+                      {/* Display name at the top */}
+                      {searchedTeacher.name && (
+                        <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+                          <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>Name:</span>
+                          <span style={{ color: "#222", fontWeight: 500 }}>{searchedTeacher.name}</span>
+                        </div>
+                      )}
                       {Object.entries(searchedTeacher).map(([key, value]) => {
                         if (key === "guardian" && Array.isArray(value) && value.length > 0) {
                           return (
@@ -941,7 +990,7 @@ function ManageAdminsUsersPage() {
                             </div>
                           );
                         }
-                        if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds") {
+                        if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds" && key !== "name" && key !== "profileVisibility" && key !== "notificationSettings") {
                           return (
                             <div key={key} style={{ display: "flex", gap: 10 }}>
                               <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
@@ -979,6 +1028,13 @@ function ManageAdminsUsersPage() {
                             style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e0e0e0', background: '#f7fafd' }}
                           />
                         </div>
+                        {/* Display name at the top */}
+                        {guardian.name && (
+                          <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+                            <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>Name:</span>
+                            <span style={{ color: "#222", fontWeight: 500 }}>{guardian.name}</span>
+                          </div>
+                        )}
                         {Object.entries(guardian).map(([key, value]) => {
                           if (key === "child" && Array.isArray(value) && value.length > 0) {
                             return (
@@ -1005,7 +1061,7 @@ function ManageAdminsUsersPage() {
                               </div>
                             );
                           }
-                          if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds") {
+                          if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds" && key !== "name" && key !== "profileVisibility" && key !== "notificationSettings") {
                             return (
                               <div key={key} style={{ display: "flex", gap: 10 }}>
                                 <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
@@ -1042,6 +1098,13 @@ function ManageAdminsUsersPage() {
                           style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e0e0e0', background: '#f7fafd' }}
                         />
                       </div>
+                      {/* Display name at the top */}
+                      {searchedGuardian.name && (
+                        <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+                          <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>Name:</span>
+                          <span style={{ color: "#222", fontWeight: 500 }}>{searchedGuardian.name}</span>
+                        </div>
+                      )}
                       {Object.entries(searchedGuardian).map(([key, value]) => {
                         if (key === "child" && Array.isArray(value) && value.length > 0) {
                           return (
@@ -1068,7 +1131,7 @@ function ManageAdminsUsersPage() {
                             </div>
                           );
                         }
-                        if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds") {
+                        if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds" && key !== "name" && key !== "profileVisibility" && key !== "notificationSettings") {
                           return (
                             <div key={key} style={{ display: "flex", gap: 10 }}>
                               <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>

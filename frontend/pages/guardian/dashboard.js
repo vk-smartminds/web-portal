@@ -31,7 +31,7 @@ function ParentSidebar({ userEmail, userPhoto, userName, onMenuSelect, selectedM
     { key: "creative-corner", label: "Creative Corner", icon: <FaPalette style={{ fontSize: 18, color: '#ff0080' }} />, action: () => window.location.href = "/creative-corner" },
     { key: "discussion-panel", label: "Discussion Panel", icon: <FaUser style={{ fontSize: 18 }} /> },
     { key: "notifications", label: "Notifications", icon: <FaBell style={{ fontSize: 18 }} /> },
-    { key: "settings", label: "Settings", icon: <FaCog style={{ fontSize: 18 }} />, action: () => window.location.href = "/guardian/settings" }
+    { key: "settings", label: "Settings", icon: <FaCog style={{ fontSize: 18 }} />, action: () => window.location.href = "/settings" }
   ];
   return (
     <>
