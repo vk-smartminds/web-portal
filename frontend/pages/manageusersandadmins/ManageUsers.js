@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BASE_API_URL } from "../../utils/apiurl";
 import { getToken } from "../../utils/auth";
 
@@ -8,6 +8,46 @@ export default function ManageUsers({ userEmail, isSuperAdmin }) {
   const [searchStatus, setSearchStatus] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteStatus, setDeleteStatus] = useState("");
+  const [students, setStudents] = useState([]);
+  const [teachers, setTeachers] = useState([]);
+  const [guardians, setGuardians] = useState([]);
+  const [admins, setAdmins] = useState([]);
+
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    // Fetch all students
+    fetch(`${BASE_API_URL}/admin/all-students`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+      body: JSON.stringify({ requesterEmail: userEmail })
+    })
+      .then(res => res.json())
+      .then(data => setStudents(data.students || []))
+      .catch(() => setStudents([]));
+    // Fetch all teachers
+    fetch(`${BASE_API_URL}/admin/all-teachers`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+      body: JSON.stringify({ requesterEmail: userEmail })
+    })
+      .then(res => res.json())
+      .then(data => setTeachers(data.teachers || []))
+      .catch(() => setTeachers([]));
+    // Fetch all guardians
+    fetch(`${BASE_API_URL}/admin/all-guardians`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+      body: JSON.stringify({ requesterEmail: userEmail })
+    })
+      .then(res => res.json())
+      .then(data => setGuardians(data.guardians || []))
+      .catch(() => setGuardians([]));
+    // Fetch all admins
+    fetch(`${BASE_API_URL}/getadmins`)
+      .then(res => res.json())
+      .then(data => setAdmins(data.admins || []))
+      .catch(() => setAdmins([]));
+  }, [isSuperAdmin, userEmail]);
 
   const handleUserSearch = async (e) => {
     e.preventDefault();
@@ -70,6 +110,15 @@ export default function ManageUsers({ userEmail, isSuperAdmin }) {
   return (
     <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32, maxWidth: 600, margin: "0 auto" }}>
       <h3 style={{ fontWeight: 700, fontSize: 22, marginBottom: 18, color: "#1e3c72" }}>Manage Users</h3>
+      {isSuperAdmin && (
+        <div style={{ marginBottom: 18, color: '#1e3c72', fontWeight: 600 }}>
+          <div>Total number of students = {students.length}</div>
+          <div>Total number of teachers = {teachers.length}</div>
+          <div>Total number of guardians = {guardians.length}</div>
+          <div>Total number of admins = {admins.length}</div>
+          <div style={{ marginTop: 6 }}>Total number of users = {students.length + teachers.length + guardians.length + admins.length}</div>
+        </div>
+      )}
       <form onSubmit={handleUserSearch} style={{ display: "flex", gap: 12, marginBottom: 24 }}>
         <input
           type="email"

@@ -330,6 +330,39 @@ export const getAllGuardiansForAdmin = async (req, res) => {
   }
 };
 
+// Fetch students by class (superadmin only)
+export const getStudentsByClass = async (req, res) => {
+  try {
+    const { class: className, requesterEmail } = req.body;
+    const requester = await Admin.findOne({ email: requesterEmail });
+    if (!requester || !requester.isSuperAdmin) {
+      return res.status(403).json({ message: 'Forbidden: Only superadmin can perform this action.' });
+    }
+    if (!className) {
+      return res.status(400).json({ message: 'Class is required' });
+    }
+    // Case-insensitive class match
+    let students = await Student.find({ class: { $regex: `^${className}$`, $options: 'i' } }, '-password -__v -guardianIds -quizIds -profileVisibility -notificationSettings');
+    students = students.map(s => {
+      const obj = s.toObject();
+      delete obj.quizIds;
+      delete obj.guardianIds;
+      delete obj.profileVisibility;
+      delete obj.notificationSettings;
+      if (obj.photo && obj.photo.data) {
+        obj.photo = `data:${obj.photo.contentType};base64,${obj.photo.data.toString('base64')}`;
+      } else {
+        obj.photo = null;
+      }
+      obj.guardian = Array.isArray(obj.guardian) ? obj.guardian : [];
+      return obj;
+    });
+    res.json({ students });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching students by class', error: err.message });
+  }
+};
+
 // Get login activity for a user by userId and userRole (superadmin only)
 export const getUserLoginActivity = async (req, res) => {
   try {
