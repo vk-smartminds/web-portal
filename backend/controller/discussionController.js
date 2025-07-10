@@ -108,6 +108,17 @@ const postUpload = multer({
 });
 export { threadUpload, postUpload };
 
+// Utility to normalize user model string
+function normalizeUserModel(role) {
+  if (!role) return 'Student';
+  const r = role.toLowerCase();
+  if (r === 'student') return 'Student';
+  if (r === 'teacher') return 'Teacher';
+  if (r === 'guardian') return 'Guardian';
+  if (r === 'admin') return 'Admin';
+  return 'Student';
+}
+
 // Create a thread
 export const createThread = async (req, res) => {
   try {
@@ -132,7 +143,7 @@ export const createThread = async (req, res) => {
       body,
       tags: tagsArr,
       createdBy: req.user._id,
-      createdByModel: req.user.role.charAt(0).toUpperCase() + req.user.role.slice(1),
+      createdByModel: normalizeUserModel(req.user.role),
       images,
       posts: [],
       votes: []
@@ -301,10 +312,11 @@ export const addPost = async (req, res) => {
     if (!thread) {
       return res.status(404).json({ message: 'Thread not found' });
     }
+    const model = normalizeUserModel(req.user.role);
     const newPost = {
       body,
       createdBy: req.user._id,
-      createdByModel: req.user.role.charAt(0).toUpperCase() + req.user.role.slice(1),
+      createdByModel: model,
       parentPost: parentPost || null,
       votes: [],
       images,
@@ -344,11 +356,12 @@ export const voteThread = async (req, res) => {
     if (!thread) {
       return res.status(404).json({ message: 'Thread not found' });
     }
-    thread.votes = thread.votes.filter(vote => !(vote.user.toString() === req.user._id.toString() && vote.userModel === req.user.role.charAt(0).toUpperCase() + req.user.role.slice(1)));
+    const model = normalizeUserModel(req.user.role);
+    thread.votes = thread.votes.filter(vote => !(vote.user.toString() === req.user._id.toString() && vote.userModel === model));
     if (value !== 0) {
       thread.votes.push({
         user: req.user._id,
-        userModel: req.user.role.charAt(0).toUpperCase() + req.user.role.slice(1),
+        userModel: model,
         value
       });
     }
@@ -379,8 +392,9 @@ export const votePost = async (req, res) => {
     if (![1, 0, -1].includes(value)) {
       return res.status(400).json({ message: 'Invalid vote value' });
     }
+    const model = normalizeUserModel(req.user.role);
     const userId = req.user._id;
-    const userModel = req.user.role.charAt(0).toUpperCase() + req.user.role.slice(1);
+    const userModel = model;
     const thread = await DiscussionThread.findOne({ _id: threadId, 'posts._id': postId }, { 'posts.$': 1 });
     if (!thread || !thread.posts || thread.posts.length === 0) {
       return res.status(404).json({ message: 'Post not found' });
@@ -418,7 +432,7 @@ export const editThread = async (req, res) => {
     const { threadId } = req.params;
     const thread = await DiscussionThread.findById(threadId);
     if (!thread) return res.status(404).json({ message: 'Thread not found' });
-    if (thread.createdBy.toString() !== req.user._id.toString() || thread.createdByModel !== req.user.role.charAt(0).toUpperCase() + req.user.role.slice(1)) {
+    if (thread.createdBy.toString() !== req.user._id.toString() || thread.createdByModel !== normalizeUserModel(req.user.role)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
     const { title, body, tags, removeImages } = req.body;
@@ -455,7 +469,7 @@ export const deleteThread = async (req, res) => {
     const { threadId } = req.params;
     const thread = await DiscussionThread.findById(threadId);
     if (!thread) return res.status(404).json({ message: 'Thread not found' });
-    if (thread.createdBy.toString() !== req.user._id.toString() || thread.createdByModel !== req.user.role.charAt(0).toUpperCase() + req.user.role.slice(1)) {
+    if (thread.createdBy.toString() !== req.user._id.toString() || thread.createdByModel !== normalizeUserModel(req.user.role)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
     thread.deleted = true;
@@ -477,7 +491,7 @@ export const editPost = async (req, res) => {
     if (!thread) return res.status(404).json({ message: 'Thread not found' });
     const post = thread.posts.id(postId);
     if (!post) return res.status(404).json({ message: 'Post not found' });
-    if (post.createdBy.toString() !== req.user._id.toString() || post.createdByModel !== req.user.role.charAt(0).toUpperCase() + req.user.role.slice(1)) {
+    if (post.createdBy.toString() !== req.user._id.toString() || post.createdByModel !== normalizeUserModel(req.user.role)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
     const { body, removeImages } = req.body;
@@ -514,7 +528,7 @@ export const deletePost = async (req, res) => {
     if (!thread) return res.status(404).json({ message: 'Thread not found' });
     const post = thread.posts.id(postId);
     if (!post) return res.status(404).json({ message: 'Post not found' });
-    if (post.createdBy.toString() !== req.user._id.toString() || post.createdByModel !== req.user.role.charAt(0).toUpperCase() + req.user.role.slice(1)) {
+    if (post.createdBy.toString() !== req.user._id.toString() || post.createdByModel !== normalizeUserModel(req.user.role)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
     post.deleted = true;
@@ -533,9 +547,10 @@ export const deletePost = async (req, res) => {
 export const getDiscussionNotifications = async (req, res) => {
   try {
     console.time('getDiscussionNotifications');
+    const model = normalizeUserModel(req.user.role);
     const notifications = await DiscussionNotification.find({
       user: req.user._id,
-      userModel: req.user.role.charAt(0).toUpperCase() + req.user.role.slice(1)
+      userModel: model
     })
       .sort({ createdAt: -1 })
       .populate('thread', 'title')
@@ -552,11 +567,12 @@ export const getDiscussionNotifications = async (req, res) => {
 export const markDiscussionNotificationRead = async (req, res) => {
   try {
     const { id } = req.params;
+    const model = normalizeUserModel(req.user.role);
     const notification = await DiscussionNotification.findOneAndUpdate(
       {
         _id: id,
         user: req.user._id,
-        userModel: req.user.role.charAt(0).toUpperCase() + req.user.role.slice(1)
+        userModel: model
       },
       { isRead: true },
       { new: true }
@@ -572,10 +588,11 @@ export const markDiscussionNotificationRead = async (req, res) => {
 export const deleteDiscussionNotification = async (req, res) => {
   try {
     const { id } = req.params;
+    const model = normalizeUserModel(req.user.role);
     const notification = await DiscussionNotification.findOneAndDelete({
       _id: id,
       user: req.user._id,
-      userModel: req.user.role.charAt(0).toUpperCase() + req.user.role.slice(1)
+      userModel: model
     });
     if (!notification) return res.status(404).json({ message: 'Notification not found' });
     res.json({ message: 'Notification deleted' });

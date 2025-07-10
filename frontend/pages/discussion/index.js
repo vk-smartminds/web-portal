@@ -11,6 +11,7 @@ import {
   deleteDiscussionPost,
   searchDiscussionThreads
 } from '../../service/api';
+import { getToken } from '../../utils/auth.js';
 
 // Helper to build a tree from flat posts array, sorted by upvotes
 function buildPostTree(posts) {
@@ -60,7 +61,7 @@ function getCurrentUser() {
   }
 }
 
-function PostTree({ post, onReply, onVote, getVoteCount, getUserVote, replyingTo, setReplyingTo, replyBody, setReplyBody, replyImagesByPostId, setReplyImagesByPostId, currentUser, onEdit, onDelete, setImagePreview, highlightId }) {
+function PostTree({ post, onReply, onVote, getVoteCount, getUserVote, replyingTo, setReplyingTo, replyBody, setReplyBody, replyBodyByPostId, setReplyBodyByPostId, replyImagesByPostId, setReplyImagesByPostId, currentUser, onEdit, onDelete, setImagePreview, highlightId }) {
   const [highlight, setHighlight] = React.useState(false);
   const postRef = React.useRef();
   React.useEffect(() => {
@@ -109,12 +110,12 @@ function PostTree({ post, onReply, onVote, getVoteCount, getUserVote, replyingTo
             <button
               onClick={() => onVote(post._id, 1)}
               style={{
-                background: getUserVote(post.votes, currentUser?._id) === 1 ? 'rgba(255,69,0,0.08)' : 'none',
+                background: getUserVote(post.votes, currentUser?._id, currentUser?.role) === 1 ? 'rgba(255,69,0,0.08)' : 'none',
                 border: 'none',
                 cursor: 'pointer',
                 fontSize: 22,
-                color: getUserVote(post.votes, currentUser?._id) === 1 ? '#ff4500' : '#888',
-                fontWeight: getUserVote(post.votes, currentUser?._id) === 1 ? 700 : 400,
+                color: getUserVote(post.votes, currentUser?._id, currentUser?.role) === 1 ? '#ff4500' : '#888',
+                fontWeight: getUserVote(post.votes, currentUser?._id, currentUser?.role) === 1 ? 700 : 400,
                 borderRadius: 4,
                 padding: '2px 6px',
                 transition: 'background 0.2s, color 0.2s',
@@ -125,12 +126,12 @@ function PostTree({ post, onReply, onVote, getVoteCount, getUserVote, replyingTo
             <button
               onClick={() => onVote(post._id, -1)}
               style={{
-                background: getUserVote(post.votes, currentUser?._id) === -1 ? 'rgba(113,147,255,0.08)' : 'none',
+                background: getUserVote(post.votes, currentUser?._id, currentUser?.role) === -1 ? 'rgba(113,147,255,0.08)' : 'none',
                 border: 'none',
                 cursor: 'pointer',
                 fontSize: 22,
-                color: getUserVote(post.votes, currentUser?._id) === -1 ? '#7193ff' : '#888',
-                fontWeight: getUserVote(post.votes, currentUser?._id) === -1 ? 700 : 400,
+                color: getUserVote(post.votes, currentUser?._id, currentUser?.role) === -1 ? '#7193ff' : '#888',
+                fontWeight: getUserVote(post.votes, currentUser?._id, currentUser?.role) === -1 ? 700 : 400,
                 borderRadius: 4,
                 padding: '2px 6px',
                 transition: 'background 0.2s, color 0.2s',
@@ -174,8 +175,10 @@ function PostTree({ post, onReply, onVote, getVoteCount, getUserVote, replyingTo
               getUserVote={getUserVote}
               replyingTo={replyingTo}
               setReplyingTo={setReplyingTo}
-              replyBody={replyBody}
-              setReplyBody={setReplyBody}
+              replyBodyByPostId={replyBodyByPostId}
+              setReplyBodyByPostId={setReplyBodyByPostId}
+              replyBody={replyBodyByPostId[child._id] || ''}
+              setReplyBody={body => setReplyBodyByPostId(prev => ({ ...prev, [child._id]: body }))}
               replyImagesByPostId={replyImagesByPostId}
               setReplyImagesByPostId={setReplyImagesByPostId}
               currentUser={currentUser}
@@ -203,7 +206,7 @@ function ReplyForm({ onSubmit, value, onChange, onCancel, images = [], setImages
         value={value}
         onChange={e => onChange(e.target.value)}
         rows={2}
-        style={{ width: '100%', padding: 8, fontSize: 15, borderRadius: 6, border: '1px solid #ddd' }}
+        style={{ width: '100%', padding: 8, fontSize: 15, borderRadius: 6, border: '1px solid #ddd', height: 80, resize: 'none' }}
       />
       <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 12 }}>
         <label style={{ display: 'inline-block', background: '#eee', color: '#333', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>
@@ -245,7 +248,8 @@ export default function DiscussionPanel() {
   const [mainReplyBody, setMainReplyBody] = useState('');
   const [replyBody, setReplyBody] = useState('');
   const [replyingTo, setReplyingTo] = useState(null);
-  const [nestedReplyBody, setNestedReplyBody] = useState('');
+  // Per-post reply input state for nested replies
+  const [replyBodyByPostId, setReplyBodyByPostId] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [tagFilter, setTagFilter] = useState([]);
@@ -404,7 +408,7 @@ export default function DiscussionPanel() {
       formData.append('parentPost', parentPostId);
       (files || []).forEach((file) => formData.append('images', file));
       await addDiscussionPost(selectedThread._id, formData);
-      setNestedReplyBody('');
+      setReplyBodyByPostId(prev => ({ ...prev, [parentPostId]: '' }));
       setReplyingTo(null);
       setReplyImagesByPostId(prev => ({ ...prev, [parentPostId]: [] }));
       const res = await fetchDiscussionThread(selectedThread._id);
@@ -415,82 +419,130 @@ export default function DiscussionPanel() {
   };
 
   const handleVoteThread = async (threadId, value) => {
+    setPendingThreadVote(threadId);
+    const token = getToken();
+    const thread = threads.find(t => t._id === threadId);
+    const userId = currentUser?._id;
+    const userRole = currentUser?.role;
+    const currentVote = thread?.votes?.find(v => v.user === userId && v.userModel === userRole);
+
+    let newValue = value;
+    if (currentVote && currentVote.value === value) {
+      newValue = 0; // toggle off
+    }
+
+    // Track the intended vote for this user
+    const intendedVote = newValue;
+
+    // Optimistically update UI
+    setThreads(prev => prev.map(t => {
+      if (t._id !== threadId) return t;
+      let newVotes = t.votes.filter(v => !(v.user === userId && v.userModel === userRole));
+      if (newValue !== 0) newVotes.push({ user: userId, userModel: userRole, value: newValue });
+      return { ...t, votes: newVotes };
+    }));
+
     try {
-      setPendingThreadVote(threadId);
-      const token = localStorage.getItem('token');
-      const threadIdx = threads.findIndex(t => t._id === threadId);
-      const userId = currentUser?._id;
-      const userRole = currentUser?.role;
-      const currentVote = threads[threadIdx]?.votes?.find(v => v.user === userId && v.userModel === userRole) || null;
-      let newValue = value;
-      if (currentVote && currentVote.value === value) {
-        newValue = 0;
-      }
-      // Optimistically update UI
-      setThreads(prev => prev.map(t => {
-        if (t._id !== threadId) return t;
-        let newVotes = t.votes.filter(v => !(v.user === userId && v.userModel === userRole));
-        if (newValue !== 0) newVotes.push({ user: userId, userModel: userRole, value: newValue });
-        return { ...t, votes: newVotes };
-      }));
       await voteThread(threadId, newValue, token);
-      // Always sync with server after vote
-      const res = await fetchDiscussionThread(threadId);
-      setThreads(prev => prev.map(t => t._id === threadId ? { ...t, ...res.data } : t));
-      if (selectedThread && selectedThread._id === threadId) {
-        setSelectedThread(res.data);
-      }
+      // Fetch latest thread data in background
+      // fetchDiscussionThread(threadId).then(res => {
+      //   // Only update if backend vote matches intended vote
+      //   const backendVote = res.data.votes.find(v => v.user === userId && v.userModel === userRole)?.value || 0;
+      //   if (backendVote === intendedVote) {
+      //     setThreads(prev => prev.map(t => t._id === threadId ? { ...t, ...res.data } : t));
+      //     if (selectedThread && selectedThread._id === threadId) {
+      //       setSelectedThread(res.data);
+      //     }
+      //   }
+      //   // else: ignore backend response, user has already changed vote again
+      // });
+      // Fetch latest thread data but only apply if backend vote matches the user’s last action
+      fetchDiscussionThread(threadId).then(res => {
+        const backendVoteObj = res.data.votes.find(v =>
+          v.user === userId && v.userModel === userRole
+        );
+        const backendVote = backendVoteObj ? backendVoteObj.value : 0;
+        if (backendVote === intendedVote) {
+          setThreads(prev => prev.map(t =>
+            t._id === threadId ? { ...t, ...res.data } : t
+          ));
+          if (selectedThread?._id === threadId) {
+            setSelectedThread(res.data);
+          }
+        }
+      });
     } catch (err) {
-      setError('Failed to vote');
-      // Revert optimistic update
-      fetchThreads();
+      setError('Vote failed. Please try again.');
     } finally {
       setPendingThreadVote(null);
     }
   };
 
   const handleVotePost = async (postId, value) => {
+    setPendingPostVote(postId);
+    const token = getToken();
+    const post = selectedThread.posts.find(p => p._id === postId);
+    const userId = currentUser?._id;
+    const userRole = currentUser?.role;
+    const currentVote = post && post.votes ? post.votes.find(v => v.user === userId && v.userModel === userRole) : null;
+
+    let newValue = value;
+    if (currentVote && currentVote.value === value) {
+      newValue = 0; // toggle off
+    }
+
+    // Track the intended vote for this user
+    const intendedVote = newValue;
+
+    // Optimistically update UI
+    setSelectedThread(prev => ({
+      ...prev,
+      posts: prev.posts.map(p => {
+        if (p._id !== postId) return p;
+        let newVotes = p.votes.filter(v => !(v.user === userId && v.userModel === userRole));
+        if (newValue !== 0) newVotes.push({ user: userId, userModel: userRole, value: newValue });
+        return { ...p, votes: newVotes };
+      })
+    }));
+
     try {
-      setPendingPostVote(postId);
-      const token = localStorage.getItem('token');
-      const post = selectedThread.posts.find(p => p._id === postId);
-      const userId = currentUser?._id;
-      const userRole = currentUser?.role;
-      const currentVote = post && post.votes ? post.votes.find(v => v.user === userId && v.userModel === userRole) : null;
-      let newValue = value;
-      if (currentVote && currentVote.value === value) {
-        newValue = 0;
-      }
-      // Optimistically update UI
-      setSelectedThread(prev => ({
-        ...prev,
-        posts: prev.posts.map(p => {
-          if (p._id !== postId) return p;
-          let newVotes = p.votes.filter(v => !(v.user === userId && v.userModel === userRole));
-          if (newValue !== 0) newVotes.push({ user: userId, userModel: userRole, value: newValue });
-          return { ...p, votes: newVotes };
-        })
-      }));
       await votePost(selectedThread._id, postId, newValue, token);
-      // Always sync with server after vote
-      const res = await fetchDiscussionThread(selectedThread._id);
-      setSelectedThread(res.data);
+      // Fetch latest post data in background
+      // fetchDiscussionThread(selectedThread._id).then(res => {
+      //   // Only update if backend vote matches intended vote
+      //   const backendPost = res.data.posts.find(p => p._id === postId);
+      //   const backendVote = backendPost?.votes.find(v => v.user === userId && v.userModel === userRole)?.value || 0;
+      //   if (backendVote === intendedVote) {
+      //     setSelectedThread(res.data);
+      //   }
+      //   // else: ignore backend response, user has already changed vote again
+      // });
+            // Fetch latest post data but only apply if backend vote matches the user’s last action
+     fetchDiscussionThread(selectedThread._id).then(res => {
+           const backendPost = res.data.posts.find(p => p._id === postId);
+           const backendVoteObj = backendPost?.votes?.find(v =>
+              v.user === userId && v.userModel === userRole
+                 );
+            const backendVote = backendVoteObj ? backendVoteObj.value : 0;
+          if (backendVote === intendedVote) {
+           setSelectedThread(res.data);
+              }
+           });
     } catch (err) {
-      setError('Failed to vote');
-      // Revert optimistic update
-      const res = await fetchDiscussionThread(selectedThread._id);
-      setSelectedThread(res.data);
+      setError('Vote failed. Please try again.');
     } finally {
       setPendingPostVote(null);
     }
   };
 
   const getVoteCount = (votes) => {
+    if (!Array.isArray(votes)) return 0;
     return votes.reduce((sum, vote) => sum + vote.value, 0);
   };
 
-  const getUserVote = (votes, userId) => {
-    const vote = votes.find(v => v.user === userId);
+  const getUserVote = (votes, userId, userRole) => {
+    if (!Array.isArray(votes)) return 0;
+    const vote = votes.find(v => v.user === userId && v.userModel === userRole);
     return vote ? vote.value : 0;
   };
 
@@ -585,6 +637,13 @@ export default function DiscussionPanel() {
     setSearchResults([]);
     setSearchError('');
   };
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(''), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   // --- Reusable Style Objects ---
   const fontFamily = 'Arial, sans-serif';
@@ -826,7 +885,7 @@ export default function DiscussionPanel() {
                   border: 'none', 
                   cursor: 'pointer', 
                   fontSize: 20,
-                  color: getUserVote(selectedThread.votes, 'current-user-id') === 1 ? '#ff4500' : '#888'
+                  color: getUserVote(selectedThread.votes, currentUser?._id, currentUser?.role) === 1 ? '#ff4500' : '#888'
                 }}
                 disabled={pendingThreadVote === selectedThread._id}
               >
@@ -840,7 +899,7 @@ export default function DiscussionPanel() {
                   border: 'none', 
                   cursor: 'pointer', 
                   fontSize: 20,
-                  color: getUserVote(selectedThread.votes, 'current-user-id') === -1 ? '#7193ff' : '#888'
+                  color: getUserVote(selectedThread.votes, currentUser?._id, currentUser?.role) === -1 ? '#7193ff' : '#888'
                 }}
                 disabled={pendingThreadVote === selectedThread._id}
               >
@@ -876,8 +935,10 @@ export default function DiscussionPanel() {
                 getUserVote={getUserVote}
                 replyingTo={replyingTo}
                 setReplyingTo={setReplyingTo}
-                replyBody={nestedReplyBody}
-                setReplyBody={setNestedReplyBody}
+                replyBodyByPostId={replyBodyByPostId}
+                setReplyBodyByPostId={setReplyBodyByPostId}
+                replyBody={replyBodyByPostId[rootPost._id] || ''}
+                setReplyBody={body => setReplyBodyByPostId(prev => ({ ...prev, [rootPost._id]: body }))}
                 replyImagesByPostId={replyImagesByPostId}
                 setReplyImagesByPostId={setReplyImagesByPostId}
                 currentUser={currentUser}
@@ -926,7 +987,7 @@ export default function DiscussionPanel() {
 
   return (
     <div style={{ maxWidth: 800, margin: '40px auto', padding: 24, background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px #eee' }}>
-      <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 16 }}>Discussion Panel</h2>
+      <h2 className='text-2xl font-bold'>Discussion Panel</h2>
       
       {/* Search Bar */}
       <form onSubmit={handleSearch} style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
@@ -954,8 +1015,8 @@ export default function DiscussionPanel() {
               {(Array.isArray(searchResults) ? searchResults : []).map(thread => {
                   // For search results, threadId is the correct field for opening
                 const threadId = thread.threadId || thread._id;
-                const voteCount = (thread.votes || []).reduce((sum, v) => sum + v.value, 0);
-                const userVote = thread.votes?.find(v => v.user === currentUser?._id && v.userModel === currentUser?.role)?.value || 0;
+                const voteCount = getVoteCount(thread.votes || []);
+                const userVote = getUserVote(thread.votes || [], currentUser?._id, currentUser?.role);
                 const hover = hoveredThreadId === threadId;
                 return (
                   <div
@@ -1071,7 +1132,7 @@ export default function DiscussionPanel() {
           value={body}
           onChange={e => setBody(e.target.value)}
           rows={4}
-          style={{ width: '100%', padding: 10, fontSize: 16, borderRadius: 6, border: '1.5px solid #e0e0e0', marginBottom: 12 }}
+          style={{ width: '100%', padding: 10, fontSize: 16, borderRadius: 6, border: '1.5px solid #e0e0e0', marginBottom: 12, height: 120, resize: 'none' }}
         />
         <div style={{ marginBottom: 10 }}>
           <label style={{ display: 'inline-block', background: '#eee', color: '#333', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>
@@ -1171,8 +1232,8 @@ export default function DiscussionPanel() {
       ) : (
         <div style={threadCardContainer}>
           {(Array.isArray(filteredThreads) ? filteredThreads : []).map(thread => {
-            const voteCount = (thread.votes || []).reduce((sum, v) => sum + v.value, 0);
-            const userVote = thread.votes?.find(v => v.user === currentUser?._id && v.userModel === currentUser?.role)?.value || 0;
+            const voteCount = getVoteCount(thread.votes || []);
+            const userVote = getUserVote(thread.votes || [], currentUser?._id, currentUser?.role);
             const hover = hoveredThreadId === thread._id;
             return (
               <div
