@@ -150,5 +150,7 @@ router.get('/api/discussion/notifications', authenticateToken, getDiscussionNoti
 router.post('/api/discussion/notifications/:id/read', authenticateToken, markDiscussionNotificationRead);
 router.delete('/api/discussion/notifications/:id', authenticateToken, deleteDiscussionNotification);
 
+// New route for searching posts
+router.get('/api/discussion/posts/search', discussionController.searchPosts);
 
 export default router;

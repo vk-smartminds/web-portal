@@ -282,10 +282,7 @@ function StudentDashboard() {
     setUserEmail(localStorage.getItem("userEmail") || "");
   }, []);
 
-  useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
-
+  // Only fetch profile on mount and when user visits profile menu
   useEffect(() => {
     if (selectedMenu === "profile" && userEmail) {
       fetchProfile();
