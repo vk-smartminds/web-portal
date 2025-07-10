@@ -26,7 +26,6 @@ function StudentSidebar({ userEmail, userPhoto, userName, onMenuSelect, selected
     { key: "profile", label: "Profile", icon: <FaUser style={{ fontSize: 18 }} /> },
     { key: "delete-account", label: "Delete Account", icon: <span style={{fontSize:18, color:'#c00'}}>🗑️</span> },
     { key: "notifications", label: "Notifications", icon: <FaBell style={{ fontSize: 18 }} /> },
-  
   ];
   return (
     <aside style={{
@@ -1662,5 +1661,11 @@ function PDFWithLoader({ url }) {
     </div>
   );
 }
+
+// const Dashboard = () => {
+//   return <div className="bg-blue-200">Dashboard</div>
+// }
+
+// export default Dashboard
 
 
