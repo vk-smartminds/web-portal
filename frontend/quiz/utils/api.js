@@ -1,3 +1,5 @@
+import { BASE_API_URL } from '../../utils/apiurl';
+
 // Get available subjects for a class
 export async function getAvailableSubjects(className) {
   const params = new URLSearchParams();
@@ -7,7 +9,7 @@ export async function getAvailableSubjects(className) {
   return res.json();
 }
 // Quiz API utility
-const BASE_URL = 'http://localhost:8000/api'; // Updated to main backend server
+const BASE_URL = BASE_API_URL;
 
 // Get available chapters for a class/subject
 export async function getAvailableChapters(className, subject) {

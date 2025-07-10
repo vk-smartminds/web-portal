@@ -5,6 +5,8 @@ import { getQuiz, submitQuiz } from '../utils/api';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { getStudentIdFromJWT } from '../../utils/auth';
 import axios from 'axios';
+import { getToken } from '../../utils/auth';
+import { BASE_API_URL } from '../../utils/apiurl';
 
 // --- Palette Color Helpers ---
 const paletteColor = s => s === 'attempted' ? '#22c55e' : s === 'review' ? '#eab308' : '#cbd5e1';
@@ -49,6 +51,7 @@ function QuizInfoPage({ quiz, onStart }) {
 function QuizAttemptPage() {
   const router = useRouter();
   const { quizId } = router.query;
+  const [isReady, setIsReady] = useState(false);
   const [quiz, setQuiz] = useState(null);
   const [current, setCurrent] = useState(0);
   const [responses, setResponses] = useState([]);
@@ -61,6 +64,7 @@ function QuizAttemptPage() {
   const [studentProfile, setStudentProfile] = useState(null);
   const [showInfo, setShowInfo] = useState(true);
   const [isQuizActive, setIsQuizActive] = useState(true); // Track if quiz is still active
+  const [jwt, setJwt] = useState(null);
 
   // --- Local Storage Key ---
   const LS_KEY = quizId ? `quiz_attempt_${quizId}` : null;
@@ -82,9 +86,14 @@ function QuizAttemptPage() {
     return null;
   }
 
-  // Fetch quiz data
   useEffect(() => {
-    if (!quizId) return;
+    if (router.isReady && quizId) {
+      setIsReady(true);
+    }
+  }, [router.isReady, quizId]);
+
+  useEffect(() => {
+    if (!isReady) return;
     setLoading(true);
     getQuiz(quizId)
       .then(q => {
@@ -119,15 +128,34 @@ function QuizAttemptPage() {
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
-  }, [quizId]);
+  }, [isReady, quizId]);
 
   useEffect(() => {
+    if (!isReady) return;
     const id = getStudentIdFromJWT();
     if (!id) return;
-    axios.get(`/api/student/${id}`)
+    // Debug: Log student ID and JWT payload
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('jwt_token');
+      const payload = token ? JSON.parse(atob(token.split('.')[1])) : null;
+      console.log('DEBUG [quizId].js] Student ID:', id, 'JWT payload:', payload);
+    }
+    axios.get(`${BASE_API_URL}/student/${id}`)
       .then(res => setStudentProfile(res.data))
-      .catch(() => setStudentProfile({ error: true }));
-  }, []);
+      .catch(err => {
+        if (err.response && err.response.status === 404) {
+          setStudentProfile({ error: true, message: 'Student profile not found. Please log out and register/login again.' });
+        } else {
+          setStudentProfile({ error: true, message: 'Failed to fetch student profile.' });
+        }
+      });
+  }, [isReady]);
+
+  useEffect(() => {
+    if (!isReady) return;
+    setJwt(getToken());
+    console.log('DEBUG [quizId].js] JWT token on mount (useEffect):', getToken());
+  }, [isReady]);
 
   // Timer countdown
   useEffect(() => {
@@ -185,6 +213,9 @@ function QuizAttemptPage() {
     };
   }, [isQuizActive]);
 
+  if (!isReady) {
+    return <div>Loading...</div>;
+  }
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   if (error) return <div className="min-h-screen flex items-center justify-center text-red-500">{error}</div>;
   if (!quiz) return null;
@@ -458,7 +489,9 @@ function QuizAttemptPage() {
         {/* Student Info */}
         <div style={{ marginBottom: 24, textAlign: 'center' }}>
           <div style={{ fontWeight: 700, fontSize: 16, color: '#2563eb', marginBottom: 2 }}>Student Info</div>
-          {studentProfile ? (
+          {studentProfile && studentProfile.error ? (
+            <div style={{ color: 'red', fontWeight: 600, marginBottom: 16 }}>{studentProfile.message}</div>
+          ) : studentProfile ? (
             <>
               <img
                 src={studentProfile.profilePhotoUrl || '/default-avatar.png'}
