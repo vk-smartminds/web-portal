@@ -2,6 +2,7 @@ import Admin from '../models/Admin.js';
 import Student from '../models/Student.js';
 import Guardian from '../models/Guardian.js';
 import Teacher from '../models/Teacher.js';
+import Session from '../models/Session.js';
 
 // Find a user by email (superadmin only)
 export const findUserByEmail = async (req, res) => {
@@ -229,5 +230,149 @@ export const getAllGuardians = async (req, res) => {
     res.json({ guardians: processedGuardians });
   } catch (err) {
     res.status(500).json({ message: 'Error fetching guardians', error: err.message });
+  }
+};
+
+// New: Allow any admin to fetch all students
+export const getAllStudentsForAdmin = async (req, res) => {
+  try {
+    const { requesterEmail } = req.body;
+    const requester = await Admin.findOne({ email: requesterEmail });
+    if (!requester) {
+      return res.status(403).json({ message: 'Forbidden: Only admin can perform this action.' });
+    }
+    let students = await Student.find({}, '-password -__v -guardianIds -quizIds -profileVisibility -notificationSettings');
+    students = students.map(s => {
+      const obj = s.toObject();
+      delete obj.quizIds;
+      delete obj.guardianIds;
+      delete obj.profileVisibility;
+      delete obj.notificationSettings;
+      if (obj.photo && obj.photo.data) {
+        obj.photo = `data:${obj.photo.contentType};base64,${obj.photo.data.toString('base64')}`;
+      } else {
+        obj.photo = null;
+      }
+      obj.guardian = Array.isArray(obj.guardian) ? obj.guardian : [];
+      return obj;
+    });
+    res.json({ students });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching students', error: err.message });
+  }
+};
+
+// New: Allow any admin to fetch all teachers
+export const getAllTeachersForAdmin = async (req, res) => {
+  try {
+    const { requesterEmail } = req.body;
+    const requester = await Admin.findOne({ email: requesterEmail });
+    if (!requester) {
+      return res.status(403).json({ message: 'Forbidden: Only admin can perform this action.' });
+    }
+    let teachers = await Teacher.find({}, '-password -__v -guardianIds -quizIds -profileVisibility -notificationSettings');
+    teachers = teachers.map(t => {
+      const obj = t.toObject();
+      delete obj.quizIds;
+      delete obj.guardianIds;
+      delete obj.profileVisibility;
+      delete obj.notificationSettings;
+      if (obj.photo && obj.photo.data) {
+        obj.photo = `data:${obj.photo.contentType};base64,${obj.photo.data.toString('base64')}`;
+      } else {
+        obj.photo = null;
+      }
+      return obj;
+    });
+    res.json({ teachers });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching teachers', error: err.message });
+  }
+};
+
+// New: Allow any admin to fetch all guardians
+export const getAllGuardiansForAdmin = async (req, res) => {
+  try {
+    const { requesterEmail } = req.body;
+    const requester = await Admin.findOne({ email: requesterEmail });
+    if (!requester) {
+      return res.status(403).json({ message: 'Forbidden: Only admin can perform this action.' });
+    }
+    let guardians = await Guardian.find({}, '-password -__v -guardianIds -quizIds -profileVisibility -notificationSettings');
+    const processedGuardians = [];
+    for (const g of guardians) {
+      const obj = g.toObject();
+      delete obj.quizIds;
+      delete obj.guardianIds;
+      delete obj.profileVisibility;
+      delete obj.notificationSettings;
+      if (obj.photo && obj.photo.data) {
+        obj.photo = `data:${obj.photo.contentType};base64,${obj.photo.data.toString('base64')}`;
+      } else {
+        obj.photo = null;
+      }
+      obj.child = Array.isArray(obj.child) ? obj.child : [];
+      for (const child of obj.child) {
+        if (!child.class || child.class === '') {
+          const student = await Student.findOne({ email: child.email });
+          if (student && student.class) {
+            child.class = student.class;
+          } else {
+            child.class = '';
+          }
+        }
+      }
+      processedGuardians.push(obj);
+    }
+    res.json({ guardians: processedGuardians });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching guardians', error: err.message });
+  }
+};
+
+// Get login activity for a user by userId and userRole (superadmin only)
+export const getUserLoginActivity = async (req, res) => {
+  try {
+    const { userId, userRole } = req.body;
+    if (!userId || !userRole) {
+      return res.status(400).json({ message: 'Missing userId or userRole' });
+    }
+    const sessions = await Session.find({ userId, userRole }).sort({ 'login.timestamp': -1 });
+    res.json({ sessions });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching login activity', error: err.message });
+  }
+};
+
+// Get all sessions (for login statistics)
+export const getAllSessions = async (req, res) => {
+  try {
+    const sessions = await Session.find({});
+    res.json({ sessions });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching sessions', error: err.message });
+  }
+};
+
+// Helper to get user by id and role
+async function getUserByIdAndRole(userId, userRole) {
+  if (!userId || !userRole) return null;
+  let user = null;
+  if (userRole === 'Student') user = await Student.findById(userId);
+  else if (userRole === 'Teacher') user = await Teacher.findById(userId);
+  else if (userRole === 'Guardian') user = await Guardian.findById(userId);
+  else if (userRole === 'Admin') user = await Admin.findById(userId);
+  return user;
+}
+
+// API: Get user basic info (email, name) by id and role
+export const getUserBasicInfo = async (req, res) => {
+  try {
+    const { userId, userRole } = req.body;
+    const user = await getUserByIdAndRole(userId, userRole);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ email: user.email || '', name: user.name || '' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching user info', error: err.message });
   }
 };
