@@ -13,10 +13,10 @@ export const findUserByEmail = async (req, res) => {
       return res.status(403).json({ message: 'Forbidden: Only superadmin can perform this action.' });
     }
     // Search in all user collections
-    let user = await Student.findOne({ email: email.trim().toLowerCase() }).select('-password -__v');
-    if (!user) user = await Guardian.findOne({ email: email.trim().toLowerCase() }).select('-password -__v');
-    if (!user) user = await Teacher.findOne({ email: email.trim().toLowerCase() }).select('-password -__v');
-    if (!user) user = await Admin.findOne({ email: email.trim().toLowerCase() }).select('-password -__v');
+    let user = await Student.findOne({ email: email.trim().toLowerCase() }).select('-password -__v -profileVisibility -notificationSettings');
+    if (!user) user = await Guardian.findOne({ email: email.trim().toLowerCase() }).select('-password -__v -profileVisibility -notificationSettings');
+    if (!user) user = await Teacher.findOne({ email: email.trim().toLowerCase() }).select('-password -__v -profileVisibility -notificationSettings');
+    if (!user) user = await Admin.findOne({ email: email.trim().toLowerCase() }).select('-password -__v -profileVisibility -notificationSettings');
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json({ user });
   } catch (err) {
@@ -55,7 +55,7 @@ export const findStudentByEmail = async (req, res) => {
     if (!requester || !requester.isSuperAdmin) {
       return res.status(403).json({ message: 'Forbidden: Only superadmin can perform this action.' });
     }
-    let user = await Student.findOne({ email: email.trim().toLowerCase() }).select('-password -__v');
+    let user = await Student.findOne({ email: email.trim().toLowerCase() }).select('-password -__v -profileVisibility -notificationSettings');
     if (!user) return res.status(404).json({ message: 'Student not found' });
     user = user.toObject();
     user.guardian = Array.isArray(user.guardian) ? user.guardian : [];
@@ -77,7 +77,7 @@ export const findTeacherByEmail = async (req, res) => {
     if (!requester || !requester.isSuperAdmin) {
       return res.status(403).json({ message: 'Forbidden: Only superadmin can perform this action.' });
     }
-    let user = await Teacher.findOne({ email: email.trim().toLowerCase() }).select('-password -__v');
+    let user = await Teacher.findOne({ email: email.trim().toLowerCase() }).select('-password -__v -profileVisibility -notificationSettings');
     if (!user) return res.status(404).json({ message: 'Teacher not found' });
     user = user.toObject();
     if (user.photo && user.photo.data) {
@@ -98,10 +98,24 @@ export const findGuardianByEmail = async (req, res) => {
     if (!requester || !requester.isSuperAdmin) {
       return res.status(403).json({ message: 'Forbidden: Only superadmin can perform this action.' });
     }
-    let user = await Guardian.findOne({ email: email.trim().toLowerCase() }).select('-password -__v');
+    let user = await Guardian.findOne({ email: email.trim().toLowerCase() }).select('-password -__v -profileVisibility -notificationSettings');
     if (!user) return res.status(404).json({ message: 'Guardian not found' });
     user = user.toObject();
     user.child = Array.isArray(user.child) ? user.child : [];
+    
+    // Update child class information if missing
+    for (const child of user.child) {
+      if (!child.class || child.class === '') {
+        // Fetch class from Student schema using child email
+        const student = await Student.findOne({ email: child.email });
+        if (student && student.class) {
+          child.class = student.class;
+        } else {
+          child.class = '';
+        }
+      }
+    }
+    
     if (user.photo && user.photo.data) {
       user.photo = `data:${user.photo.contentType};base64,${user.photo.data.toString('base64')}`;
     } else {
@@ -120,11 +134,13 @@ export const getAllStudents = async (req, res) => {
     if (!requester || !requester.isSuperAdmin) {
       return res.status(403).json({ message: 'Forbidden: Only superadmin can perform this action.' });
     }
-    let students = await Student.find({}, '-password -__v -guardianIds -quizIds');
+    let students = await Student.find({}, '-password -__v -guardianIds -quizIds -profileVisibility -notificationSettings');
     students = students.map(s => {
       const obj = s.toObject();
       delete obj.quizIds;
       delete obj.guardianIds;
+      delete obj.profileVisibility;
+      delete obj.notificationSettings;
       // Set photo as base64 data URL or null
       if (obj.photo && obj.photo.data) {
         obj.photo = `data:${obj.photo.contentType};base64,${obj.photo.data.toString('base64')}`;
@@ -148,11 +164,13 @@ export const getAllTeachers = async (req, res) => {
     if (!requester || !requester.isSuperAdmin) {
       return res.status(403).json({ message: 'Forbidden: Only superadmin can perform this action.' });
     }
-    let teachers = await Teacher.find({}, '-password -__v -guardianIds -quizIds');
+    let teachers = await Teacher.find({}, '-password -__v -guardianIds -quizIds -profileVisibility -notificationSettings');
     teachers = teachers.map(t => {
       const obj = t.toObject();
       delete obj.quizIds;
       delete obj.guardianIds;
+      delete obj.profileVisibility;
+      delete obj.notificationSettings;
       // Set photo as base64 data URL or null
       if (obj.photo && obj.photo.data) {
         obj.photo = `data:${obj.photo.contentType};base64,${obj.photo.data.toString('base64')}`;
@@ -174,22 +192,41 @@ export const getAllGuardians = async (req, res) => {
     if (!requester || !requester.isSuperAdmin) {
       return res.status(403).json({ message: 'Forbidden: Only superadmin can perform this action.' });
     }
-    let guardians = await Guardian.find({}, '-password -__v -guardianIds -quizIds');
-    guardians = guardians.map(g => {
+    let guardians = await Guardian.find({}, '-password -__v -guardianIds -quizIds -profileVisibility -notificationSettings');
+    
+    // Process guardians and update child class information
+    const processedGuardians = [];
+    for (const g of guardians) {
       const obj = g.toObject();
       delete obj.quizIds;
       delete obj.guardianIds;
+      delete obj.profileVisibility;
+      delete obj.notificationSettings;
       // Set photo as base64 data URL or null
       if (obj.photo && obj.photo.data) {
         obj.photo = `data:${obj.photo.contentType};base64,${obj.photo.data.toString('base64')}`;
       } else {
         obj.photo = null;
       }
-      // Ensure child array is present
+      // Ensure child array is present and update missing class information
       obj.child = Array.isArray(obj.child) ? obj.child : [];
-      return obj;
-    });
-    res.json({ guardians });
+      
+      // Update child class information if missing
+      for (const child of obj.child) {
+        if (!child.class || child.class === '') {
+          // Fetch class from Student schema using child email
+          const student = await Student.findOne({ email: child.email });
+          if (student && student.class) {
+            child.class = student.class;
+          } else {
+            child.class = '';
+          }
+        }
+      }
+      processedGuardians.push(obj);
+    }
+    
+    res.json({ guardians: processedGuardians });
   } catch (err) {
     res.status(500).json({ message: 'Error fetching guardians', error: err.message });
   }

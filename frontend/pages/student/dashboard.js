@@ -26,13 +26,16 @@ function StudentSidebar({ userEmail, userPhoto, userName, onMenuSelect, selected
     { key: "avlrs", label: "AVLRs", icon: <FaLaptop style={{ fontSize: 18 }} />, action: () => window.location.href = "/avlrs" },
     { key: "dlrs", label: "DLRs", icon: <FaFilePdf style={{ fontSize: 18 }} />, action: () => window.location.href = "/dlrs" },
     { key: "mind-maps", label: "Mind Maps", icon: <FaChartBar style={{ fontSize: 18 }} />, action: () => window.location.href = "/mindmaps" },
+    { key: "sqps", label: "SQPs", icon: <FaFilePdf style={{ fontSize: 18 }} />, action: () => window.location.href = "/sqps" },
+    { key: "pyqs", label: "PYQs", icon: <FaFilePdf style={{ fontSize: 18 }} />, action: () => window.location.href = "/pyqs" },
+    { key: "pyps", label: "PYPs", icon: <FaFilePdf style={{ fontSize: 18 }} />, action: () => window.location.href = "/pyps" },
     { key: "discussion-panel", label: "Discussion Panel", icon: <FaUser style={{ fontSize: 18 }} /> },
     { key: "creative-corner", label: "Creative Corner", icon: <FaPalette style={{ fontSize: 18, color: '#ff0080' }} />, action: () => window.location.href = "/creative-corner" },
     { key: "books", label: "Books", icon: <FaBookOpen style={{ fontSize: 18 }} /> },
     { key: "performance", label: "Performance", icon: <FaChartBar style={{ fontSize: 18 }} /> },
     { key: "profile", label: "Profile", icon: <FaUser style={{ fontSize: 18 }} />, action: () => window.location.href = "/student/profile" },
     { key: "notifications", label: "Notifications", icon: <FaBell style={{ fontSize: 18 }} /> },
-    { key: "settings", label: "Settings", icon: <FaCog style={{ fontSize: 18 }} />, action: () => window.location.href = "/student/settings" }
+    { key: "settings", label: "Settings", icon: <FaCog style={{ fontSize: 18 }} />, action: () => window.location.href = "/settings" }
   ];
   return (
     <>

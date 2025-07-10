@@ -152,4 +152,24 @@ export const updateMindMap = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: 'Error updating mind map', error: err.message });
   }
+};
+
+// Stream a specific PDF from a MindMap
+export const getMindMapPdf = async (req, res) => {
+  try {
+    const { id, pdfIndex } = req.params;
+    const mindMap = await MindMap.findById(id);
+    if (!mindMap || !mindMap.mindmap || !mindMap.mindmap[parseInt(pdfIndex)]) {
+      return res.status(404).json({ message: 'PDF not found' });
+    }
+    const file = mindMap.mindmap[parseInt(pdfIndex)];
+    if (!file || file.contentType !== 'application/pdf') {
+      return res.status(404).json({ message: 'PDF not found' });
+    }
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="mindmap.pdf"');
+    res.send(file.data);
+  } catch (err) {
+    res.status(500).json({ message: 'Error streaming PDF', error: err.message });
+  }
 }; 

@@ -189,7 +189,10 @@ export const registerGuardian = async (req, res) => {
       // Add new child to existing guardian if not already present
       const alreadyLinked = existingGuardian.child.some(c => c.email === childEmail);
       if (!alreadyLinked) {
-        existingGuardian.child.push({ email: childEmail, role });
+        // Get student's class information
+        const student = await Student.findOne({ email: childEmail });
+        const childClass = student ? student.class : '';
+        existingGuardian.child.push({ email: childEmail, class: childClass, role });
         // --- Update guardian name if not set ---
         if (!existingGuardian.name) existingGuardian.name = name;
         await existingGuardian.save();
@@ -211,12 +214,15 @@ export const registerGuardian = async (req, res) => {
       return res.status(200).json({ message: 'Child added to existing guardian account' });
     }
     // Create new guardian
+    // Get student's class information
+    const studentForClass = await Student.findOne({ email: childEmail });
+    const childClass = studentForClass ? studentForClass.class : '';
     const guardian = new Guardian({
       name: name.trim(), // <-- set name
       email: cleanEmail,
       password: hashedPassword,
       userRole: 'Guardian',
-      child: [{ email: childEmail, role }]
+      child: [{ email: childEmail, class: childClass, role }]
     });
     await guardian.save();
     // --- Add/Update guardian info in Student's guardian array ---
