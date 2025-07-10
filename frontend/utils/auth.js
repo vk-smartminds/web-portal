@@ -102,7 +102,13 @@ export const getStudentIdFromJWT = () => {
   if (!token) return null;
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
-    return payload._id || payload.userId || null;
+    // Check for both userId and _id
+    const id = payload.userId || payload._id || null;
+    // Validate MongoDB ObjectId (24 hex chars)
+    if (typeof id === 'string' && /^[a-fA-F0-9]{24}$/.test(id)) {
+      return id;
+    }
+    return null;
   } catch (error) {
     return null;
   }

@@ -63,8 +63,8 @@ router.post('/api/student/send-otp', studentController.sendOtp);
 router.post('/api/student/register', studentController.register);
 router.post('/api/student/find', studentController.find);
 router.get('/api/student/class/:id', studentController.getClassByStudentId); // New endpoint for fetching student class by student ID
-router.get('/api/student/:id', getStudentById);
-router.get('/api/student/:id/photo', getStudentPhoto);
+router.get('/api/student/:id', studentController.getStudentById);
+router.get('/api/student/:id/photo', studentController.getStudentPhoto);
 
 // Teacher routes
 router.post('/api/teacher/send-otp', teacherController.sendOtp);

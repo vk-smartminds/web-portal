@@ -33,14 +33,39 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     const checkAuth = async () => {
       try {
         const token = getToken();
-        if (!token || !isAuthenticated() || isTokenExpired(token)) {
+        console.log('DEBUG [ProtectedRoute] token:', token);
+        console.log('DEBUG [ProtectedRoute] isAuthenticated:', isAuthenticated());
+        console.log('DEBUG [ProtectedRoute] isTokenExpired:', isTokenExpired(token));
+
+        if (typeof pathname !== 'string') {
+          console.log('DEBUG [ProtectedRoute] pathname not ready, skipping auth check');
+          return;
+        }
+
+        if (!token) {
+          console.log('DEBUG [ProtectedRoute] Reason: No token found. Logging out.');
           logout();
           router.replace('/login');
           return;
         }
+        if (!isAuthenticated()) {
+          console.log('DEBUG [ProtectedRoute] Reason: Not authenticated. Logging out.');
+          logout();
+          router.replace('/login');
+          return;
+        }
+        if (isTokenExpired(token)) {
+          console.log('DEBUG [ProtectedRoute] Reason: Token expired. Logging out.');
+          logout();
+          router.replace('/login');
+          return;
+        }
+
         const role = getRoleFromToken(token);
-        // If allowedRoles is set, enforce RBAC
+        console.log('DEBUG [ProtectedRoute] role:', role);
+
         if (allowedRoles && Array.isArray(allowedRoles) && !allowedRoles.includes(role)) {
+          console.log('DEBUG [ProtectedRoute] Reason: Role not allowed:', role);
           if (roleDashboardMap[role]) {
             router.replace(roleDashboardMap[role]);
           } else {
@@ -48,7 +73,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
           }
           return;
         }
-        // If authenticated and on /login, redirect to dashboard
+
         if (pathname === '/login') {
           if (roleDashboardMap[role]) {
             router.replace(roleDashboardMap[role]);
@@ -57,9 +82,10 @@ export default function ProtectedRoute({ children, allowedRoles }) {
           }
           return;
         }
-        // Role-based access: if on a dashboard route, only allow if role matches
+
         for (const [r, dash] of Object.entries(roleDashboardMap)) {
-          if (pathname.startsWith(dash) && role !== r) {
+          if (typeof pathname === 'string' && pathname.startsWith(dash) && role !== r) {
+            console.log('DEBUG [ProtectedRoute] Reason: Dashboard route mismatch:', pathname, role);
             if (roleDashboardMap[role]) {
               router.replace(roleDashboardMap[role]);
             } else {
@@ -68,7 +94,9 @@ export default function ProtectedRoute({ children, allowedRoles }) {
             return;
           }
         }
+
         // Verify token with backend
+        console.log('DEBUG [ProtectedRoute] About to call verify-token');
         const response = await fetch(`${BASE_API_URL}/verify-token`, {
           method: 'GET',
           headers: {
@@ -76,13 +104,26 @@ export default function ProtectedRoute({ children, allowedRoles }) {
             'Content-Type': 'application/json'
           }
         });
+        console.log('DEBUG [ProtectedRoute] verify-token status:', response.status);
+        let data = {};
+        try {
+          data = await response.json();
+        } catch (e) {
+          console.log('DEBUG [ProtectedRoute] Could not parse verify-token response as JSON');
+        }
+        console.log('DEBUG [ProtectedRoute] verify-token response:', data);
+
         if (response.ok) {
           setIsValid(true);
+          console.log('DEBUG [ProtectedRoute] Token verified with backend.');
+          return;
         } else {
+          console.log('DEBUG [ProtectedRoute] Reason: Token verification failed with backend. Logging out.');
           logout();
           router.replace('/login');
         }
       } catch (error) {
+        console.log('DEBUG [ProtectedRoute] Reason: Error during auth check:', error);
         logout();
         router.replace('/login');
       } finally {
