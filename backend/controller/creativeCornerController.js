@@ -136,4 +136,24 @@ export const updateCreativeItem = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: 'Error updating creative item', error: err.message });
   }
+};
+
+// Stream a specific file (PDF or image) from Creative Corner
+export const getCreativeCornerFile = async (req, res) => {
+  try {
+    const { id, fileIndex } = req.params;
+    const item = await CreativeCorner.findById(id);
+    if (!item || !item.files || !item.files[parseInt(fileIndex)]) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+    const file = item.files[parseInt(fileIndex)];
+    if (!file || !file.data || !file.contentType) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+    res.setHeader('Content-Type', file.contentType);
+    res.setHeader('Content-Disposition', `inline; filename="creative-corner-file.${file.contentType.split('/')[1] || 'bin'}"`);
+    res.send(file.data);
+  } catch (err) {
+    res.status(500).json({ message: 'Error streaming file', error: err.message });
+  }
 }; 

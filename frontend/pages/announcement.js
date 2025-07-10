@@ -68,7 +68,7 @@ const AnnouncementPage = ({ newAnnouncementCount, setNewAnnouncementCount }) => 
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [removedImages, setRemovedImages] = useState([]);
   const [removingImage, setRemovingImage] = useState({ announcementId: null, imageIndex: null, loading: false });
-  const [previewModal, setPreviewModal] = useState({ open: false, url: '', fileType: '' });
+  const [previewModal, setPreviewModal] = useState({ open: false, url: '', fileType: '', imgLoaded: false });
   const [selectedClasses, setSelectedClasses] = useState([]);
   const [editClasses, setEditClasses] = useState("");
   const [editAnnouncementFor, setEditAnnouncementFor] = useState("");
@@ -455,10 +455,10 @@ const AnnouncementPage = ({ newAnnouncementCount, setNewAnnouncementCount }) => 
                       {img.fileType === "pdf" ? (
                         <div
                           style={{ cursor: "pointer", position: "relative", display: "inline-block" }}
-                          onClick={() => setPreviewModal({ open: true, url: img.url, fileType: "pdf" })}
+                          onClick={() => setPreviewModal({ open: true, url: `${BASE_API_URL}/announcement/${a._id}/file/${idx}`, fileType: "pdf", imgLoaded: false })}
                         >
                           <iframe
-                            src={img.url}
+                            src={`${BASE_API_URL}/announcement/${a._id}/file/${idx}`}
                             title={`Announcement PDF ${idx + 1}`}
                             style={{ width: 180, height: 120, border: "1px solid #e0e0e0", borderRadius: 8, boxShadow: "0 2px 8px rgba(30,60,114,0.10)" }}
                           />
@@ -474,10 +474,10 @@ const AnnouncementPage = ({ newAnnouncementCount, setNewAnnouncementCount }) => 
                         </div>
                       ) : (
                         <img
-                          src={img.url}
+                          src={`${BASE_API_URL}/announcement/${a._id}/file/${idx}`}
                           alt="Announcement"
                           style={{ maxWidth: 180, maxHeight: 120, borderRadius: 8, boxShadow: '0 2px 8px rgba(30,60,114,0.10)', cursor: "pointer" }}
-                          onClick={() => setPreviewModal({ open: true, url: img.url, fileType: "image" })}
+                          onClick={() => setPreviewModal({ open: true, url: `${BASE_API_URL}/announcement/${a._id}/file/${idx}`, fileType: "image", imgLoaded: false })}
                         />
                       )}
                       {isSuperAdmin && (
@@ -549,7 +549,7 @@ const AnnouncementPage = ({ newAnnouncementCount, setNewAnnouncementCount }) => 
             position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
             background: "rgba(0,0,0,0.7)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center"
           }}
-          onClick={() => setPreviewModal({ open: false, url: '', fileType: '' })}
+          onClick={() => setPreviewModal({ open: false, url: '', fileType: '', imgLoaded: false })}
         >
           <div
             style={{
@@ -559,7 +559,7 @@ const AnnouncementPage = ({ newAnnouncementCount, setNewAnnouncementCount }) => 
             onClick={e => e.stopPropagation()}
           >
             <button
-              onClick={() => setPreviewModal({ open: false, url: '', fileType: '' })}
+              onClick={() => setPreviewModal({ open: false, url: '', fileType: '', imgLoaded: false })}
               style={{
                 position: "absolute", top: 8, right: 12, background: "#c0392b", color: "#fff", border: "none",
                 borderRadius: "50%", width: 32, height: 32, fontSize: 22, fontWeight: 700, cursor: "pointer", zIndex: 2
@@ -569,11 +569,22 @@ const AnnouncementPage = ({ newAnnouncementCount, setNewAnnouncementCount }) => 
             {previewModal.fileType === "pdf" ? (
               <PDFWithLoader url={previewModal.url} fullscreen={true} />
             ) : (
-              <img
-                src={previewModal.url}
-                alt="Preview"
-                style={{ maxWidth: "80vw", maxHeight: "80vh", borderRadius: 8 }}
-              />
+              <div style={{ position: 'relative', width: '80vw', height: '90vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {!previewModal.imgLoaded && (
+                  <>
+                    <style>{`@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
+                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', zIndex: 2 }}>
+                      <div className="spinner" style={{ width: 48, height: 48, border: '6px solid #eee', borderTop: '6px solid #1e3c72', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                    </div>
+                  </>
+                )}
+                <img
+                  src={previewModal.url}
+                  alt="Preview"
+                  style={{ maxWidth: "80vw", maxHeight: "80vh", borderRadius: 8, zIndex: 3 }}
+                  onLoad={() => setPreviewModal(prev => ({ ...prev, imgLoaded: true }))}
+                />
+              </div>
             )}
           </div>
         </div>

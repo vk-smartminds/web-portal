@@ -18,7 +18,7 @@ const DlrsPage = () => {
   const [status, setStatus] = useState('');
   const [filter, setFilter] = useState({ class: '', subject: '', chapter: '' });
   const [searchInitiated, setSearchInitiated] = useState(false);
-  const [previewPdf, setPreviewPdf] = useState({ open: false, url: '' });
+  const [previewPdf, setPreviewPdf] = useState({ open: false, url: '', loaded: false, id: '', idx: 0 });
 
   useEffect(() => {
     const email = (typeof window !== 'undefined' && localStorage.getItem('userEmail')) || '';
@@ -258,7 +258,7 @@ const DlrsPage = () => {
               <div style={{ color: "#222", marginBottom: 6 }}>PDFs:
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 6 }}>
                   {item.pdfs && item.pdfs.map((pdf, idx) => (
-                    <div key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }} onClick={() => setPreviewPdf({ open: true, url: pdf.url })}>
+                    <div key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }} onClick={() => setPreviewPdf({ open: true, url: `${BASE_API_URL}/dlr/${item._id}/pdf/${idx}`, loaded: false, id: item._id, idx })}>
                       <FaFilePdf style={{ fontSize: 20, color: '#e74c3c' }} /> <span style={{ fontWeight: 600 }}>PDF {idx + 1}</span>
                     </div>
                   ))}
@@ -296,8 +296,21 @@ const DlrsPage = () => {
       {previewPdf.open && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(30,60,114,0.18)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ position: 'relative', width: '90vw', height: '90vh', background: '#fff', borderRadius: 12, boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.13)', display: 'flex', flexDirection: 'column' }}>
-            <button onClick={() => setPreviewPdf({ open: false, url: '' })} style={{ position: 'absolute', top: 16, right: 24, background: '#c0392b', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, fontWeight: 700, fontSize: 22, cursor: 'pointer', zIndex: 2 }}>×</button>
-            <iframe src={previewPdf.url} title="PDF Preview" style={{ width: '100%', height: '100%', border: 'none', borderRadius: 12, background: '#fff' }} />
+            <button onClick={() => setPreviewPdf({ open: false, url: '', loaded: false })} style={{ position: 'absolute', top: 16, right: 24, background: '#c0392b', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, fontWeight: 700, fontSize: 22, cursor: 'pointer', zIndex: 2 }}>×</button>
+            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+              {!previewPdf.loaded && (
+                <>
+                  <style>{`@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
+                  <div className="spinner" style={{ width: 48, height: 48, border: '6px solid #eee', borderTop: '6px solid #1e3c72', borderRadius: '50%', animation: 'spin 1s linear infinite', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
+                </>
+              )}
+              <iframe
+                src={previewPdf.url}
+                title="PDF Preview"
+                style={{ width: '100%', height: '100%', border: 'none', borderRadius: 12, background: '#fff', zIndex: 1 }}
+                onLoad={() => setPreviewPdf(prev => ({ ...prev, loaded: true }))}
+              />
+            </div>
           </div>
         </div>
       )}
