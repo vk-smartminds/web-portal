@@ -1,3 +1,5 @@
+'use client';
+
 export default function GuardianRegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-black px-4">
