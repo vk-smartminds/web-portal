@@ -1,7 +1,9 @@
+import AdminDashboard from "../../../pages/AdminDashboard";
+
 export default function Dashboard() {
     return (
         <div>
-            This is admin aashboard
+            <AdminDashboard />
         </div>
     )
 }
