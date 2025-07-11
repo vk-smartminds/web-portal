@@ -1,5 +1,4 @@
-
-"use client"
+"use client";
 import { BASE_API_URL } from "../utils/apiurl";
 import { setToken } from "../utils/auth";
 import { Dispatch, SetStateAction } from "react";
@@ -37,47 +36,90 @@ export default function LoginWithPassword({
     e.preventDefault();
     setError("");
     setLoading(true);
-    const endpoints = [
-      { url: `${BASE_API_URL}/admin/login`, dashboard: "/admin/dashboard" },
-      { url: `${BASE_API_URL}/login-student`, dashboard: "/student/dashboard" },
-      { url: `${BASE_API_URL}/login-teacher`, dashboard: "/teacher/dashboard" },
-      { url: `${BASE_API_URL}/login-guardian`, dashboard: "/guardian/dashboard" },
-    ];
-    for (const ep of endpoints) {
-      try {
-        const res = await fetch(ep.url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.token) {
-            setToken(data.token);
-          }
-          setLoading(false);
-          router.push(ep.dashboard);
-          return;
-        } else {
-          let errorMsg = "Login failed. Please try again.";
-          if (res.status === 401) {
-            errorMsg = "Incorrect password.";
-          } else if (res.status === 404) {
-            errorMsg = "User not found.";
-          } else {
-            try {
-              const data = await res.json();
-              if (data && data.message) errorMsg = data.message;
-            } catch {}
-          }
-          setError(errorMsg);
-          setLoading(false);
-          return;
-        }
-      } catch {}
-    }
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password;
+    // Try admin first
+    try {
+      const adminRes = await fetch(`${BASE_API_URL}/admin/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail, password: cleanPassword })
+      });
+      if (adminRes.ok) {
+        const data = await adminRes.json();
+        if (data.token) setToken(data.token);
+        setLoading(false);
+        router.push("/admin/dashboard");
+        return;
+      }
+      if (adminRes.status === 401) {
+        setError("Incorrect password.");
+        setLoading(false);
+        return;
+      }
+    } catch {}
+    // Try student
+    try {
+      const studentRes = await fetch(`${BASE_API_URL}/login-student`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail, password: cleanPassword })
+      });
+      if (studentRes.ok) {
+        const data = await studentRes.json();
+        if (data.token) setToken(data.token);
+        setLoading(false);
+        router.push("/student/dashboard");
+        return;
+      }
+      if (studentRes.status === 401) {
+        setError("Incorrect password.");
+        setLoading(false);
+        return;
+      }
+    } catch {}
+    // Try teacher
+    try {
+      const teacherRes = await fetch(`${BASE_API_URL}/login-teacher`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail, password: cleanPassword })
+      });
+      if (teacherRes.ok) {
+        const data = await teacherRes.json();
+        if (data.token) setToken(data.token);
+        setLoading(false);
+        router.push("/teacher/dashboard");
+        return;
+      }
+      if (teacherRes.status === 401) {
+        setError("Incorrect password.");
+        setLoading(false);
+        return;
+      }
+    } catch {}
+    // Try guardian
+    try {
+      const guardianRes = await fetch(`${BASE_API_URL}/login-guardian`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail, password: cleanPassword })
+      });
+      if (guardianRes.ok) {
+        const data = await guardianRes.json();
+        if (data.token) setToken(data.token);
+        setLoading(false);
+        router.push("/guardian/dashboard");
+        return;
+      }
+      if (guardianRes.status === 401) {
+        setError("Incorrect password.");
+        setLoading(false);
+        return;
+      }
+    } catch {}
+    setError("User not found.");
     setLoading(false);
-    setError("Login failed. Please try again.");
   };
 
   return (
