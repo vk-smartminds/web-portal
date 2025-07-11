@@ -4,8 +4,8 @@ export default function StatsSection() {
       label: "Exam categories",
       value: "60+",
       icon: (
-        <div className="bg-orange-100 rounded-md p-2">
-          <div className="w-4 h-4 bg-orange-400 rounded-sm" />
+        <div className="bg-orange-100 rounded-lg p-3">
+          <div className="w-5 h-5 bg-orange-400 rounded-sm" />
         </div>
       ),
     },
@@ -13,7 +13,7 @@ export default function StatsSection() {
       label: "Educators",
       value: "14k+",
       icon: (
-        <div className="bg-blue-100 rounded-md p-2 flex items-center justify-center">
+        <div className="bg-blue-100 rounded-lg p-3 flex items-center justify-center">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="#3b82f6">
             <circle cx="8" cy="8" r="4" />
             <circle cx="16" cy="8" r="4" fill="#60a5fa" />
@@ -25,8 +25,8 @@ export default function StatsSection() {
       label: "Daily live classes",
       value: "1.5k+",
       icon: (
-        <div className="bg-rose-100 rounded-md p-2">
-          <div className="w-4 h-3 bg-rose-400 rounded" />
+        <div className="bg-rose-100 rounded-lg p-3">
+          <div className="w-5 h-3 bg-rose-400 rounded" />
         </div>
       ),
     },
@@ -34,8 +34,8 @@ export default function StatsSection() {
       label: "Video lessons",
       value: "1M+",
       icon: (
-        <div className="bg-yellow-100 rounded-md p-2">
-          <div className="w-4 h-4 bg-yellow-400" />
+        <div className="bg-yellow-100 rounded-lg p-3">
+          <div className="w-5 h-5 bg-yellow-400" />
         </div>
       ),
     },
@@ -43,7 +43,7 @@ export default function StatsSection() {
       label: "Mins. watched",
       value: "3.2B+",
       icon: (
-        <div className="bg-gray-100 rounded-md p-2">
+        <div className="bg-gray-100 rounded-lg p-3 flex items-center justify-center">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="#9ca3af">
             <circle cx="12" cy="12" r="10" />
           </svg>
@@ -53,31 +53,32 @@ export default function StatsSection() {
   ];
 
   return (
-    <section className="py-16 px-6 md:px-12 bg-white">
-      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center">
-        {/* Left */}
+    <section className="py-20 px-6 md:px-12 bg-white">
+      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-14 items-center">
+        {/* Left Section */}
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Start learning with<br />Unacademy
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-snug">
+            Start learning with <br />
+            <span className="text-[#10b981]">Smart-Minds</span>
           </h2>
-          <p className="text-gray-600 text-sm mb-6">
-            Get unlimited access to structured courses & doubt clearing sessions
+          <p className="text-gray-600 text-base mb-6 max-w-md">
+            Get unlimited access to structured courses and doubt clearing sessions
           </p>
-          <button className="bg-green-500 hover:bg-green-600 text-white font-medium px-5 py-2 rounded-md">
+          <button className="bg-green-500 hover:bg-green-600 transition text-white font-medium px-6 py-3 rounded-lg shadow-md">
             Start learning
           </button>
         </div>
 
-        {/* Right */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {/* Right Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
           {stats.map((stat, index) => (
             <div
               key={index}
-              className="bg-white shadow rounded-lg p-4 flex flex-col gap-2 border border-gray-100"
+              className="bg-white border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all rounded-xl p-5 flex flex-col gap-3 items-start"
             >
-              <div>{stat.icon}</div>
-              <div className="text-sm text-gray-600">{stat.label}</div>
-              <div className="text-lg font-semibold text-green-600">{stat.value}</div>
+              {stat.icon}
+              <p className="text-gray-500 text-sm">{stat.label}</p>
+              <p className="text-xl font-bold text-green-600">{stat.value}</p>
             </div>
           ))}
         </div>
