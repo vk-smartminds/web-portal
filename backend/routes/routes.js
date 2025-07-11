@@ -208,6 +208,10 @@ router.get('/api/discussion/notifications', authenticateToken, getDiscussionNoti
 router.post('/api/discussion/notifications/:id/read', authenticateToken, markDiscussionNotificationRead);
 router.delete('/api/discussion/notifications/:id', authenticateToken, deleteDiscussionNotification);
 
+
+// New route for searching posts
+router.get('/api/discussion/posts/search', discussionController.searchPosts);
+
 // Notification settings routes
 router.get('/api/notification-settings', authenticateToken, notificationSettingsController.getNotificationSettings);
 router.put('/api/notification-settings', authenticateToken, notificationSettingsController.updateNotificationSettings);
@@ -221,5 +225,6 @@ import adminQuizRoutes from '../quiz/routes/adminQuizRoutes.js';
 import quizRoutes from '../quiz/routes/quizRoutes.js';
 router.use('/api/admin/quiz', adminQuizRoutes);
 router.use('/api/quiz', quizRoutes);
+
 
 export default router;
