@@ -1,8 +1,16 @@
 
+import { useState } from "react";
 import Link from "next/link";
 import LoginForm from "../components/LoginForm";
 
 export default function LoginPage() {
+  const [mode, setMode] = useState<'password' | 'otp'>('password');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-black px-4">
       <div className="w-full max-w-sm bg-[#111111] rounded-2xl p-6 shadow-lg">
@@ -18,7 +26,33 @@ export default function LoginPage() {
             <Link href="/signup">Sign up</Link>
           </span>
         </p>
-        <LoginForm />
+        <div className="flex mb-4">
+          <button
+            className={`flex-1 py-2 rounded-l-md ${mode === "password" ? "bg-blue-600 text-white" : "bg-[#1c1c1c] text-gray-400"}`}
+            onClick={() => setMode("password")}
+          >
+            Password
+          </button>
+          <button
+            className={`flex-1 py-2 rounded-r-md ${mode === "otp" ? "bg-blue-600 text-white" : "bg-[#1c1c1c] text-gray-400"}`}
+            onClick={() => setMode("otp")}
+          >
+            OTP
+          </button>
+        </div>
+        <LoginForm
+          mode={mode}
+          email={email}
+          setEmail={setEmail}
+          password={password}
+          setPassword={setPassword}
+          otp={otp}
+          setOtp={setOtp}
+          error={error}
+          setError={setError}
+          loading={loading}
+          setLoading={setLoading}
+        />
       </div>
     </div>
   );
