@@ -7,6 +7,8 @@ import nodemailer from 'nodemailer';
 import { generateToken } from '../middleware/auth.js';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
+import * as loginActivityController from './loginActivityController.js';
+import { v4 as uuidv4 } from 'uuid';
 dotenv.config();
 
 const otpStore = {};
@@ -50,7 +52,7 @@ function generateOtp() {
 // --- Registration ---
 export const sendRegisterOtp = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, allowGuardian } = req.body;
     const cleanEmail = email.trim().toLowerCase();
     // Check all user tables for existing email
     const [existingStudent, existingTeacher, existingGuardian, existingAdmin] = await Promise.all([
@@ -59,8 +61,12 @@ export const sendRegisterOtp = async (req, res) => {
       Guardian.findOne({ email: cleanEmail }),
       Admin.findOne({ email: cleanEmail })
     ]);
-    // Only block if email exists in Student, Teacher, or Admin
+    // Block if email exists in Student, Teacher, or Admin
     if (existingStudent || existingTeacher || existingAdmin) {
+      return res.status(409).json({ message: 'A user with this email already exists' });
+    }
+    // If guardian exists and allowGuardian is not set, block (for legacy, but frontend always sends allowGuardian)
+    if (existingGuardian && !allowGuardian) {
       return res.status(409).json({ message: 'A user with this email already exists' });
     }
     const otp = generateOtp();
@@ -114,6 +120,11 @@ export const registerStudent = async (req, res) => {
       return res.status(409).json({ message: 'A user with this email already exists' });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
+    // Validate class
+    const allowedClasses = ['6','7','8','9','10','11','12','JEE','NEET','CUET'];
+    if (!userClass || !allowedClasses.includes(String(userClass))) {
+      return res.status(400).json({ message: 'Invalid or missing class. Allowed: ' + allowedClasses.join(', ') });
+    }
     const student = new Student({
       name,
       email: cleanEmail,
@@ -132,7 +143,11 @@ export const registerStudent = async (req, res) => {
 
 export const registerGuardian = async (req, res) => {
   try {
-    const { email, password, otp, child, role } = req.body;
+    const { name, email, password, otp, child, role } = req.body;
+    // --- Require name ---
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Parent name is required' });
+    }
     const cleanEmail = email.trim().toLowerCase();
     // Child email is required and must be a non-empty string
     if (!child || !Array.isArray(child) || child.length === 0 || !child[0]) {
@@ -166,11 +181,32 @@ export const registerGuardian = async (req, res) => {
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     if (existingGuardian) {
+      // Validate password before adding child
+      const isMatch = await bcrypt.compare(password, existingGuardian.password);
+      if (!isMatch) {
+        return res.status(401).json({ message: "Your password is incorrect." });
+      }
       // Add new child to existing guardian if not already present
       const alreadyLinked = existingGuardian.child.some(c => c.email === childEmail);
       if (!alreadyLinked) {
-        existingGuardian.child.push({ email: childEmail, role });
+        // Get student's class information
+        const student = await Student.findOne({ email: childEmail });
+        const childClass = student ? student.class : '';
+        existingGuardian.child.push({ email: childEmail, class: childClass, role });
+        // --- Update guardian name if not set ---
+        if (!existingGuardian.name) existingGuardian.name = name;
         await existingGuardian.save();
+      }
+      // --- Add/Update guardian info in Student's guardian array ---
+      const student = await Student.findOne({ email: childEmail });
+      if (student) {
+        student.guardian = (student.guardian || []).filter(g => g.email !== cleanEmail);
+        student.guardian.push({
+          name: existingGuardian.name || name,
+          email: cleanEmail,
+          role
+        });
+        await student.save();
       }
       delete otpStore[cleanEmail];
       delete childVerificationTokens[token];
@@ -178,13 +214,28 @@ export const registerGuardian = async (req, res) => {
       return res.status(200).json({ message: 'Child added to existing guardian account' });
     }
     // Create new guardian
+    // Get student's class information
+    const studentForClass = await Student.findOne({ email: childEmail });
+    const childClass = studentForClass ? studentForClass.class : '';
     const guardian = new Guardian({
+      name: name.trim(), // <-- set name
       email: cleanEmail,
       password: hashedPassword,
       userRole: 'Guardian',
-      child: [{ email: childEmail, role }]
+      child: [{ email: childEmail, class: childClass, role }]
     });
     await guardian.save();
+    // --- Add/Update guardian info in Student's guardian array ---
+    const student = await Student.findOne({ email: childEmail });
+    if (student) {
+      student.guardian = (student.guardian || []).filter(g => g.email !== cleanEmail);
+      student.guardian.push({
+        name: guardian.name,
+        email: cleanEmail,
+        role
+      });
+      await student.save();
+    }
     delete otpStore[cleanEmail];
     delete childVerificationTokens[token];
     res.clearCookie('vk_child_verified');
@@ -210,6 +261,7 @@ export const registerTeacher = async (req, res) => {
       Guardian.findOne({ email: cleanEmail }),
       Admin.findOne({ email: cleanEmail })
     ]);
+    console.log('DEBUG registerTeacher: existingGuardian =', existingGuardian);
     if (existingStudent || existingTeacher || existingGuardian || existingAdmin) {
       return res.status(409).json({ message: 'A user with this email already exists' });
     }
@@ -238,9 +290,11 @@ export const loginStudent = async (req, res) => {
     if (!student) return res.status(404).json({ message: "Student not found" });
     const isMatch = await bcrypt.compare(password, student.password);
     if (!isMatch) return res.status(401).json({ message: "Incorrect password" });
-    const token = generateToken(student._id, 'student');
-    // Remove cookie logic for students, only return token in response (frontend uses localStorage)
-    res.status(200).json({ message: "Login successful", token, user: { id: student._id, email: student.email, role: 'student', name: student.name } });
+    const sessionId = uuidv4();
+    const token = generateToken(student._id, 'student', sessionId);
+    // Log login event with sessionId
+    await loginActivityController.addLoginEvent({ user: { id: student._id, role: 'student', sessionId }, ip: req.ip, headers: req.headers }, { status: () => ({ json: () => {} }) });
+    res.status(200).json({ message: "Login successful", token, sessionId, user: { id: student._id, email: student.email, role: 'student', name: student.name } });
   } catch (err) {
     res.status(500).json({ message: "Login failed", error: err.message });
   }
@@ -254,8 +308,11 @@ export const loginGuardian = async (req, res) => {
     if (!guardian) return res.status(404).json({ message: "Guardian not found" });
     const isMatch = await bcrypt.compare(password, guardian.password);
     if (!isMatch) return res.status(401).json({ message: "Incorrect password" });
-    const token = generateToken(guardian._id, 'guardian');
-    res.status(200).json({ message: "Login successful", token, user: { id: guardian._id, email: guardian.email, role: 'guardian', name: guardian.name, guardianRole: guardian.role } });
+    const sessionId = uuidv4();
+    const token = generateToken(guardian._id, 'guardian', sessionId);
+    // Log login event with sessionId
+    await loginActivityController.addLoginEvent({ user: { id: guardian._id, role: 'guardian', sessionId }, ip: req.ip, headers: req.headers }, { status: () => ({ json: () => {} }) });
+    res.status(200).json({ message: "Login successful", token, sessionId, user: { id: guardian._id, email: guardian.email, role: 'guardian', name: guardian.name, guardianRole: guardian.role } });
   } catch (err) {
     res.status(500).json({ message: "Login failed", error: err.message });
   }
@@ -269,8 +326,11 @@ export const loginTeacher = async (req, res) => {
     if (!teacher) return res.status(404).json({ message: "Teacher not found" });
     const isMatch = await bcrypt.compare(password, teacher.password);
     if (!isMatch) return res.status(401).json({ message: "Incorrect password" });
-    const token = generateToken(teacher._id, 'teacher');
-    res.status(200).json({ message: "Login successful", token, user: { id: teacher._id, email: teacher.email, role: 'teacher', name: teacher.name } });
+    const sessionId = uuidv4();
+    const token = generateToken(teacher._id, 'teacher', sessionId);
+    // Log login event with sessionId
+    await loginActivityController.addLoginEvent({ user: { id: teacher._id, role: 'teacher', sessionId }, ip: req.ip, headers: req.headers }, { status: () => ({ json: () => {} }) });
+    res.status(200).json({ message: "Login successful", token, sessionId, user: { id: teacher._id, email: teacher.email, role: 'teacher', name: teacher.name } });
   } catch (err) {
     res.status(500).json({ message: "Login failed", error: err.message });
   }

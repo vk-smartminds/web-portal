@@ -86,12 +86,10 @@ export const createAnnouncement = async (req, res) => {
     
     // Send announcement emails
     try {
-      console.log(`Sending announcement emails for: ${announcementForStored.join(', ')}`);
       const emailResult = await sendAnnouncementEmails(announcementForStored, finalClasses, text, creatorEmail);
-      console.log(`Email sending completed:`, emailResult);
+      if (emailResult.emails && Array.isArray(emailResult.emails)) {
+      }
     } catch (emailError) {
-      console.error('Failed to send announcement emails:', emailError);
-      // Don't fail the announcement creation if email fails
     }
     
     res.status(201).json({ message: 'Announcement created', announcement });
@@ -377,5 +375,25 @@ export const markAnnouncementAsViewed = async (req, res) => {
     res.json({ message: 'Announcement marked as viewed' });
   } catch (err) {
     res.status(500).json({ message: 'Error marking as viewed', error: err.message });
+  }
+};
+
+// Stream a specific file (PDF or image) from Announcement
+export const getAnnouncementFile = async (req, res) => {
+  try {
+    const { id, fileIndex } = req.params;
+    const announcement = await Announcement.findById(id);
+    if (!announcement || !announcement.images || !announcement.images[parseInt(fileIndex)]) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+    const file = announcement.images[parseInt(fileIndex)];
+    if (!file || !file.data || !file.contentType) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+    res.setHeader('Content-Type', file.contentType);
+    res.setHeader('Content-Disposition', `inline; filename="announcement-file.${file.contentType.split('/')[1] || 'bin'}"`);
+    res.send(file.data);
+  } catch (err) {
+    res.status(500).json({ message: 'Error streaming file', error: err.message });
   }
 };

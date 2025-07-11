@@ -1,7 +1,27 @@
 import Student from '../models/Student.js';
+import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import nodemailer from 'nodemailer';
 import Admin from '../models/Admin.js';
+
+// Get student class by student ID
+export const getClassByStudentId = async (req, res) => {
+  try {
+    // Only use the MongoDB ObjectId from the URL param 'id'
+    const id = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid student ID', idReceived: id });
+    }
+    // Only search by _id field (convert to ObjectId)
+    const student = await Student.findOne({ _id: new mongoose.Types.ObjectId(id) });
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found', idReceived: id });
+    }
+    res.json({ class: student.class, _id: student._id });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching student class', error: err.message });
+  }
+};
 
 const otpStore = {}; // { email: { otp, expires } }
 
@@ -102,4 +122,48 @@ export const find = async (req, res) => {
   }
 };
 
-export default { sendOtp, register, find };
+export const getStudentById = async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid student ID', idReceived: id });
+    }
+    const student = await Student.findById(id);
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found', idReceived: id });
+    }
+    let profilePhotoUrl = '';
+    if (student.photo && student.photo.data) {
+      profilePhotoUrl = `/api/student/${student._id}/photo`;
+    }
+    res.json({
+      _id: student._id,
+      name: student.name,
+      class: student.class,
+      profilePhotoUrl
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching student info', error: err.message });
+  }
+};
+
+export const getStudentPhoto = async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).send('Invalid student ID');
+    }
+    const student = await Student.findById(id);
+    if (!student || !student.photo || !student.photo.data) {
+      // Serve default avatar
+      return res.sendFile('default-avatar.png', { root: 'backend/public' });
+    }
+    res.set('Content-Type', student.photo.contentType || 'image/png');
+    res.send(student.photo.data);
+  } catch (err) {
+    res.status(500).send('Error fetching student photo');
+  }
+};
+
+// Add getClassByStudentId to the default export for proper routing
+export default { sendOtp, register, find, getClassByStudentId, getStudentById, getStudentPhoto };
