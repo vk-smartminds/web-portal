@@ -3,6 +3,8 @@ import { BASE_API_URL } from "../utils/apiurl";
 import { setToken } from "../utils/auth";
 import { Dispatch, SetStateAction } from "react";
 import { useRouter } from "next/router";
+import ForgotPasswordModal from "./ForgotPasswordModal";
+import { useState } from "react";
 
 interface Props {
   email: string;
@@ -26,6 +28,7 @@ export default function LoginWithPassword({
   setLoading,
 }: Props) {
   const router = useRouter();
+  const [showForgot, setShowForgot] = useState(false);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -60,36 +63,53 @@ export default function LoginWithPassword({
   };
 
   return (
-    <form className="space-y-4" onSubmit={handleLogin} autoComplete="off">
-      <div className="bg-[#1c1c1c] rounded-md px-3 py-2 flex items-center gap-2">
-        <input
-          type="email"
-          placeholder="email address"
-          className="bg-transparent outline-none text-white text-sm w-full"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          required
-          autoComplete="off"
-        />
-      </div>
-      <div className="bg-[#1c1c1c] rounded-md px-3 py-2 flex items-center gap-2">
-        <input
-          type="password"
-          placeholder="Password"
-          className="bg-transparent outline-none text-white text-sm w-full"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
-          autoComplete="off"
-        />
-      </div>
-      <button
-        type="submit"
-        className="w-full bg-blue-600 hover:bg-blue-700 transition text-white py-2 rounded-md font-medium"
-        disabled={loading}
-      >
-        {loading ? "Logging in..." : "Login"}
-      </button>
-    </form>
+    <>
+      <form className="space-y-4" onSubmit={handleLogin} autoComplete="off">
+        <div className="bg-[#1c1c1c] rounded-md px-3 py-2 flex items-center gap-2">
+          <input
+            type="email"
+            placeholder="email address"
+            className="bg-transparent outline-none text-white text-sm w-full"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            required
+            autoComplete="off"
+          />
+        </div>
+        <div className="bg-[#1c1c1c] rounded-md px-3 py-2 flex items-center gap-2">
+          <input
+            type="password"
+            placeholder="Password"
+            className="bg-transparent outline-none text-white text-sm w-full"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+            autoComplete="off"
+          />
+        </div>
+        <button
+          type="submit"
+          className="w-full bg-blue-600 hover:bg-blue-700 transition text-white py-2 rounded-md font-medium"
+          disabled={loading}
+        >
+          {loading ? "Logging in..." : "Login"}
+        </button>
+        {error && (
+          <div className="text-red-400 text-sm text-center mt-2">
+            {error}
+            <div className="mt-1">
+              <button
+                type="button"
+                className="text-blue-400 hover:underline text-xs font-medium"
+                onClick={() => setShowForgot(true)}
+              >
+                Forgot Password?
+              </button>
+            </div>
+          </div>
+        )}
+      </form>
+      <ForgotPasswordModal open={showForgot} onClose={() => setShowForgot(false)} onSuccess={() => setShowForgot(false)} />
+    </>
   );
 } 
