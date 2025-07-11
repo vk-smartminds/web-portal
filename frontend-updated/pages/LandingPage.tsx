@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     // <main className="min-h-screen bg-[#7f93f8] flex items-center justify-center px-4 py-10">
@@ -15,9 +17,18 @@ export default function Home() {
             A community with high expectation and high academic achievement
           </p>
 
-          <button className="bg-[#7f93f8] text-white px-5 py-2 rounded-md w-max hover:bg-[#6c84ea] transition">
-            Get Started
-          </button>
+          <div className="flex gap-3">
+            <Link href="/LoginPage">
+              <button className="bg-[#7f93f8] text-white px-5 py-2 rounded-md hover:bg-[#6c84ea] transition">
+                Login
+              </button>
+            </Link>
+            <Link href="/signup">
+              <button className="border border-[#7f93f8] text-[#7f93f8] px-5 py-2 rounded-md hover:bg-[#7f93f8] hover:text-white transition">
+                Get Started
+              </button>
+            </Link>
+          </div>
         </div>
 
         {/* Right Section */}
@@ -26,6 +37,9 @@ export default function Home() {
             <a href="#">Home</a>
             <a href="#">Courses</a>
             <a href="#">About us</a>
+            <Link href="/LoginPage">
+              <button className="bg-white text-[#7f93f8] px-4 py-1 rounded-md hover:bg-gray-100 transition">Login</button>
+            </Link>
             <button className="bg-white text-[#7f93f8] px-4 py-1 rounded-md hover:bg-gray-100 transition">Contact us</button>
           </nav>
 
