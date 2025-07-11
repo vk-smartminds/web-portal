@@ -20,7 +20,7 @@ export default function RegisterModal({ open, onClose }: RegisterModalProps) {
         <div className="font-bold text-lg text-white mb-4 text-center">Register As</div>
         <button
           className="w-full bg-blue-600 hover:bg-blue-700 transition text-white py-2 rounded-md font-medium mb-3"
-          onClick={() => { onClose(); router.push("/student/signup"); }}
+          onClick={() => { onClose(); router.push("/student/register"); }}
         >
           Student
         </button>
