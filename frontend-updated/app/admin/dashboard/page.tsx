@@ -1,7 +1,9 @@
+import AdminDashboard from "../../../pages/AdminDashboard";
+
 export default function Dashboard() {
     return (
-        <div className="bg-blue-100">
-            This is admin aashboard
+        <div>
+            <AdminDashboard />
         </div>
     )
 }

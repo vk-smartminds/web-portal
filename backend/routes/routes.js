@@ -6,7 +6,7 @@ import { authenticateToken } from '../middleware/auth.js';
 import multer from 'multer';
 import studentController from '../controller/studentController.js';
 import teacherController from '../controller/teacherController.js';
-import { findUserByEmail as manageFindUserByEmail, deleteUserByEmail as manageDeleteUserByEmail, findStudentByEmail, findTeacherByEmail, findGuardianByEmail, getAllStudents, getAllTeachers, getAllGuardians } from '../controller/manageUserController.js';
+import { findUserByEmail as manageFindUserByEmail, deleteUserByEmail as manageDeleteUserByEmail, findStudentByEmail, findTeacherByEmail, findGuardianByEmail, getAllStudents, getAllTeachers, getAllGuardians, getUserLoginActivity, getAllSessions, getUserBasicInfo, getAllStudentsForAdmin, getAllTeachersForAdmin, getAllGuardiansForAdmin, getStudentsByClass } from '../controller/manageUserController.js';
 import { createAnnouncement, getAnnouncements, updateAnnouncement, deleteAnnouncement, announcementUpload, removeAnnouncementImage, markAnnouncementAsViewed, getAnnouncementFile } from '../controller/announcementController.js';
 import { getCbseUpdates } from '../controller/cbseController.js';
 import { addMindMap, getMindMaps, deleteMindMap, mindMapUpload, updateMindMap, getMindMapPdf } from '../controller/mindMapController.js';
@@ -93,14 +93,19 @@ router.post('/api/addadmins', addAdmin);
 router.delete('/api/removeadmin', removeAdmin);
 router.post('/api/admin/login', adminLogin); // Secure admin login route
 router.post('/api/check-superadmin', checkSuperAdmin);
-router.post('/api/admin/find-user', manageFindUserByEmail); // Superadmin only
-router.delete('/api/admin/delete-user', manageDeleteUserByEmail); // Superadmin only
-router.post('/api/admin/find-student', findStudentByEmail); // Superadmin only
-router.post('/api/admin/find-teacher', findTeacherByEmail); // Superadmin only
-router.post('/api/admin/find-guardian', findGuardianByEmail); // Superadmin only
-router.post('/api/admin/all-students', getAllStudents); // Superadmin only
-router.post('/api/admin/all-teachers', getAllTeachers); // Superadmin only
-router.post('/api/admin/all-guardians', getAllGuardians); // Superadmin only
+// Manage users (superadmin)
+router.post('/api/admin/find-user', manageFindUserByEmail);
+router.delete('/api/admin/delete-user', manageDeleteUserByEmail);
+router.post('/api/admin/find-student', findStudentByEmail);
+router.post('/api/admin/find-teacher', findTeacherByEmail);
+router.post('/api/admin/find-guardian', findGuardianByEmail);
+router.post('/api/admin/all-students', getAllStudentsForAdmin);
+router.post('/api/admin/all-teachers', getAllTeachersForAdmin);
+router.post('/api/admin/all-guardians', getAllGuardiansForAdmin);
+router.post('/api/admin/user-login-activity', getUserLoginActivity);
+router.post('/api/admin/user-basic-info', getUserBasicInfo);
+router.get('/api/admin/all-sessions', getAllSessions);
+router.post('/api/admin/students-by-class', getStudentsByClass);
 
 // Announcement routes (RESTful, explicit)
 router.post('/api/addannouncement', authenticateToken, announcementUpload.array('images', 5), createAnnouncement);
