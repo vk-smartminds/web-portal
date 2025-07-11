@@ -1,6 +1,6 @@
 export default function Dashboard() {
     return (
-        <div>
+        <div className="bg-blue-100">
             This is admin aashboard
         </div>
     )
