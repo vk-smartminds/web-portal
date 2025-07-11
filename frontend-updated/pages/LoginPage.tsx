@@ -1,7 +1,7 @@
 
 import { useState } from "react";
-import Link from "next/link";
 import LoginForm from "../components/LoginForm";
+import RegisterModal from "../components/RegisterModal";
 
 export default function LoginPage() {
   const [mode, setMode] = useState<'password' | 'otp'>('password');
@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black px-4">
@@ -22,8 +23,8 @@ export default function LoginPage() {
         <h2 className="text-white text-center text-xl font-semibold mb-1">Welcome Back</h2>
         <p className="text-sm text-gray-400 text-center mb-6">
           Don’t have an account yet? 
-          <span className="text-white font-medium cursor-pointer hover:underline">
-            <Link href="/signup">Sign up</Link>
+          <span className="text-white font-medium cursor-pointer hover:underline" onClick={() => setShowRegister(true)}>
+            Sign up
           </span>
         </p>
         <div className="flex mb-4">
@@ -53,6 +54,7 @@ export default function LoginPage() {
           loading={loading}
           setLoading={setLoading}
         />
+        <RegisterModal open={showRegister} onClose={() => setShowRegister(false)} />
       </div>
     </div>
   );

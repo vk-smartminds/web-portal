@@ -1,5 +1,10 @@
+'use client';
+
 import Link from "next/link";
+import { useState } from "react";
+import RegisterModal from "../components/RegisterModal";
 export default function LoginPage() {
+  const [showRegister, setShowRegister] = useState(false);
   return (
     <div className="min-h-screen flex items-center justify-center bg-black px-4">
       <div className="w-full max-w-sm bg-[#111111] rounded-2xl p-6 shadow-lg">
@@ -53,8 +58,13 @@ export default function LoginPage() {
           </button>
         </form>
 
-
-        
+        <button
+          className="w-full mt-4 bg-green-600 hover:bg-green-700 transition text-white py-2 rounded-md font-medium"
+          onClick={() => setShowRegister(true)}
+        >
+          Register
+        </button>
+        <RegisterModal open={showRegister} onClose={() => setShowRegister(false)} />
       </div>
     </div>
   );
