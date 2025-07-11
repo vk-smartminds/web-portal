@@ -1,15 +1,16 @@
 "use client";
-import { useState } from "react";
 import Link from "next/link";
-import LoginForm from "../components/LoginForm";
+import { useState } from "react";
+import axios from "axios";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [mode, setMode] = useState<'password' | 'otp'>('password');
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [otp, setOtp] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const router = useRouter();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black px-4">
@@ -19,40 +20,86 @@ export default function LoginPage() {
             <span>VK</span>
           </div>
         </div>
+
         <h2 className="text-white text-center text-xl font-semibold mb-1">Welcome Back</h2>
         <p className="text-sm text-gray-400 text-center mb-6">
-          Don’t have an account yet? 
-          <span className="text-white font-medium cursor-pointer hover:underline">
-            <Link href="/student/signup">Sign up</Link>
-          </span>
+          Don’t have an account yet?{" "}
+          <Link href="/signup">
+            <span className="text-white font-medium cursor-pointer hover:underline">Sign up</span>
+          </Link>
         </p>
-        <div className="flex mb-4">
-          <button
-            className={`flex-1 py-2 rounded-l-md ${mode === "password" ? "bg-blue-600 text-white" : "bg-[#1c1c1c] text-gray-400"}`}
-            onClick={() => setMode("password")}
+
+        <div className="space-y-4">
+          <div className="bg-[#1c1c1c] rounded-md px-3 py-2 flex items-center gap-2">
+            <span className="text-gray-500">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12H8m0 0l4-4m-4 4l4 4" />
+              </svg>
+            </span>
+            <input
+              type="email"
+              placeholder="email address"
+              className="bg-transparent outline-none text-white text-sm w-full"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div className="bg-[#1c1c1c] rounded-md px-3 py-2 flex items-center gap-2">
+            <span className="text-gray-500">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m0-6v.01M6 10a6 6 0 0112 0v4a2 2 0 01-2 2h-1m-6 0H8a2 2 0 01-2-2v-4z"
+                />
+              </svg>
+            </span>
+            <input
+              type="password"
+              placeholder="Password"
+              className="bg-transparent outline-none text-white text-sm w-full"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              setLoading(true);
+              setError("");
+
+              const postData = {
+                email,
+                password,
+              };
+
+              axios
+                .post("http://localhost:8000/api/login-student", postData)
+                .then((res) => {
+                  console.log(res);
+                  router.push("/student/dashboard");
+                })
+                .catch((err) => {
+                  console.log(err);
+                  setError("Login failed. Please try again.");
+                })
+                .finally(() => {
+                  setLoading(false);
+                });
+            }}
           >
-            Password
-          </button>
-          <button
-            className={`flex-1 py-2 rounded-r-md ${mode === "otp" ? "bg-blue-600 text-white" : "bg-[#1c1c1c] text-gray-400"}`}
-            onClick={() => setMode("otp")}
-          >
-            OTP
-          </button>
+            <button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 transition text-white py-2 rounded-md font-medium"
+            >
+              {loading ? "Logging in..." : "Login"}
+            </button>
+            {error && <p className="text-red-500 text-sm mt-2 text-center">{error}</p>}
+          </form>
         </div>
-        <LoginForm
-          mode={mode}
-          email={email}
-          setEmail={setEmail}
-          password={password}
-          setPassword={setPassword}
-          otp={otp}
-          setOtp={setOtp}
-          error={error}
-          setError={setError}
-          loading={loading}
-          setLoading={setLoading}
-        />
       </div>
     </div>
   );

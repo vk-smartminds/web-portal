@@ -14,7 +14,7 @@ export default function LoginPage() {
         <p className="text-sm text-gray-400 text-center mb-6">
           Already have an account?  
           <span className="text-white font-medium cursor-pointer hover:underline">
-            <Link href="/student/login">Log in</Link> 
+            <Link href="/login">Log in</Link> 
           </span>
         </p>
 

@@ -19,7 +19,7 @@ export default function TopSection() {
           <li>Blog</li>
           <li>About Us</li>
         </ul>
-        <Link href="/student/login"><ProfileIcon /></Link>
+        <Link href="/login"><ProfileIcon /></Link>
       </nav>
 
       {/* Hero Section */}
