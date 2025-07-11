@@ -1,3 +1,4 @@
+"use client"
 import { BASE_API_URL } from "../utils/apiurl";
 import { setToken } from "../utils/auth";
 import { Dispatch, SetStateAction } from "react";
