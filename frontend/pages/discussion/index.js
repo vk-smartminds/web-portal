@@ -546,12 +546,35 @@ export default function DiscussionPanel() {
     return vote ? vote.value : 0;
   };
 
-  // Filtered threads
+  // Add filter state
+  const [activeTab, setActiveTab] = useState('hot'); // 'hot' | 'latest'
+  // Remove old tagFilter state, use selectedTags for categories filter
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [categoriesDropdownOpen, setCategoriesDropdownOpen] = useState(false);
+  const categoriesDropdownRef = useRef(null);
+
+  // Handle click outside for categories dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (categoriesDropdownRef.current && !categoriesDropdownRef.current.contains(event.target)) {
+        setCategoriesDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filtering and sorting logic
   const getThreadUpvotes = (thread) => (thread.votes || []).reduce((sum, v) => sum + v.value, 0);
-  const filteredThreads = (tagFilter.length > 0
-    ? threads.filter(thread => thread.tags && tagFilter.some(tag => thread.tags.includes(tag)))
-    : threads
-  ).slice().sort((a, b) => getThreadUpvotes(b) - getThreadUpvotes(a));
+  let filteredThreads = threads;
+  if (selectedTags.length > 0) {
+    filteredThreads = filteredThreads.filter(thread => thread.tags && selectedTags.some(tag => thread.tags.includes(tag)));
+  }
+  if (activeTab === 'hot') {
+    filteredThreads = filteredThreads.slice().sort((a, b) => getThreadUpvotes(b) - getThreadUpvotes(a));
+  } else if (activeTab === 'latest') {
+    filteredThreads = filteredThreads.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
 
   // Edit post handler
   const handleEditPost = (post) => {
@@ -987,6 +1010,100 @@ export default function DiscussionPanel() {
 
   return (
     <div style={{ maxWidth: 800, margin: '40px auto', padding: 24, background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px #eee' }}>
+      {/* Filter Bar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 24, borderBottom: '1px solid #eee', marginBottom: 24, position: 'relative' }}>
+        <button
+          onClick={() => setActiveTab('latest')}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontSize: 17,
+            fontWeight: 600,
+            color: activeTab === 'latest' ? '#222' : '#888',
+            borderBottom: activeTab === 'latest' ? '2.5px solid #222' : '2.5px solid transparent',
+            padding: '8px 0',
+            cursor: 'pointer',
+            outline: 'none',
+            marginRight: 8,
+            transition: 'color 0.2s, border-bottom 0.2s',
+          }}
+        >
+          Latest
+        </button>
+        <button
+          onClick={() => setActiveTab('hot')}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontSize: 17,
+            fontWeight: 600,
+            color: activeTab === 'hot' ? '#222' : '#888',
+            borderBottom: activeTab === 'hot' ? '2.5px solid #222' : '2.5px solid transparent',
+            padding: '8px 0',
+            cursor: 'pointer',
+            outline: 'none',
+            marginRight: 8,
+            transition: 'color 0.2s, border-bottom 0.2s',
+          }}
+        >
+          Hot
+        </button>
+        <div ref={categoriesDropdownRef} style={{ position: 'relative' }}>
+          <button
+            onClick={() => setCategoriesDropdownOpen(v => !v)}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: 17,
+              fontWeight: 600,
+              color: selectedTags.length > 0 ? '#222' : '#888',
+              borderBottom: selectedTags.length > 0 ? '2.5px solid #222' : '2.5px solid transparent',
+              padding: '8px 0',
+              cursor: 'pointer',
+              outline: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              transition: 'color 0.2s, border-bottom 0.2s',
+            }}
+          >
+            Categories <span style={{ fontSize: 16, marginLeft: 2 }}>&#9660;</span>
+          </button>
+          {categoriesDropdownOpen && (
+            <div style={{ position: 'absolute', top: 38, left: 0, minWidth: 180, background: '#fff', border: '1.5px solid #e0e0e0', borderRadius: 6, zIndex: 10, maxHeight: 260, overflowY: 'auto', boxShadow: '0 2px 8px #0001', padding: 8 }}>
+              {TAG_OPTIONS.map(tag => (
+                <div
+                  key={tag}
+                  onClick={() => {
+                    if (selectedTags.includes(tag)) setSelectedTags(selectedTags.filter(t => t !== tag));
+                    else setSelectedTags([...selectedTags, tag]);
+                  }}
+                  style={{
+                    padding: '7px 12px',
+                    cursor: 'pointer',
+                    background: selectedTags.includes(tag) ? '#e0e7ff' : '#fff',
+                    color: selectedTags.includes(tag) ? '#1e3c72' : '#222',
+                    fontWeight: selectedTags.includes(tag) ? 600 : 400,
+                    borderRadius: 5,
+                    marginBottom: 2,
+                  }}
+                >
+                  {tag} {selectedTags.includes(tag) && <span style={{ float: 'right', color: '#1e3c72' }}>✓</span>}
+                </div>
+              ))}
+              {selectedTags.length > 0 && (
+                <button
+                  onClick={() => setSelectedTags([])}
+                  style={{ marginTop: 8, background: '#eee', color: '#333', border: 'none', borderRadius: 6, padding: '4px 12px', fontWeight: 600, fontSize: 14, cursor: 'pointer', width: '100%' }}
+                >
+                  Clear Selection
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      {/* End Filter Bar */}
       <h2 className='text-2xl font-bold'>Discussion Panel</h2>
       
       {/* Search Bar */}
