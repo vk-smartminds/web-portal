@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { BASE_API_URL } from "../../pages/apiurl";
-import { setToken, setUserData, getToken, isAuthenticated, isTokenExpired } from "../../utils/auth";
+import { BASE_API_URL } from "../../utils/apiurl";
+import { setToken, setUserData, getToken, isAuthenticated, isTokenExpired, setSessionId } from "../../utils/auth";
 import useOtpTimer from "./useOtpTimer";
 
 export default function useLogin() {
@@ -71,8 +71,10 @@ export default function useLogin() {
       if (adminRes.ok) {
         const data = await adminRes.json();
         setToken(data.token);
+        if (data.sessionId) setSessionId(data.sessionId);
         setUserData(data.admin);
         localStorage.setItem("userEmail", cleanEmail);
+        localStorage.setItem("isSuperAdmin", data.admin.isSuperAdmin ? "true" : "false");
         setMsg("Admin login successful!");
         setError("");
         router.push("/admin/dashboard");
@@ -93,6 +95,7 @@ export default function useLogin() {
       if (studentRes.ok) {
         const data = await studentRes.json();
         setToken(data.token);
+        if (data.sessionId) setSessionId(data.sessionId);
         setUserData(data.user);
         localStorage.setItem("userEmail", cleanEmail);
         setMsg("Student login successful!");
@@ -115,6 +118,7 @@ export default function useLogin() {
       if (teacherRes.ok) {
         const data = await teacherRes.json();
         setToken(data.token);
+        if (data.sessionId) setSessionId(data.sessionId);
         setUserData(data.user);
         localStorage.setItem("userEmail", cleanEmail);
         setMsg("Teacher login successful!");
@@ -137,6 +141,7 @@ export default function useLogin() {
       if (guardianRes.ok) {
         const data = await guardianRes.json();
         setToken(data.token);
+        if (data.sessionId) setSessionId(data.sessionId);
         setUserData(data.user);
         localStorage.setItem("userEmail", cleanEmail);
         setMsg("Parent login successful!");
@@ -162,58 +167,22 @@ export default function useLogin() {
     setOtpBlocks(["", "", "", "", "", ""]);
     const cleanEmail = email.trim().toLowerCase();
     try {
-      const adminRes = await fetch(`${BASE_API_URL}/getadmins`);
-      if (adminRes.ok) {
-        const adminData = await adminRes.json();
-        const foundAdmin = (adminData.admins || []).find(a => a.email === cleanEmail);
-        if (foundAdmin) {
-          const sendOtpRes = await fetch(`${BASE_API_URL}/user/send-login-otp`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: cleanEmail })
-          });
-          setSendingOtp(false);
-          if (sendOtpRes.ok) {
-            setIsAdminOtp(true);
-            setOtpSent(true);
-            setAdminOtpSent(true);
-            setMsg("OTP sent to your email.");
-          } else {
-            const data = await sendOtpRes.json();
-            setError(data.message || "Failed to send OTP.");
-          }
-          return;
-        }
-      }
-    } catch (err) {}
-    try {
-      const userRes = await fetch(`${BASE_API_URL}/user/find-by-email`, {
+      // Directly call the unified OTP endpoint for all user types
+      const sendOtpRes = await fetch(`${BASE_API_URL}/send-login-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: cleanEmail })
       });
-      if (userRes.ok) {
-        const sendOtpRes = await fetch(`${BASE_API_URL}/user/send-login-otp`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: cleanEmail })
-        });
-        setSendingOtp(false);
-        if (sendOtpRes.ok) {
-          setOtpSent(true);
-          setMsg("OTP sent to your email.");
-        } else {
-          const data = await sendOtpRes.json();
-          setError(data.message || "Failed to send OTP.");
-        }
-      } else if (userRes.status === 404) {
-        setSendingOtp(false);
-        setError("");
-        setShowNotFoundPopup(true);
+      setSendingOtp(false);
+      if (sendOtpRes.ok) {
+        setOtpSent(true);
+        setMsg("OTP sent to your email.");
       } else {
-        setSendingOtp(false);
-        const data = await userRes.json();
-        setError(data.message || "Failed to check user.");
+        const data = await sendOtpRes.json();
+        setError(data.message || "Failed to send OTP.");
+        if (sendOtpRes.status === 404) {
+          setShowNotFoundPopup(true);
+        }
       }
     } catch (err) {
       setSendingOtp(false);
@@ -246,7 +215,7 @@ export default function useLogin() {
     }
     if (isAdminOtp && adminOtpSent) {
       try {
-        const res = await fetch(`${BASE_API_URL}/user/verify-login-otp`, {
+        const res = await fetch(`${BASE_API_URL}/verify-login-otp`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: cleanEmail, otp: otpBlocks.join("") })
@@ -262,6 +231,9 @@ export default function useLogin() {
             const superData = await superRes.json();
             isSuperAdmin = !!superData.isSuperAdmin;
           }
+          // Add setSessionId if present
+          const data = await res.json();
+          if (data.sessionId) setSessionId(data.sessionId);
           localStorage.setItem("userEmail", cleanEmail);
           localStorage.setItem("isSuperAdmin", isSuperAdmin ? "true" : "false");
           setMsg("Admin login successful!");
@@ -277,23 +249,23 @@ export default function useLogin() {
       return;
     }
     try {
-      const res = await fetch(`${BASE_API_URL}/user/verify-login-otp`, {
+      const res = await fetch(`${BASE_API_URL}/verify-login-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: cleanEmail, otp: otpBlocks.join("") })
       });
       if (res.ok) {
         const data = await res.json();
-        setMsg("OTP login successful!");
-        setError("");
         setToken(data.token);
+        if (data.sessionId) setSessionId(data.sessionId);
         setUserData(data.user);
         localStorage.setItem("userEmail", cleanEmail);
-        if (data.user && data.user.registeredAs) {
-          const role = data.user.registeredAs.toLowerCase();
+        if (data.user && data.user.role) {
+          const role = data.user.role.toLowerCase();
           if (role === "student") router.replace("/student/dashboard");
           else if (role === "teacher") router.replace("/teacher/dashboard");
-          else if (role === "parent") router.replace("/parent/dashboard");
+          else if (role === "guardian") router.replace("/guardian/dashboard");
+          else if (role === "admin") router.replace("/admin/dashboard");
           else router.replace("/login");
         } else {
           router.replace("/login");

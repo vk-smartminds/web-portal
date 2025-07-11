@@ -50,6 +50,39 @@ export const getProfile = async (req, res) => {
       }));
       userObj.child = updatedChildren;
     }
+    // --- Privacy masking for all fields: remove fields if privacy is off ---
+    if (userObj.profileVisibility) {
+      // Helper to remove fields
+      const removeFields = (fields) => {
+        for (const field of fields) {
+          if (userObj.profileVisibility[field] === false) {
+            delete userObj[field];
+          }
+        }
+      };
+      // Student
+      if (userObj.role === 'Student') {
+        removeFields(['name', 'email', 'phone', 'school', 'class', 'photo', 'role']);
+        if (userObj.profileVisibility.guardian === false) {
+          userObj.guardian = [];
+        }
+      }
+      // Guardian
+      if (userObj.userRole === 'Guardian') {
+        removeFields(['name', 'email', 'phone', 'photo', 'userRole']);
+        if (userObj.profileVisibility.child === false) {
+          userObj.child = [];
+        }
+      }
+      // Teacher
+      if (userObj.role === 'Teacher') {
+        removeFields(['name', 'email', 'phone', 'school', 'photo', 'role']);
+      }
+      // Admin
+      if (userObj.isSuperAdmin !== undefined || userObj.isAdmin !== undefined || userObj.role === 'admin') {
+        removeFields(['name', 'email', 'phone', 'photo', 'role']);
+      }
+    }
     res.json({ user: userObj });
   } catch (err) {
     res.status(500).json({ message: 'Error fetching profile', error: err.message });

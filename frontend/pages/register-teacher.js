@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { BASE_API_URL } from "./apiurl";
+import { BASE_API_URL } from "../utils/apiurl";
 
 const btnStyle = {
   background: "linear-gradient(90deg, #ff8c00 0%, #ff0080 100%)",

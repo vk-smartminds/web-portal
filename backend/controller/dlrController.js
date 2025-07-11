@@ -130,4 +130,24 @@ export const removeDLRPdf = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: 'Error removing PDF', error: err.message });
   }
+};
+
+// Stream a specific PDF from a DLR
+export const getDlrPdf = async (req, res) => {
+  try {
+    const { id, pdfIndex } = req.params;
+    const dlr = await DLR.findById(id);
+    if (!dlr || !dlr.pdfs || !dlr.pdfs[parseInt(pdfIndex)]) {
+      return res.status(404).json({ message: 'PDF not found' });
+    }
+    const file = dlr.pdfs[parseInt(pdfIndex)];
+    if (!file || file.contentType !== 'application/pdf') {
+      return res.status(404).json({ message: 'PDF not found' });
+    }
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="dlr.pdf"');
+    res.send(file.data);
+  } catch (err) {
+    res.status(500).json({ message: 'Error streaming PDF', error: err.message });
+  }
 }; 

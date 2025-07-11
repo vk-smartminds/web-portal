@@ -2,6 +2,11 @@ import Admin from '../models/Admin.js';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import Student from '../models/Student.js';
+import Teacher from '../models/Teacher.js';
+import Guardian from '../models/Guardian.js';
+import * as loginActivityController from './loginActivityController.js';
+import { v4 as uuidv4 } from 'uuid';
 dotenv.config();
 
 // Helper to generate random password of length 5-10, different each time
@@ -81,6 +86,16 @@ export const addAdmin = async (req, res) => {
     // Check if already an admin
     const exists = await Admin.findOne({ email });
     if (exists) return res.status(409).json({ message: 'Admin already exists' });
+
+    // Check if email exists as Student, Teacher, or Guardian
+    const [student, teacher, guardian] = await Promise.all([
+      Student.findOne({ email: email.trim().toLowerCase() }),
+      Teacher.findOne({ email: email.trim().toLowerCase() }),
+      Guardian.findOne({ email: email.trim().toLowerCase() })
+    ]);
+    if (student) return res.status(409).json({ message: 'This email is already registered as a Student.' });
+    if (teacher) return res.status(409).json({ message: 'This email is already registered as a Teacher.' });
+    if (guardian) return res.status(409).json({ message: 'This email is already registered as a Guardian.' });
 
     // Generate random password
     const randomPassword = generateRandomPassword();
@@ -162,25 +177,28 @@ export const adminLogin = async (req, res) => {
     // Always trim and lowercase for lookup
     const admin = await Admin.findOne({ email: email.trim().toLowerCase() });
     if (!admin) {
-      // Email not found in admin table
       return res.status(404).json({ message: 'User not registered.' });
     }
-    // Email found, check password
-    // DEBUG LOGGING
-    // console.log("Admin login attempt:", email, password, admin.password);
     const match = await bcrypt.compare(password, admin.password);
-    // console.log("Password match result:", match);
     if (!match) {
-      // Password does not match
       return res.status(401).json({ message: 'Incorrect password.' });
     }
-    // Success: Generate JWT token and return admin data
+    // Generate sessionId
+    const sessionId = uuidv4();
     // Import generateToken if not already
     const { generateToken } = await import('../middleware/auth.js');
-    const token = generateToken(admin._id, 'admin');
+    const token = generateToken(admin._id, 'admin', sessionId);
+    // Log login event with sessionId and proper req object
+    await loginActivityController.addLoginEvent({
+      user: { id: admin._id, role: 'admin', sessionId },
+      ip: req.ip,
+      headers: req.headers,
+      body: { sessionId }
+    }, { status: () => ({ json: () => {} }) });
     return res.json({
       message: 'Login successful',
       token,
+      sessionId,
       admin: {
         id: admin._id,
         email: admin.email,

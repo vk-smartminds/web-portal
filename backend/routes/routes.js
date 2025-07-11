@@ -6,17 +6,28 @@ import { authenticateToken } from '../middleware/auth.js';
 import multer from 'multer';
 import studentController from '../controller/studentController.js';
 import teacherController from '../controller/teacherController.js';
-import { findUserByEmail as manageFindUserByEmail, deleteUserByEmail as manageDeleteUserByEmail } from '../controller/manageUserController.js';
-import { createAnnouncement, getAnnouncements, updateAnnouncement, deleteAnnouncement, announcementUpload, removeAnnouncementImage, markAnnouncementAsViewed } from '../controller/announcementController.js';
+import { findUserByEmail as manageFindUserByEmail, deleteUserByEmail as manageDeleteUserByEmail, findStudentByEmail, findTeacherByEmail, findGuardianByEmail, getAllStudents, getAllTeachers, getAllGuardians } from '../controller/manageUserController.js';
+import { createAnnouncement, getAnnouncements, updateAnnouncement, deleteAnnouncement, announcementUpload, removeAnnouncementImage, markAnnouncementAsViewed, getAnnouncementFile } from '../controller/announcementController.js';
 import { getCbseUpdates } from '../controller/cbseController.js';
-import { addMindMap, getMindMaps, deleteMindMap, mindMapUpload, updateMindMap } from '../controller/mindMapController.js';
+import { addMindMap, getMindMaps, deleteMindMap, mindMapUpload, updateMindMap, getMindMapPdf } from '../controller/mindMapController.js';
 import { addAVLR, getAVLRs, updateAVLR, deleteAVLR } from '../controller/avlrController.js';
-import { createDLR, getDLRs, updateDLR, deleteDLR, removeDLRPdf, dlrUpload } from '../controller/dlrController.js';
-import { addCreativeItem, getCreativeItems, deleteCreativeItem, creativeCornerUpload, updateCreativeItem } from '../controller/creativeCornerController.js';
+import { createDLR, getDLRs, updateDLR, deleteDLR, removeDLRPdf, dlrUpload, getDlrPdf } from '../controller/dlrController.js';
+import { addCreativeItem, getCreativeItems, deleteCreativeItem, creativeCornerUpload, updateCreativeItem, getCreativeCornerFile } from '../controller/creativeCornerController.js';
 import { verifyChildEmail, verifyChildOtp as verifyGuardianChildOtp } from '../controller/guardianController';
 import { checkGuardianEmail, validateGuardianPassword } from '../controller/guardianController';
 import * as discussionController from '../controller/discussionController.js';
 import { threadUpload, postUpload, getDiscussionNotifications, markDiscussionNotificationRead, deleteDiscussionNotification } from '../controller/discussionController.js';
+import { deleteAccount } from '../controller/deleteAccountController.js';
+import * as forgotPasswordController from '../controller/forgotPasswordController.js';
+import { changePassword } from '../controller/passwordController.js';
+import * as alternativeEmailController from '../controller/alternativeEmailController.js';
+import * as privacyController from '../controller/privacyController.js';
+import * as notificationSettingsController from '../controller/notificationSettingsController.js';
+import * as loginActivityController from '../controller/loginActivityController.js';
+import { getStudentById, getStudentPhoto } from '../controller/studentController.js';//let's have a check on it
+import { createSqp, getSqps, updateSqp, deleteSqp, sqpUpload, getSqpPdf } from '../controller/sqpController.js';
+import { createPyq, getPyqs, updatePyq, deletePyq, pyqUpload, getPyqPdf } from '../controller/pyqController.js';
+import { createPyp, getPyps, updatePyp, deletePyp, pypUpload, getPypPdf } from '../controller/pypController.js';
 
 const router = express.Router();
 
@@ -28,6 +39,11 @@ router.post('/api/send-register-otp', sendRegisterOtp);
 router.post('/api/verify-register-otp', verifyRegisterOtp);
 router.post('/api/send-child-otp', sendChildOtp);
 router.post('/api/verify-child-otp', verifyChildOtp);
+
+// Forgot Password routes
+router.post('/api/forgot-password/send-otp', forgotPasswordController.sendForgotPasswordOtp);
+router.post('/api/forgot-password/verify-otp', forgotPasswordController.verifyForgotPasswordOtp);
+router.post('/api/forgot-password/reset', forgotPasswordController.resetPassword);
 
 // Registration
 router.post('/api/register-student', registerStudent);
@@ -49,6 +65,9 @@ router.post('/api/send-login-otp', sendLoginOtp);
 router.post('/api/student/send-otp', studentController.sendOtp);
 router.post('/api/student/register', studentController.register);
 router.post('/api/student/find', studentController.find);
+router.get('/api/student/class/:id', studentController.getClassByStudentId); // New endpoint for fetching student class by student ID
+router.get('/api/student/:id', studentController.getStudentById);
+router.get('/api/student/:id/photo', studentController.getStudentPhoto);
 
 // Teacher routes
 router.post('/api/teacher/send-otp', teacherController.sendOtp);
@@ -60,6 +79,12 @@ router.get('/api/verify-token', authenticateToken, verifyToken);
 router.get('/api/profile', authenticateToken, getProfile);
 router.put('/api/profile', authenticateToken, memoryUpload.single('photo'), updateProfile);
 router.post('/api/user/delete', authenticateToken, deleteUser);
+router.delete('/api/delete-account', authenticateToken, deleteAccount);
+router.post('/api/change-password', authenticateToken, changePassword);
+router.post('/api/send-alt-email-otp', authenticateToken, alternativeEmailController.sendAltEmailOtp);
+router.post('/api/verify-alt-email-otp', authenticateToken, alternativeEmailController.verifyAltEmailOtp);
+router.get('/api/profile-visibility', authenticateToken, privacyController.getProfileVisibility);
+router.put('/api/profile-visibility', authenticateToken, privacyController.updateProfileVisibility);
 
 // Admin routes
 router.get('/api/getadmins', getAdmins);
@@ -70,6 +95,12 @@ router.post('/api/admin/login', adminLogin); // Secure admin login route
 router.post('/api/check-superadmin', checkSuperAdmin);
 router.post('/api/admin/find-user', manageFindUserByEmail); // Superadmin only
 router.delete('/api/admin/delete-user', manageDeleteUserByEmail); // Superadmin only
+router.post('/api/admin/find-student', findStudentByEmail); // Superadmin only
+router.post('/api/admin/find-teacher', findTeacherByEmail); // Superadmin only
+router.post('/api/admin/find-guardian', findGuardianByEmail); // Superadmin only
+router.post('/api/admin/all-students', getAllStudents); // Superadmin only
+router.post('/api/admin/all-teachers', getAllTeachers); // Superadmin only
+router.post('/api/admin/all-guardians', getAllGuardians); // Superadmin only
 
 // Announcement routes (RESTful, explicit)
 router.post('/api/addannouncement', authenticateToken, announcementUpload.array('images', 5), createAnnouncement);
@@ -78,6 +109,7 @@ router.put('/api/updateannouncement/:id', authenticateToken, announcementUpload.
 router.delete('/api/removeannouncement/:id', authenticateToken, deleteAnnouncement);
 router.put('/api/announcement/:id/remove-image', authenticateToken, removeAnnouncementImage);
 router.post('/api/announcement/:announcementId/view', authenticateToken, markAnnouncementAsViewed);
+router.get('/api/announcement/:id/file/:fileIndex', getAnnouncementFile);
 
 // CBSE Updates route
 router.get('/api/cbse-updates', getCbseUpdates);
@@ -99,6 +131,7 @@ router.put('/api/mindmap/:id', authenticateToken, (req, res, next) => {
     next();
   });
 }, updateMindMap);
+router.get('/api/mindmap/:id/pdf/:pdfIndex', getMindMapPdf);
 
 // AVLR routes
 router.post('/api/avlr', authenticateToken, addAVLR);
@@ -112,13 +145,33 @@ router.get('/api/dlrs', getDLRs);
 router.put('/api/dlr/:id', dlrUpload.array('pdfs', 10), updateDLR);
 router.delete('/api/dlr/:id', deleteDLR);
 router.post('/api/dlr/:id/remove-pdf', removeDLRPdf);
+router.get('/api/dlr/:id/pdf/:pdfIndex', getDlrPdf);
 
 // Creative Corner routes
 router.post('/api/creative-corner', authenticateToken, creativeCornerUpload.array('files', 10), addCreativeItem);
 router.get('/api/creative-corner', getCreativeItems);
 router.put('/api/creative-corner/:id', authenticateToken, creativeCornerUpload.array('files', 10), updateCreativeItem);
 router.delete('/api/creative-corner/:id', authenticateToken, deleteCreativeItem);
+router.get('/api/creative-corner/:id/file/:fileIndex', getCreativeCornerFile);
 
+// SQP routes
+router.post('/api/sqp', sqpUpload.array('pdfs', 10), createSqp);
+router.get('/api/sqps', getSqps);
+router.put('/api/sqp/:id', sqpUpload.array('pdfs', 10), updateSqp);
+router.delete('/api/sqp/:id', deleteSqp);
+router.get('/api/sqp/:id/pdf/:pdfIndex', getSqpPdf);
+// PYQ routes
+router.post('/api/pyq', pyqUpload.array('pdfs', 10), createPyq);
+router.get('/api/pyqs', getPyqs);
+router.put('/api/pyq/:id', pyqUpload.array('pdfs', 10), updatePyq);
+router.delete('/api/pyq/:id', deletePyq);
+router.get('/api/pyq/:id/pdf/:pdfIndex', getPyqPdf);
+// PYP routes
+router.post('/api/pyp', pypUpload.array('pdfs', 10), createPyp);
+router.get('/api/pyps', getPyps);
+router.put('/api/pyp/:id', pypUpload.array('pdfs', 10), updatePyp);
+router.delete('/api/pyp/:id', deletePyp);
+router.get('/api/pyp/:id/pdf/:pdfIndex', getPypPdf);
 
 // User Info route
 router.get('/api/userinfo', getUserInfoById);
@@ -150,5 +203,18 @@ router.get('/api/discussion/notifications', authenticateToken, getDiscussionNoti
 router.post('/api/discussion/notifications/:id/read', authenticateToken, markDiscussionNotificationRead);
 router.delete('/api/discussion/notifications/:id', authenticateToken, deleteDiscussionNotification);
 
+// Notification settings routes
+router.get('/api/notification-settings', authenticateToken, notificationSettingsController.getNotificationSettings);
+router.put('/api/notification-settings', authenticateToken, notificationSettingsController.updateNotificationSettings);
+
+// Login activity route
+router.get('/api/login-activity', authenticateToken, loginActivityController.getLoginActivity);
+// Logout route
+router.post('/api/logout', authenticateToken, loginActivityController.addLogoutEvent);
+// --- QUIZ/QUESTION ADMIN & STUDENT ROUTES ---
+import adminQuizRoutes from '../quiz/routes/adminQuizRoutes.js';
+import quizRoutes from '../quiz/routes/quizRoutes.js';
+router.use('/api/admin/quiz', adminQuizRoutes);
+router.use('/api/quiz', quizRoutes);
 
 export default router;
