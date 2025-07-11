@@ -1,5 +1,5 @@
 import express from 'express';
-import { sendRegisterOtp,verifyRegisterOtp,registerStudent,registerGuardian,registerTeacher,loginStudent,loginGuardian,loginTeacher,deleteUser,sendChildOtp,verifyChildOtp,checkChildVerified,verifyLoginOtp,sendLoginOtp } from '../controller/authController.js';
+import { sendRegisterOtp,verifyRegisterOtp,registerStudent,registerGuardian,registerTeacher,loginStudent,loginGuardian,loginTeacher,deleteUser,sendChildOtp,verifyChildOtp,checkChildVerified,verifyLoginOtp,sendLoginOtp, loginUser } from '../controller/authController.js';
 import { getProfile, updateProfile, upload, verifyToken, getUserInfoById } from '../controller/profileController.js';
 import { getAdmins, addAdmin, removeAdmin, isAdmin, adminLogin, checkSuperAdmin } from '../controller/adminController.js';
 import { authenticateToken } from '../middleware/auth.js';
@@ -54,6 +54,7 @@ router.post('/api/register-teacher', registerTeacher);
 router.post('/api/login-student', loginStudent);
 router.post('/api/login-guardian', loginGuardian);
 router.post('/api/login-teacher', loginTeacher);
+router.post('/api/login', loginUser);
 
 // OTP Login
 router.post('/api/verify-login-otp', verifyLoginOtp); // Unified OTP login verification for all user types
