@@ -336,6 +336,41 @@ export const loginTeacher = async (req, res) => {
   }
 };
 
+export const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const cleanEmail = email.trim().toLowerCase();
+    // Check all user tables
+    const [student, teacher, guardian, admin] = await Promise.all([
+      Student.findOne({ email: cleanEmail }),
+      Teacher.findOne({ email: cleanEmail }),
+      Guardian.findOne({ email: cleanEmail }),
+      Admin.findOne({ email: cleanEmail })
+    ]);
+    let user = null, role = null;
+    if (student) { user = student; role = 'student'; }
+    else if (teacher) { user = teacher; role = 'teacher'; }
+    else if (guardian) { user = guardian; role = 'guardian'; }
+    else if (admin) { user = admin; role = 'admin'; }
+    else return res.status(404).json({ message: 'User not found' });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ message: 'Incorrect password' });
+    const sessionId = uuidv4();
+    const token = generateToken(user._id, role, sessionId);
+    await loginActivityController.addLoginEvent({
+      user: { id: user._id, role, sessionId },
+      ip: req.ip,
+      headers: req.headers
+    }, { status: () => ({ json: () => {} }) });
+    let userInfo = { id: user._id, email: user.email, role, name: user.name };
+    if (role === 'guardian') userInfo.guardianRole = user.role;
+    if (role === 'admin') userInfo.isSuperAdmin = user.isSuperAdmin;
+    res.status(200).json({ message: "Login successful", token, sessionId, user: userInfo });
+  } catch (err) {
+    res.status(500).json({ message: "Login failed", error: err.message });
+  }
+};
+
 // --- OTP Login for Student ---
 // Removed old role-specific OTP login and verification endpoints
 // --- OTP Login for Guardian ---
