@@ -11,8 +11,7 @@ import PracticeDashboard from "../../../components/PracticeDashboard";
 const menuItems = [
   { key: "cbse-updates", label: "CBSE Updates" },
   { key: "announcements", label: "Announcements" },
-  { key: "quizzes", label: "Quizzes" },
-  { key: "sample-papers", label: "Sample Papers" },
+  { key: "quizzes", label: "Quizzes" },,
   { key: "avlrs", label: "AVLRs" },
   { key: "dlrs", label: "DLRs" },
   { key: "mind-maps", label: "Mind Maps" },

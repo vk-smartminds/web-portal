@@ -81,7 +81,6 @@ export default function Sidebar({
   };
 
   const staticsItems = [
-    { key: "sample-papers", label: "Sample Papers", icon: icons.book },
     { key: "avlrs", label: "AVLRs", icon: icons.laptop, href: "/avlrs" },
     { key: "dlrs", label: "DLRs", icon: icons.pdf, href: "/dlrs" },
     { key: "mind-maps", label: "Mind Maps", icon: icons.chart, href: "/mindmaps" },
@@ -170,6 +169,7 @@ export default function Sidebar({
                 >
                   {item.icon}
                   <span>{item.label}</span>
+                  {item.key === "announcements" && renderAnnouncementBadge && renderAnnouncementBadge(newAnnouncementCount)}
                 </button>
               ))}
             </div>
