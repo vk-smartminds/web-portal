@@ -8,7 +8,7 @@ export default function LandingHeader() {
 
   const navItems = [
     { label: "Home", href: "/" },
-    { label: "About Us", href: "https://vkpublications.com/pages/vk" },
+    { label: "About Us", href: "/about" },
   ];
   return (<nav className="flex justify-between items-center px-10 py-6">
         <div className="flex items-center gap-2 font-bold text-lg text-[#4f46e5]">

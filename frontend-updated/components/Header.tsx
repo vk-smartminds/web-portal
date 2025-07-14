@@ -27,11 +27,7 @@ export default function Header() {
           1 hour remaining
         </div>
 
-        <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-md shadow-sm transition">
-          New Courses
-        </button>
 
-        <ProfileIcon className="w-5 h-5 text-gray-600 cursor-pointer hover:text-gray-800" />
       </div>
     </header>
   );
