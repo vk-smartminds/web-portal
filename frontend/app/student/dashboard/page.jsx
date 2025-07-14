@@ -5,6 +5,7 @@ import DashboardCommon from "../../../pages/DashboardCommon";
 // import { BASE_API_URL } from "../../../utils/apiurl";
 import AnnouncementPage from "../../../pages/announcement";
 import Sidebar from "../../../components/Sidebar";
+import PracticeDashboard from "../../../components/PracticeDashboard";
 
 
 const menuItems = [
