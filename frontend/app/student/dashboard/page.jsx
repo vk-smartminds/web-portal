@@ -1,7 +1,4 @@
 "use client";
-
-import React from "react";
-
 import DashboardCommon from "../../../pages/DashboardCommon";
 // import { getToken, logout } from "../../../utils/auth";
 // import ProtectedRoute from '../../../components/ProtectedRoute';
@@ -30,20 +27,17 @@ const menuItems = [
 
 export default function StudentDashboardPage() {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f4f7fa' }}>
-      <Sidebar style={{ borderRight: '1px solid #e0e0e0' }} />
-      <div style={{ flex: 1, padding: '0 24px' }}>
-        <PracticeDashboard />
-    <DashboardCommon
-      menuItems={menuItems}
-      userType="Student"
-      renderContent={({ selectedMenu, ...rest }) =>
-        selectedMenu === "announcements"
-          ? <AnnouncementPage {...rest} />
-          : null
-      }
-    />
-      </div>
+    <div>
+      <DashboardCommon
+        SidebarComponent={Sidebar}
+        menuItems={menuItems}
+        userType="Student"
+        renderContent={({ selectedMenu, ...rest }) =>
+          selectedMenu === "announcements"
+            ? <AnnouncementPage {...rest} />
+            : null
+        }
+      />
     </div>
   );
 }
