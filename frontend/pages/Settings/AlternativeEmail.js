@@ -18,6 +18,7 @@ export default function AlternativeEmail() {
   const [otpBlocks, setOtpBlocks] = useState(["", "", "", "", "", ""]);
   const otpRefs = Array.from({ length: 6 }, () => React.useRef());
   const { timeLeft, expired, start: startOtpTimer, reset: resetOtpTimer } = useOtpTimer(120);
+  const [loading, setLoading] = useState(true);
 
   // Fetch current alternative email when component mounts
   useEffect(() => {
@@ -29,14 +30,19 @@ export default function AlternativeEmail() {
     setOtpError(""); 
     setOtpSuccess(""); 
     setShowChangeForm(false);
+    setLoading(true);
     fetch(`${BASE_API_URL}/profile`, {
       headers: { Authorization: `Bearer ${getToken()}` }
     })
       .then(res => res.json())
       .then(data => {
         setCurrentAltEmail(data.user && data.user.alternativeEmail ? data.user.alternativeEmail : "");
+        setLoading(false);
       })
-      .catch(() => setCurrentAltEmail(""));
+      .catch(() => {
+        setCurrentAltEmail("");
+        setLoading(false);
+      });
   }, []);
 
   const handleSendOtp = async (e) => {
@@ -159,95 +165,105 @@ export default function AlternativeEmail() {
     }
   };
 
+  if (loading) {
+    return (
+      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ fontSize: 20, color: '#1e3c72', fontWeight: 600 }}>Loading...</div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ background: '#fff', borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32 }}>
-      <h3 style={{ fontWeight: 700, fontSize: 22, marginBottom: 18, color: "#1e3c72" }}>Alternative Email</h3>
-      {currentAltEmail && !showChangeForm ? (
-        <>
-          <div style={{ marginBottom: 18 }}>
-            <span style={{ fontWeight: 600 }}>Current Alternative Email: </span>
-            <span style={{ color: '#1e3c72', fontWeight: 600 }}>{currentAltEmail}</span>
-          </div>
-          <button type="button" style={{ background: '#1e3c72', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 22px', fontWeight: 600, cursor: 'pointer', marginBottom: 18 }} onClick={() => setShowChangeForm(true)}>
-            Change Alternative Email
-          </button>
-        </>
-      ) : null}
-      {(!currentAltEmail || showChangeForm) && (
-        <>
-          <form onSubmit={handleSendOtp} style={{ maxWidth: 400 }}>
+    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#fff', borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, minWidth: 350, maxWidth: 420, width: '100%' }}>
+        <h3 style={{ fontWeight: 700, fontSize: 22, marginBottom: 18, color: "#1e3c72" }}>Alternative Email</h3>
+        {currentAltEmail && !showChangeForm ? (
+          <>
             <div style={{ marginBottom: 18 }}>
-              <label style={{ fontWeight: 600 }}>Alternative Email</label>
-              <input
-                type="email"
-                value={altEmail}
-                onChange={e => setAltEmail(e.target.value)}
-                style={{ width: "100%", padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16, marginTop: 6 }}
-                required
-                disabled={otpSent || sendingOtp}
-              />
+              <span style={{ fontWeight: 600 }}>Current Alternative Email: </span>
+              <span style={{ color: '#1e3c72', fontWeight: 600 }}>{currentAltEmail}</span>
             </div>
-            {altEmailError && <div style={{ color: '#c00', marginBottom: 12 }}>{altEmailError}</div>}
-            {altEmailSuccess && <div style={{ color: '#28a745', marginBottom: 12 }}>{altEmailSuccess}</div>}
-            {!otpSent && (
-              <button type="submit" style={{ background: '#1e3c72', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 600, cursor: sendingOtp ? 'not-allowed' : 'pointer' }} disabled={sendingOtp}>
-                {sendingOtp ? 'Sending OTP...' : 'Send OTP'}
-              </button>
-            )}
-          </form>
-          {otpSent && (
-            <form onSubmit={handleVerifyOtp} style={{ maxWidth: 400, marginTop: 24 }}>
+            <button type="button" style={{ background: '#1e3c72', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 22px', fontWeight: 600, cursor: 'pointer', marginBottom: 18 }} onClick={() => setShowChangeForm(true)}>
+              Change Alternative Email
+            </button>
+          </>
+        ) : null}
+        {(!currentAltEmail || showChangeForm) && (
+          <>
+            <form onSubmit={handleSendOtp} style={{ maxWidth: 400 }}>
               <div style={{ marginBottom: 18 }}>
-                <label style={{ fontWeight: 600 }}>Enter OTP</label>
-                <div style={{ display: "flex", gap: 8, marginTop: 8, marginBottom: 8 }}>
-                  {otpBlocks.map((val, idx) => (
-                    <input
-                      key={idx}
-                      ref={otpRefs[idx]}
-                      type="text"
-                      maxLength={1}
-                      value={val}
-                      onChange={e => {
-                        const v = e.target.value.replace(/\D/g, "");
-                        if (!v) return;
-                        const newBlocks = [...otpBlocks];
-                        newBlocks[idx] = v;
-                        setOtpBlocks(newBlocks);
-                        if (idx < 5 && v) otpRefs[idx + 1].current.focus();
-                      }}
-                      onKeyDown={e => {
-                        if (e.key === "Backspace") {
-                          if (otpBlocks[idx]) {
-                            const newBlocks = [...otpBlocks];
-                            newBlocks[idx] = "";
-                            setOtpBlocks(newBlocks);
-                          } else if (idx > 0) {
-                            otpRefs[idx - 1].current.focus();
-                          }
-                        }
-                      }}
-                      style={{ width: 36, height: 44, fontSize: 22, textAlign: "center", borderRadius: 7, border: "1.5px solid #e0e0e0", background: "#f7f8fa" }}
-                      disabled={expired}
-                    />
-                  ))}
-                </div>
-                <div style={{ fontSize: 13, color: '#1e3c72', marginBottom: 6 }}>
-                  {expired ? (
-                    <span style={{ color: "#e74c3c" }}>OTP expired. <span style={{ cursor: "pointer", color: "#4a69bb", textDecoration: "underline" }} onClick={handleResendOtp}>Resend OTP</span></span>
-                  ) : (
-                    <>Time left: <b>{timeLeft}s</b></>
-                  )}
-                </div>
+                <label style={{ fontWeight: 600 }}>Alternative Email</label>
+                <input
+                  type="email"
+                  value={altEmail}
+                  onChange={e => setAltEmail(e.target.value)}
+                  style={{ width: "100%", padding: 10, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16, marginTop: 6 }}
+                  required
+                  disabled={otpSent || sendingOtp}
+                />
               </div>
-              {otpError && <div style={{ color: '#c00', marginBottom: 12 }}>{otpError}</div>}
-              {otpSuccess && <div style={{ color: '#28a745', marginBottom: 12 }}>{otpSuccess}</div>}
-              <button type="submit" style={{ background: expired ? '#ccc' : '#1e3c72', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 600, cursor: expired ? 'not-allowed' : 'pointer' }} disabled={expired}>
-                Verify OTP
-              </button>
+              {altEmailError && <div style={{ color: '#c00', marginBottom: 12 }}>{altEmailError}</div>}
+              {altEmailSuccess && <div style={{ color: '#28a745', marginBottom: 12 }}>{altEmailSuccess}</div>}
+              {!otpSent && (
+                <button type="submit" style={{ background: '#1e3c72', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 600, cursor: sendingOtp ? 'not-allowed' : 'pointer' }} disabled={sendingOtp}>
+                  {sendingOtp ? 'Sending OTP...' : 'Send OTP'}
+                </button>
+              )}
             </form>
-          )}
-        </>
-      )}
+            {otpSent && (
+              <form onSubmit={handleVerifyOtp} style={{ maxWidth: 400, marginTop: 24 }}>
+                <div style={{ marginBottom: 18 }}>
+                  <label style={{ fontWeight: 600 }}>Enter OTP</label>
+                  <div style={{ display: "flex", gap: 8, marginTop: 8, marginBottom: 8 }}>
+                    {otpBlocks.map((val, idx) => (
+                      <input
+                        key={idx}
+                        ref={otpRefs[idx]}
+                        type="text"
+                        maxLength={1}
+                        value={val}
+                        onChange={e => {
+                          const v = e.target.value.replace(/\D/g, "");
+                          if (!v) return;
+                          const newBlocks = [...otpBlocks];
+                          newBlocks[idx] = v;
+                          setOtpBlocks(newBlocks);
+                          if (idx < 5 && v) otpRefs[idx + 1].current.focus();
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === "Backspace") {
+                            if (otpBlocks[idx]) {
+                              const newBlocks = [...otpBlocks];
+                              newBlocks[idx] = "";
+                              setOtpBlocks(newBlocks);
+                            } else if (idx > 0) {
+                              otpRefs[idx - 1].current.focus();
+                            }
+                          }
+                        }}
+                        style={{ width: 36, height: 44, fontSize: 22, textAlign: "center", borderRadius: 7, border: "1.5px solid #e0e0e0", background: "#f7f8fa" }}
+                        disabled={expired}
+                      />
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 13, color: '#1e3c72', marginBottom: 6 }}>
+                    {expired ? (
+                      <span style={{ color: "#e74c3c" }}>OTP expired. <span style={{ cursor: "pointer", color: "#4a69bb", textDecoration: "underline" }} onClick={handleResendOtp}>Resend OTP</span></span>
+                    ) : (
+                      <>Time left: <b>{timeLeft}s</b></>
+                    )}
+                  </div>
+                </div>
+                {otpError && <div style={{ color: '#c00', marginBottom: 12 }}>{otpError}</div>}
+                {otpSuccess && <div style={{ color: '#28a745', marginBottom: 12 }}>{otpSuccess}</div>}
+                <button type="submit" style={{ background: expired ? '#ccc' : '#1e3c72', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 600, cursor: expired ? 'not-allowed' : 'pointer' }} disabled={expired}>
+                  Verify OTP
+                </button>
+              </form>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 } 
