@@ -29,7 +29,7 @@
     ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx"
-, "components/RegisterModal.jsx", "app/student/register/page.jsx", "app/student/dashboard/page.jsx", "app/student/quiz/page.jsx"  ],
+, "components/RegisterModal.jsx", "app/student/register/page.jsx", "app/student/dashboard/page.jsx", "app/student/quiz/page.jsx", "components/AdminDashboardMain.jsx"  ],
   "exclude": [
     "node_modules"
   ]

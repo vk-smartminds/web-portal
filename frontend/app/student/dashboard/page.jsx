@@ -1,7 +1,4 @@
 "use client";
-
-import React from "react";
-
 import DashboardCommon from "../../../pages/DashboardCommon";
 // import { getToken, logout } from "../../../utils/auth";
 // import ProtectedRoute from '../../../components/ProtectedRoute';
@@ -29,15 +26,17 @@ const menuItems = [
 
 export default function StudentDashboardPage() {
   return (
-    <DashboardCommon
-      SidebarComponent={Sidebar}
-      menuItems={menuItems}
-      userType="Student"
-      renderContent={({ selectedMenu, ...rest }) =>
-        selectedMenu === "announcements"
-          ? <AnnouncementPage {...rest} />
-          : null
-      }
-    />
+    <div>
+      <DashboardCommon
+        SidebarComponent={Sidebar}
+        menuItems={menuItems}
+        userType="Student"
+        renderContent={({ selectedMenu, ...rest }) =>
+          selectedMenu === "announcements"
+            ? <AnnouncementPage {...rest} />
+            : null
+        }
+      />
+    </div>
   );
 }
