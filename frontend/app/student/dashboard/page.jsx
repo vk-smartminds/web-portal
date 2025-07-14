@@ -8,6 +8,7 @@ import DashboardCommon from "../../../pages/DashboardCommon";
 // import { BASE_API_URL } from "../../../utils/apiurl";
 import AnnouncementPage from "../../../pages/announcement";
 import Sidebar from "../../../components/Sidebar";
+import PracticeDashboard from "../../../components/PracticeDashboard";
 
 
 const menuItems = [
@@ -28,8 +29,11 @@ const menuItems = [
 
 export default function StudentDashboardPage() {
   return (
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#f4f7fa' }}>
+      <Sidebar style={{ borderRight: '1px solid #e0e0e0' }} />
+      <div style={{ flex: 1, padding: '0 24px' }}>
+        <PracticeDashboard />
     <DashboardCommon
-      SidebarComponent={Sidebar}
       menuItems={menuItems}
       userType="Student"
       renderContent={({ selectedMenu, ...rest }) =>
@@ -38,5 +42,7 @@ export default function StudentDashboardPage() {
           : null
       }
     />
+      </div>
+    </div>
   );
 }
