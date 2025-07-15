@@ -4,6 +4,9 @@ import { useRouter } from "next/navigation";
 import { useThreads } from "./hooks/useThreads";
 import { ChevronUp, ChevronDown, MessageSquare, Plus, Search, User, Users, Shield, GraduationCap, Bell } from "lucide-react";
 import { createDiscussionThread } from "./api/discussionApi";
+import { voteThread } from "./api/discussionApi";
+import { logout } from '../../../utils/auth.js';
+import { getUserData } from '../../../utils/auth.js';
 
 const TAG_OPTIONS = [
   "CBSE", "Maths", "Chemistry", "Physics", "Science", "JEE", "NEET", "Biology", "English", "Hindi", "Social Studies",
@@ -58,6 +61,10 @@ export default function DiscussionPanel() {
   const [subjectsSearch, setSubjectsSearch] = useState("");
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const [visibleThreads, setVisibleThreads] = useState(8);
+
+  const userData = typeof window !== 'undefined' ? getUserData() : null;
+  const userEmail = userData && userData.email ? userData.email : '';
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -84,12 +91,23 @@ export default function DiscussionPanel() {
     filteredThreads = filteredThreads.slice().sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
   }
 
-  const handleVote = (threadId: string, value: 1 | -1) => {
-    setVoteState(prev => {
-      const current = prev[threadId] || 0;
-      return { ...prev, [threadId]: current === value ? 0 : value };
-    });
-    // TODO: Call backend API to persist vote
+  const handleVote = async (threadId: string, value: 1 | -1) => {
+    const current = voteState[threadId] || 0;
+    let newValue = value;
+    if (current === value) {
+      // User is toggling off their vote; remove from UI, but do not send value 0 to backend
+      setVoteState(prev => ({ ...prev, [threadId]: 0 }));
+      // Optionally, you can call a remove-vote endpoint here if you implement one
+      return;
+    } else {
+      setVoteState(prev => ({ ...prev, [threadId]: value }));
+    }
+    try {
+      await voteThread(threadId, value);
+      // Optionally, refetch thread data here
+    } catch (err) {
+      alert('Failed to vote');
+    }
   };
 
   const handleCreateThread = async (e: React.FormEvent) => {
@@ -122,9 +140,9 @@ export default function DiscussionPanel() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-8">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">E</span>
-                </div>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#5B43EF' }}>
+                  <span className="sr-only">VK Global Logo</span>
+                </div>  
                 <span className="text-xl font-bold text-gray-900">VK Studies</span>
               </div>
               <div className="flex items-center space-x-6">
@@ -199,7 +217,40 @@ export default function DiscussionPanel() {
                 />
               </div>
               <Bell className="w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600" />
-              {/* Profile icon and menu removed as per user request */}
+              <div className="relative" ref={profileMenuRef}>
+                <button
+                  onClick={() => setProfileMenuOpen((v) => !v)}
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 hover:bg-blue-100 transition-colors border border-gray-200 focus:outline-none"
+                  aria-label="Profile"
+                  type="button"
+                >
+                  <User className="w-6 h-6 text-gray-600" />
+                </button>
+                {profileMenuOpen && (
+                  <div
+                    className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl z-50 py-2 animate-fade-in"
+                    style={{ top: '110%' }}
+                  >
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <div className="font-semibold text-gray-900 text-base">My Profile</div>
+                      <div className="text-xs text-gray-500">{userEmail || 'Unknown'}</div>
+                    </div>
+                    <button
+                      className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 transition-colors text-sm"
+                      onClick={() => { setProfileMenuOpen(false); router.push('/student/profile'); }}
+                    >Profile</button>
+                    <button className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 transition-colors text-sm">My Activity</button>
+                    <button className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 transition-colors text-sm" onClick={() => { setProfileMenuOpen(false); router.push('/settings?tab=support'); }}>
+                      Help & Support
+                    </button>
+                    <div className="border-t border-gray-100 my-2" />
+                    <button
+                      className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors text-sm"
+                      onClick={async () => { setProfileMenuOpen(false); await logout(); router.push('/login'); }}
+                    >Logout</button>
+                  </div>
+                )}
+              </div>
               <button onClick={() => setShowCreate(true)} className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center space-x-2 hover:bg-blue-700 transition-colors">
                 <Plus className="w-4 h-4" />
                 <span>Create Thread</span>
@@ -291,67 +342,83 @@ export default function DiscussionPanel() {
           {loading && <div className="text-center text-gray-500">Loading threads...</div>}
           {error && <div className="text-center text-red-500">{error}</div>}
           <div className="space-y-6">
-            {filteredThreads.filter(thread => thread.title.toLowerCase().includes(search.toLowerCase()) || thread.body.toLowerCase().includes(search.toLowerCase())).map(thread => {
-              const vote = voteState[thread._id] || 0;
-              const totalVotes = (thread.votes || []).reduce((sum, v) => sum + v.value, 0) + vote;
-              return (
-                <div key={thread._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push(`/student/discussion/${thread._id}`)}>
-                  <div className="p-6">
-                    <div className="flex gap-4">
-                      {/* Voting Section */}
-                      <div className="flex flex-col items-center space-y-2 pt-1">
-                        <button
-                          className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors group ${vote === 1 ? 'bg-blue-100' : 'bg-gray-50 hover:bg-blue-50'}`}
-                          onClick={e => { e.stopPropagation(); handleVote(thread._id, 1); }}
-                        >
-                          <ChevronUp className={`w-5 h-5 ${vote === 1 ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-600'}`} />
-                        </button>
-                        <div className="bg-gray-100 rounded-full px-3 py-1 min-w-12 text-center">
-                          <span className="text-sm font-bold text-gray-700">{totalVotes}</span>
+            {filteredThreads
+              .filter(thread => thread.title.toLowerCase().includes(search.toLowerCase()) || thread.body.toLowerCase().includes(search.toLowerCase()))
+              .slice(0, visibleThreads)
+              .map(thread => {
+                const vote = voteState[thread._id] || 0;
+                const totalVotes = (thread.votes || []).reduce((sum, v) => sum + v.value, 0) + vote;
+                return (
+                  <div key={thread._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push(`/student/discussion/${thread._id}`)}>
+                    <div className="p-6">
+                      <div className="flex gap-4">
+                        {/* Voting Section */}
+                        <div className="flex flex-col items-center space-y-2 pt-1">
+                          <button
+                            className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors group ${vote === 1 ? 'bg-blue-100' : 'bg-gray-50 hover:bg-blue-50'}`}
+                            onClick={e => { e.stopPropagation(); handleVote(thread._id, 1); }}
+                          >
+                            <ChevronUp className={`w-5 h-5 ${vote === 1 ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-600'}`} />
+                          </button>
+                          <div className="bg-gray-100 rounded-full px-3 py-1 min-w-12 text-center">
+                            <span className="text-sm font-bold text-gray-700">{totalVotes}</span>
+                          </div>
+                          <button
+                            className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors group ${vote === -1 ? 'bg-red-100' : 'bg-gray-50 hover:bg-red-50'}`}
+                            onClick={e => { e.stopPropagation(); handleVote(thread._id, -1); }}
+                          >
+                            <ChevronDown className={`w-5 h-5 ${vote === -1 ? 'text-red-600' : 'text-gray-400 group-hover:text-red-600'}`} />
+                          </button>
                         </div>
-                        <button
-                          className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors group ${vote === -1 ? 'bg-red-100' : 'bg-gray-50 hover:bg-red-50'}`}
-                          onClick={e => { e.stopPropagation(); handleVote(thread._id, -1); }}
-                        >
-                          <ChevronDown className={`w-5 h-5 ${vote === -1 ? 'text-red-600' : 'text-gray-400 group-hover:text-red-600'}`} />
-                        </button>
-                      </div>
-                      {/* Thread Details */}
-                      <div className="flex-1">
-                        <div className="flex items-start space-x-3 mb-3">
-                          {/* Avatar removed as per user request */}
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <span className="text-sm font-medium text-gray-900">{typeof thread.createdBy === 'object' ? thread.createdBy.name || thread.createdBy.email : 'Unknown'}</span>
-                              <div className="flex items-center space-x-1">
-                                {getRoleIcon(thread.createdByModel)}
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(thread.createdByModel)}`}>{thread.createdByModel}</span>
+                        {/* Thread Details */}
+                        <div className="flex-1">
+                          <div className="flex items-start space-x-3 mb-3">
+                            {/* Avatar removed as per user request */}
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-1">
+                                <span className="text-sm font-medium text-gray-900">{typeof thread.createdBy === 'object' ? thread.createdBy.name || thread.createdBy.email : 'Unknown'}</span>
+                                <div className="flex items-center space-x-1">
+                                  {getRoleIcon(thread.createdByModel)}
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(thread.createdByModel)}`}>{thread.createdByModel}</span>
+                                </div>
+                                <span className="text-xs text-gray-500">{thread.createdAt ? new Date(thread.createdAt).toLocaleString() : ''}</span>
+                                {thread.tags && thread.tags.length > 0 && thread.tags.map(tag => (
+                                  <span key={tag} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full ml-1">{tag}</span>
+                                ))}
                               </div>
-                              <span className="text-xs text-gray-500">{thread.createdAt ? new Date(thread.createdAt).toLocaleString() : ''}</span>
-                              {thread.tags && thread.tags.length > 0 && thread.tags.map(tag => (
-                                <span key={tag} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full ml-1">{tag}</span>
-                              ))}
-                            </div>
-                            <h2 className="text-lg font-semibold text-gray-900 mb-2">{thread.title}</h2>
-                            <p className="text-gray-700 text-sm mb-3">{thread.body.length > 180 ? thread.body.slice(0, 180) + '...' : thread.body}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                          <div className="flex items-center space-x-4">
-                            <div className="flex items-center space-x-1 text-gray-500 text-sm">
-                              <MessageSquare className="w-4 h-4" />
-                              <span>{thread.posts ? thread.posts.length : 0}</span>
+                              <h2 className="text-lg font-semibold text-gray-900 mb-2">{thread.title}</h2>
+                              <p className="text-gray-700 text-sm mb-1">{thread.body.length > 180 ? thread.body.slice(0, 180) + '...' : thread.body}</p>
+                              {thread.createdAt && (
+                                <div className="text-xs text-gray-400 mb-2">{new Date(thread.createdAt).toLocaleString()}</div>
+                              )}
                             </div>
                           </div>
-                          {/* Placeholder for more actions */}
-                          <div className="flex items-center space-x-2"></div>
+                          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                            <div className="flex items-center space-x-4">
+                              <div className="flex items-center space-x-1 text-gray-500 text-sm">
+                                <MessageSquare className="w-4 h-4" />
+                                <span>{thread.posts ? thread.posts.length : 0}</span>
+                              </div>
+                            </div>
+                            {/* Placeholder for more actions */}
+                            <div className="flex items-center space-x-2"></div>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            {filteredThreads.filter(thread => thread.title.toLowerCase().includes(search.toLowerCase()) || thread.body.toLowerCase().includes(search.toLowerCase())).length > visibleThreads && (
+              <div className="flex justify-center mt-6">
+                <button
+                  className="px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold text-base hover:bg-blue-700 transition-colors"
+                  onClick={() => setVisibleThreads(visibleThreads + 8)}
+                >
+                  Show More
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
