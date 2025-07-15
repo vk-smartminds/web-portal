@@ -4,15 +4,7 @@ import { BASE_API_URL } from '../utils/apiurl.js';
 import { getUserData, getToken, logout } from "../utils/auth.js";
 
 // Add this style block at the top of the file (or in a global CSS if preferred)
-const blinkStyle = `
-@keyframes blink-badge {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
-}
-.blink-badge {
-  animation: blink-badge 1s steps(1, end) infinite;
-}
-`;
+// Remove blinkStyle and .blink-badge animation
 
 export default function DashboardCommon({
   SidebarComponent,
@@ -35,7 +27,7 @@ export default function DashboardCommon({
   const [userPhoto, setUserPhoto] = useState('');
   const [userName, setUserName] = useState("");
   const [newAnnouncementCount, setNewAnnouncementCount] = useState(0);
-  const [blink, setBlink] = useState(true);
+  // Remove all useEffect and state related to blink
   const [notifSettings, setNotifSettings] = useState(null);
 
   // Fetch profile logic (can be overridden)
@@ -101,17 +93,7 @@ export default function DashboardCommon({
       });
   }, [userType, notifSettings]);
 
-  // Blinking effect for announcement count
-  useEffect(() => {
-    if (newAnnouncementCount > 0) {
-      const interval = setInterval(() => {
-        setBlink(prev => !prev);
-      }, 1000);
-      return () => clearInterval(interval);
-    } else {
-      setBlink(true);
-    }
-  }, [newAnnouncementCount]);
+  // Remove all useEffect and state related to blink
 
   // Fetch notification settings
   useEffect(() => {
@@ -148,7 +130,7 @@ export default function DashboardCommon({
   // Render badge function to be used by all sidebars
   const renderAnnouncementBadge = (count) => (
     notifSettings && notifSettings.announcements && count > 0 ? (
-      <span className="blink-badge" style={{
+      <span style={{
         marginLeft: 8,
         background: "#1e3c72",
         color: "#fff",
@@ -179,7 +161,7 @@ export default function DashboardCommon({
 
   return (
     <ProtectedRoute>
-      <style>{blinkStyle}</style>
+      {/* Remove style block for blink */}
       <div style={{ display: "flex", minHeight: "100vh", background: "#f4f7fa", flexDirection: "column" }}>
         <div style={{ display: "flex", flex: 1 }}>
           {SidebarComponent && <SidebarComponent {...sidebarProps} />}

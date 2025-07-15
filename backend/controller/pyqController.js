@@ -1,5 +1,8 @@
 import Pyq from '../models/Pyq.js';
 import multer from 'multer';
+import { execFile } from 'child_process';
+import fs from 'fs/promises';
+import path from 'path';
 
 const storage = multer.memoryStorage();
 export const pyqUpload = multer({
@@ -11,23 +14,60 @@ export const pyqUpload = multer({
   }
 });
 
+// Utility to compress PDF using Ghostscript
+async function compressPdfBuffer(buffer) {
+  const tmpIn = path.join(process.cwd(), 'tmp-in-' + Date.now() + '-' + Math.random() + '.pdf');
+  const tmpOut = path.join(process.cwd(), 'tmp-out-' + Date.now() + '-' + Math.random() + '.pdf');
+  try {
+    await fs.writeFile(tmpIn, buffer);
+    await new Promise((resolve, reject) => {
+      execFile(
+        'gswin64c',
+        [
+          '-sDEVICE=pdfwrite',
+          '-dCompatibilityLevel=1.4',
+          '-dPDFSETTINGS=/ebook',
+          '-dNOPAUSE',
+          '-dQUIET',
+          '-dBATCH',
+          `-sOutputFile=${tmpOut}`,
+          tmpIn
+        ],
+        (error) => {
+          if (error) reject(error); else resolve();
+        }
+      );
+    });
+    const outBuffer = await fs.readFile(tmpOut);
+    return outBuffer;
+  } finally {
+    fs.unlink(tmpIn).catch(() => {});
+    fs.unlink(tmpOut).catch(() => {});
+  }
+}
+
 export const createPyq = async (req, res) => {
   try {
-    const { class: pyqClass, subject, chapter } = req.body;
-    if (!pyqClass || !subject || !chapter) {
-      return res.status(400).json({ message: 'Class, subject, and chapter are required' });
+    const { class: pyqClass, subject, chapter, pdfType } = req.body;
+    if (!pyqClass || !subject || !chapter || !pdfType) {
+      return res.status(400).json({ message: 'Class, subject, chapter, and pdfType are required' });
     }
     let pdfs = [];
     if (req.files && req.files.length > 0) {
-      pdfs = req.files.map(f => ({
-        data: f.buffer,
-        contentType: f.mimetype,
-        fileType: 'pdf'
+      pdfs = await Promise.all(req.files.map(async (f) => {
+        if (f.mimetype === 'application/pdf') {
+          const compressedPdf = await compressPdfBuffer(f.buffer);
+          return {
+            data: compressedPdf,
+            contentType: f.mimetype,
+            fileType: 'pdf'
+          };
+        }
       }));
     } else {
       return res.status(400).json({ message: 'At least one PDF is required' });
     }
-    const pyq = await Pyq.create({ class: pyqClass, subject, chapter, pdfs });
+    const pyq = await Pyq.create({ class: pyqClass, subject, chapter, pdfType, pdfs });
     res.status(201).json({ message: 'PYQ created', pyq });
   } catch (err) {
     res.status(500).json({ message: 'Error creating PYQ', error: err.message });
@@ -36,11 +76,12 @@ export const createPyq = async (req, res) => {
 
 export const getPyqs = async (req, res) => {
   try {
-    const { class: pyqClass, subject, chapter } = req.query;
+    const { class: pyqClass, subject, chapter, pdfType } = req.query;
     let query = {};
     if (pyqClass) query.class = pyqClass;
     if (subject) query.subject = subject;
     if (chapter) query.chapter = chapter;
+    if (pdfType) query.pdfType = pdfType;
     const pyqs = await Pyq.find(query).sort({ createdAt: -1 });
     const pyqsWithBase64 = pyqs.map(pyq => ({
       _id: pyq._id,
@@ -63,17 +104,23 @@ export const getPyqs = async (req, res) => {
 export const updatePyq = async (req, res) => {
   try {
     const { id } = req.params;
-    const { class: pyqClass, subject, chapter } = req.body;
+    const { class: pyqClass, subject, chapter, pdfType } = req.body;
     const pyq = await Pyq.findById(id);
     if (!pyq) return res.status(404).json({ message: 'PYQ not found' });
     if (pyqClass) pyq.class = pyqClass;
     if (subject) pyq.subject = subject;
     if (chapter) pyq.chapter = chapter;
+    if (pdfType) pyq.pdfType = pdfType;
     if (req.files && req.files.length > 0) {
-      const newPdfs = req.files.map(f => ({
-        data: f.buffer,
-        contentType: f.mimetype,
-        fileType: 'pdf'
+      const newPdfs = await Promise.all(req.files.map(async (f) => {
+        if (f.mimetype === 'application/pdf') {
+          const compressedPdf = await compressPdfBuffer(f.buffer);
+          return {
+            data: compressedPdf,
+            contentType: f.mimetype,
+            fileType: 'pdf'
+          };
+        }
       }));
       pyq.pdfs = [...(pyq.pdfs || []), ...newPdfs];
     }

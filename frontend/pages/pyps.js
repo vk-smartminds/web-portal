@@ -4,6 +4,13 @@ import { BASE_API_URL } from "../utils/apiurl";
 import { getUserData, getToken, setUserData } from "../utils/auth";
 import { FaFilePdf } from "react-icons/fa";
 
+const PDF_TYPE_OPTIONS = [
+  { value: '', label: 'All Types' },
+  { value: 'questions', label: 'Questions Only' },
+  { value: 'solutions', label: 'Solutions Only' },
+  { value: 'both', label: 'Questions & Solutions' }
+];
+
 const PypsPage = () => {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -14,9 +21,9 @@ const PypsPage = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [editItem, setEditItem] = useState(null);
-  const [form, setForm] = useState({ class: '', subject: '', pdfs: [] });
+  const [form, setForm] = useState({ class: '', subject: '', pdfs: [], pdfType: '' });
   const [status, setStatus] = useState('');
-  const [filter, setFilter] = useState({ class: '', subject: '' });
+  const [filter, setFilter] = useState({ class: '', subject: '', pdfType: '' });
   const [searchInitiated, setSearchInitiated] = useState(false);
   const [previewPdf, setPreviewPdf] = useState({ open: false, url: '', loaded: false, id: '', idx: 0 });
 
@@ -73,6 +80,7 @@ const PypsPage = () => {
     const params = new URLSearchParams();
     if (filter.class) params.append('class', filter.class);
     if (filter.subject) params.append('subject', filter.subject);
+    if (filter.pdfType) params.append('pdfType', filter.pdfType);
     let url = `${BASE_API_URL}/pyps?${params.toString()}`;
     fetch(url, {
       headers: { 'Authorization': `Bearer ${getToken()}` }
@@ -110,6 +118,7 @@ const PypsPage = () => {
     const formData = new FormData();
     formData.append('class', form.class);
     formData.append('subject', form.subject);
+    formData.append('pdfType', form.pdfType);
     form.pdfs.forEach(f => formData.append('pdfs', f));
     try {
       const res = await fetch(`${BASE_API_URL}/pyp`, {
@@ -120,7 +129,7 @@ const PypsPage = () => {
       const data = await res.json();
       if (res.ok) {
         setStatus("PYP added!");
-        setForm({ class: '', subject: '', pdfs: [] });
+        setForm({ class: '', subject: '', pdfs: [], pdfType: '' });
         setShowCreate(false);
         refetchIfSearched();
       } else {
@@ -136,7 +145,8 @@ const PypsPage = () => {
     setForm({
       class: item.class,
       subject: item.subject,
-      pdfs: []
+      pdfs: [],
+      pdfType: item.pdfType || ''
     });
     setShowEdit(true);
     setStatus('');
@@ -148,6 +158,7 @@ const PypsPage = () => {
     const formData = new FormData();
     formData.append("class", form.class);
     formData.append("subject", form.subject);
+    formData.append('pdfType', form.pdfType);
     form.pdfs.forEach(f => formData.append("pdfs", f));
     try {
       const res = await fetch(`${BASE_API_URL}/pyp/${editItem._id}`, {
@@ -212,14 +223,17 @@ const PypsPage = () => {
           disabled={role === 'student'}
         />
         <input type="text" placeholder="Subject" value={filter.subject} onChange={e => setFilter(f => ({ ...f, subject: e.target.value }))} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 15 }} />
+        <select value={filter.pdfType} onChange={e => setFilter(f => ({ ...f, pdfType: e.target.value }))} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 15 }}>
+          {PDF_TYPE_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+        </select>
         <button type="button" onClick={handleFilter} style={{ background: '#1e3c72', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}>Filter</button>
-        <button type="button" onClick={() => { setFilter({ class: role === 'student' && user && user.class ? user.class : '', subject: '' }); setSearchInitiated(false); setPyps([]); }} style={{ background: '#bbb', color: '#222', border: 'none', borderRadius: 6, padding: '8px 12px', fontWeight: 600, cursor: 'pointer' }}>Clear</button>
+        <button type="button" onClick={() => { setFilter({ class: role === 'student' && user && user.class ? user.class : '', subject: '', pdfType: '' }); setSearchInitiated(false); setPyps([]); }} style={{ background: '#bbb', color: '#222', border: 'none', borderRadius: 6, padding: '8px 12px', fontWeight: 600, cursor: 'pointer' }}>Clear</button>
       </div>
       {/* Only show add PYP section for non-students */}
       {role !== 'student' && (
         <>
           <button onClick={() => {
-            setForm({ class: '', subject: '', pdfs: [] });
+            setForm({ class: '', subject: '', pdfs: [], pdfType: '' });
             setStatus('');
           }} style={{ marginBottom: 24, background: '#1e3c72', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 28px', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>
             + Add PYP
@@ -230,6 +244,12 @@ const PypsPage = () => {
               <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
                 <input type="text" name="class" value={form.class} onChange={handleFormChange} placeholder="Class" required style={{ flex: 1, padding: 10, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16 }} disabled={role === 'student'} />
                 <input type="text" name="subject" value={form.subject} onChange={handleFormChange} placeholder="Subject" required style={{ flex: 1, padding: 10, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16 }} />
+                <select name="pdfType" value={form.pdfType} onChange={handleFormChange} required style={{ flex: 1, padding: 10, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16 }}>
+                  <option value="">Select PDF Type</option>
+                  <option value="questions">Questions Only</option>
+                  <option value="solutions">Solutions Only</option>
+                  <option value="both">Questions & Solutions</option>
+                </select>
               </div>
               <div style={{ display: 'flex', gap: 12, marginBottom: 12, alignItems: 'center' }}>
                 <input type="file" name="pdfs" accept="application/pdf" multiple onChange={handleFormChange} style={{ flex: 2 }} />
@@ -252,6 +272,7 @@ const PypsPage = () => {
           {pyps.map(item => (
             <div key={item._id} style={{ background: "#fff", borderRadius: 10, boxShadow: "0 2px 8px rgba(30,60,114,0.06)", padding: 18, display: "flex", flexDirection: "column", gap: 8, position: 'relative' }}>
               <div style={{ fontWeight: 600, color: "#1e3c72" }}>Class: {item.class} | Subject: {item.subject}</div>
+              <div><b>Type:</b> {item.pdfType ? PDF_TYPE_OPTIONS.find(opt => opt.value === item.pdfType)?.label : '-'}</div>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 {item.pdfs && item.pdfs.map((pdf, idx) => (
                   <div key={idx} style={{ display: 'inline-block', position: 'relative', width: 120, height: 80, border: '1px solid #eee', borderRadius: 6, background: '#fafafa', textAlign: 'center', verticalAlign: 'middle', lineHeight: '80px', fontWeight: 600, color: '#1e3c72', fontSize: 18, cursor: 'pointer' }} onClick={() => setPreviewPdf({ open: true, url: `${BASE_API_URL}/pyp/${item._id}/pdf/${idx}`, loaded: false, id: item._id, idx })}>
@@ -276,6 +297,12 @@ const PypsPage = () => {
             <h3 style={{ marginBottom: 18, color: '#1e3c72' }}>Edit PYP</h3>
             <input type="text" name="class" value={form.class} onChange={handleFormChange} required style={{ width: '100%', marginBottom: 12, padding: 10, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16 }} disabled={role === 'student'} />
             <input type="text" name="subject" value={form.subject} onChange={handleFormChange} required style={{ width: '100%', marginBottom: 12, padding: 10, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16 }} />
+            <select name="pdfType" value={form.pdfType} onChange={handleFormChange} required style={{ width: '100%', marginBottom: 12, padding: 10, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16 }}>
+              <option value="">Select PDF Type</option>
+              <option value="questions">Questions Only</option>
+              <option value="solutions">Solutions Only</option>
+              <option value="both">Questions & Solutions</option>
+            </select>
             <input type="file" name="pdfs" accept="application/pdf" multiple onChange={handleFormChange} style={{ marginBottom: 12 }} />
             <div style={{ marginTop: 10, color: '#1e3c72', fontWeight: 500 }}>{status}</div>
             <div style={{ marginTop: 18, display: 'flex', gap: 12, justifyContent: 'center' }}>

@@ -13,6 +13,11 @@ const pyqSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  pdfType: {
+    type: String,
+    enum: ['questions', 'solutions', 'both'],
+    required: true
+  },
   pdfs: [{
     data: Buffer,
     contentType: String,

@@ -1,5 +1,8 @@
 import Pyp from '../models/Pyp.js';
 import multer from 'multer';
+import { execFile } from 'child_process';
+import fs from 'fs/promises';
+import path from 'path';
 
 const storage = multer.memoryStorage();
 export const pypUpload = multer({
@@ -11,23 +14,60 @@ export const pypUpload = multer({
   }
 });
 
+// Utility to compress PDF using Ghostscript
+async function compressPdfBuffer(buffer) {
+  const tmpIn = path.join(process.cwd(), 'tmp-in-' + Date.now() + '-' + Math.random() + '.pdf');
+  const tmpOut = path.join(process.cwd(), 'tmp-out-' + Date.now() + '-' + Math.random() + '.pdf');
+  try {
+    await fs.writeFile(tmpIn, buffer);
+    await new Promise((resolve, reject) => {
+      execFile(
+        'gswin64c',
+        [
+          '-sDEVICE=pdfwrite',
+          '-dCompatibilityLevel=1.4',
+          '-dPDFSETTINGS=/ebook',
+          '-dNOPAUSE',
+          '-dQUIET',
+          '-dBATCH',
+          `-sOutputFile=${tmpOut}`,
+          tmpIn
+        ],
+        (error) => {
+          if (error) reject(error); else resolve();
+        }
+      );
+    });
+    const outBuffer = await fs.readFile(tmpOut);
+    return outBuffer;
+  } finally {
+    fs.unlink(tmpIn).catch(() => {});
+    fs.unlink(tmpOut).catch(() => {});
+  }
+}
+
 export const createPyp = async (req, res) => {
   try {
-    const { class: pypClass, subject } = req.body;
-    if (!pypClass || !subject) {
-      return res.status(400).json({ message: 'Class and subject are required' });
+    const { class: pypClass, subject, pdfType } = req.body;
+    if (!pypClass || !subject || !pdfType) {
+      return res.status(400).json({ message: 'Class, subject, and pdfType are required' });
     }
     let pdfs = [];
     if (req.files && req.files.length > 0) {
-      pdfs = req.files.map(f => ({
-        data: f.buffer,
-        contentType: f.mimetype,
-        fileType: 'pdf'
+      pdfs = await Promise.all(req.files.map(async (f) => {
+        if (f.mimetype === 'application/pdf') {
+          const compressedPdf = await compressPdfBuffer(f.buffer);
+          return {
+            data: compressedPdf,
+            contentType: f.mimetype,
+            fileType: 'pdf'
+          };
+        }
       }));
     } else {
       return res.status(400).json({ message: 'At least one PDF is required' });
     }
-    const pyp = await Pyp.create({ class: pypClass, subject, pdfs });
+    const pyp = await Pyp.create({ class: pypClass, subject, pdfType, pdfs });
     res.status(201).json({ message: 'PYP created', pyp });
   } catch (err) {
     res.status(500).json({ message: 'Error creating PYP', error: err.message });
@@ -36,10 +76,11 @@ export const createPyp = async (req, res) => {
 
 export const getPyps = async (req, res) => {
   try {
-    const { class: pypClass, subject } = req.query;
+    const { class: pypClass, subject, pdfType } = req.query;
     let query = {};
     if (pypClass) query.class = pypClass;
     if (subject) query.subject = subject;
+    if (pdfType) query.pdfType = pdfType;
     const pyps = await Pyp.find(query).sort({ createdAt: -1 });
     const pypsWithBase64 = pyps.map(pyp => ({
       _id: pyp._id,
@@ -61,16 +102,22 @@ export const getPyps = async (req, res) => {
 export const updatePyp = async (req, res) => {
   try {
     const { id } = req.params;
-    const { class: pypClass, subject } = req.body;
+    const { class: pypClass, subject, pdfType } = req.body;
     const pyp = await Pyp.findById(id);
     if (!pyp) return res.status(404).json({ message: 'PYP not found' });
     if (pypClass) pyp.class = pypClass;
     if (subject) pyp.subject = subject;
+    if (pdfType) pyp.pdfType = pdfType;
     if (req.files && req.files.length > 0) {
-      const newPdfs = req.files.map(f => ({
-        data: f.buffer,
-        contentType: f.mimetype,
-        fileType: 'pdf'
+      const newPdfs = await Promise.all(req.files.map(async (f) => {
+        if (f.mimetype === 'application/pdf') {
+          const compressedPdf = await compressPdfBuffer(f.buffer);
+          return {
+            data: compressedPdf,
+            contentType: f.mimetype,
+            fileType: 'pdf'
+          };
+        }
       }));
       pyp.pdfs = [...(pyp.pdfs || []), ...newPdfs];
     }
