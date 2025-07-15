@@ -62,6 +62,7 @@ export default function DiscussionPanel() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const [visibleThreads, setVisibleThreads] = useState(8);
+  const subjectsMenuCloseTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const userData = typeof window !== 'undefined' ? getUserData() : null;
   const userEmail = userData && userData.email ? userData.email : '';
@@ -143,7 +144,8 @@ export default function DiscussionPanel() {
                 <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#5B43EF' }}>
                   <span className="sr-only">VK Global Logo</span>
                 </div>  
-                <span className="text-xl font-bold text-gray-900">VK Studies</span>
+                <span className="text-xl font-bold text-gray-900">
+                Discussion</span>
               </div>
               <div className="flex items-center space-x-6">
                 <button onClick={() => setActiveTab('latest')} className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === 'latest' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900'}`}>Latest</button>
@@ -164,19 +166,38 @@ export default function DiscussionPanel() {
                         ))}
                         <div
                           className="relative"
-                          onMouseEnter={() => setSubjectsMenuOpen(true)}
-                          onMouseLeave={() => setSubjectsMenuOpen(false)}
+                          onMouseEnter={() => {
+                            if (subjectsMenuCloseTimeout.current) {
+                              clearTimeout(subjectsMenuCloseTimeout.current);
+                              subjectsMenuCloseTimeout.current = null;
+                            }
+                            setSubjectsMenuOpen(true);
+                          }}
+                          onMouseLeave={() => {
+                            if (subjectsMenuCloseTimeout.current) clearTimeout(subjectsMenuCloseTimeout.current);
+                            subjectsMenuCloseTimeout.current = setTimeout(() => {
+                              setSubjectsMenuOpen(false);
+                              subjectsMenuCloseTimeout.current = null;
+                            }, 3000);
+                          }}
                         >
                           <div
                             className={`px-3 py-2 rounded-md font-semibold cursor-pointer transition-colors ${subjectsMenuOpen || subjectFilter ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}
+                            onClick={() => {
+                              if (subjectsMenuCloseTimeout.current) {
+                                clearTimeout(subjectsMenuCloseTimeout.current);
+                                subjectsMenuCloseTimeout.current = null;
+                              }
+                              setSubjectsMenuOpen((open) => !open);
+                            }}
                           >
-                            Subjects
+                            Topics
                           </div>
                           {subjectsMenuOpen && (
                             <div className="absolute left-full top-0 ml-2 min-w-[180px] bg-white border border-gray-200 rounded-lg shadow-lg z-20 p-2 flex flex-col max-h-64 overflow-y-auto">
                               <input
                                 type="text"
-                                placeholder="Search subjects..."
+                                placeholder="Search topics..."
                                 value={subjectsSearch}
                                 onChange={e => setSubjectsSearch(e.target.value)}
                                 className="mb-2 px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -191,7 +212,7 @@ export default function DiscussionPanel() {
                                 </button>
                               ))}
                               {subjectFilter && (
-                                <button onClick={() => { setSubjectFilter(null); setCategoriesDropdownOpen(false); setSubjectsMenuOpen(false); }} className="mt-2 w-full bg-gray-100 text-gray-700 rounded-md py-1 font-semibold">Clear Subject</button>
+                                <button onClick={() => { setSubjectFilter(null); setCategoriesDropdownOpen(false); setSubjectsMenuOpen(false); }} className="mt-2 w-full bg-gray-100 text-gray-700 rounded-md py-1 font-semibold">Clear Topic</button>
                               )}
                             </div>
                           )}
@@ -341,6 +362,9 @@ export default function DiscussionPanel() {
           )}
           {loading && <div className="text-center text-gray-500">Loading threads...</div>}
           {error && <div className="text-center text-red-500">{error}</div>}
+          {filteredThreads.filter(thread => thread.title.toLowerCase().includes(search.toLowerCase()) || thread.body.toLowerCase().includes(search.toLowerCase())).slice(0, visibleThreads).length === 0 && !loading && !error && (
+            <div className="text-center text-gray-400 text-lg py-12">No posts available</div>
+          )}
           <div className="space-y-6">
             {filteredThreads
               .filter(thread => thread.title.toLowerCase().includes(search.toLowerCase()) || thread.body.toLowerCase().includes(search.toLowerCase()))
