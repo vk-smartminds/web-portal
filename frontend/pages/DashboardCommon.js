@@ -29,6 +29,7 @@ export default function DashboardCommon({
   const [newAnnouncementCount, setNewAnnouncementCount] = useState(0);
   // Remove all useEffect and state related to blink
   const [notifSettings, setNotifSettings] = useState(null);
+  const [announcementCountLoading, setAnnouncementCountLoading] = useState(true);
 
   // Fetch profile logic (can be overridden)
   const fetchProfile = useCallback(() => {
@@ -75,8 +76,10 @@ export default function DashboardCommon({
   }, [form.photo]);
 
   useEffect(() => {
+    setAnnouncementCountLoading(true);
     if (!notifSettings || !notifSettings.announcements) {
       setNewAnnouncementCount(0);
+      setAnnouncementCountLoading(false);
       return;
     }
     let registeredAs = userType;
@@ -90,6 +93,10 @@ export default function DashboardCommon({
           const count = data.announcements.filter(a => a.isNew).length;
           setNewAnnouncementCount(count);
         }
+        setAnnouncementCountLoading(false);
+      })
+      .catch(() => {
+        setAnnouncementCountLoading(false);
       });
   }, [userType, notifSettings]);
 
@@ -129,19 +136,46 @@ export default function DashboardCommon({
 
   // Render badge function to be used by all sidebars
   const renderAnnouncementBadge = (count) => (
-    notifSettings && notifSettings.announcements && count > 0 ? (
-      <span style={{
-        marginLeft: 8,
-        background: "#1e3c72",
-        color: "#fff",
-        borderRadius: "50%",
-        padding: "2px 8px",
-        fontSize: 13,
-        fontWeight: 700,
-        minWidth: 22,
-        textAlign: "center",
-        display: "inline-block"
-      }}>{count}</span>
+    notifSettings && notifSettings.announcements ? (
+      announcementCountLoading ? (
+        <span style={{
+          marginLeft: 8,
+          background: "#1e3c72",
+          color: "#fff",
+          borderRadius: "50%",
+          padding: "2px 8px",
+          fontSize: 13,
+          fontWeight: 700,
+          minWidth: 22,
+          textAlign: "center",
+          display: "inline-block"
+        }}>
+          <span style={{
+            display: 'inline-block',
+            width: 14,
+            height: 14,
+            border: '2px solid #fff',
+            borderTop: '2px solid #1e3c72',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            verticalAlign: 'middle'
+          }} />
+          <style>{`@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
+        </span>
+      ) : count > 0 ? (
+        <span style={{
+          marginLeft: 8,
+          background: "#1e3c72",
+          color: "#fff",
+          borderRadius: "50%",
+          padding: "2px 8px",
+          fontSize: 13,
+          fontWeight: 700,
+          minWidth: 22,
+          textAlign: "center",
+          display: "inline-block"
+        }}>{count}</span>
+      ) : null
     ) : null
   );
 
