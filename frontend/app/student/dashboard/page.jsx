@@ -1,4 +1,7 @@
 "use client";
+
+import React from "react";
+
 import DashboardCommon from "../../../pages/DashboardCommon";
 // import { getToken, logout } from "../../../utils/auth";
 // import ProtectedRoute from '../../../components/ProtectedRoute';
@@ -11,7 +14,8 @@ import PracticeDashboard from "../../../components/PracticeDashboard";
 const menuItems = [
   { key: "cbse-updates", label: "CBSE Updates" },
   { key: "announcements", label: "Announcements" },
-  { key: "quizzes", label: "Quizzes" },,
+  { key: "quizzes", label: "Quizzes" },
+  { key: "sample-papers", label: "Sample Papers" },
   { key: "avlrs", label: "AVLRs" },
   { key: "dlrs", label: "DLRs" },
   { key: "mind-maps", label: "Mind Maps" },
