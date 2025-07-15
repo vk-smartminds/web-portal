@@ -9,11 +9,18 @@ const subOptions = [
   { key: "login", label: "Login Activity", icon: <FaHistory /> },
 ];
 
-export default function AccountSettings() {
-  const [selected, setSelected] = useState(null); // null means show main account settings
+export default function AccountSettings({ subOption }) {
+  const [selected, setSelected] = useState(subOption || null); // Use subOption as initial value
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Update selected if subOption changes
+  React.useEffect(() => {
+    if (subOption && selected !== subOption) {
+      setSelected(subOption);
+    }
+  }, [subOption]);
 
   useEffect(() => {
     setLoading(true);
@@ -81,14 +88,19 @@ export default function AccountSettings() {
                 <label style={{ color: '#888', fontSize: 13 }}>Phone</label>
                 <div style={{ fontWeight: 500, fontSize: 16, background: '#f7f7fa', borderRadius: 8, padding: '10px 14px', marginTop: 4 }}>{profile.phone || '-'}</div>
               </div>
-              <div style={{ flex: '1 1 220px' }}>
-                <label style={{ color: '#888', fontSize: 13 }}>School</label>
-                <div style={{ fontWeight: 500, fontSize: 16, background: '#f7f7fa', borderRadius: 8, padding: '10px 14px', marginTop: 4 }}>{profile.school || '-'}</div>
-              </div>
-              <div style={{ flex: '1 1 220px' }}>
-                <label style={{ color: '#888', fontSize: 13 }}>Class</label>
-                <div style={{ fontWeight: 500, fontSize: 16, background: '#f7f7fa', borderRadius: 8, padding: '10px 14px', marginTop: 4 }}>{profile.class || '-'}</div>
-              </div>
+              {/* Only show School and Class if not guardian */}
+              {profile.userRole !== 'Guardian' && (
+                <>
+                  <div style={{ flex: '1 1 220px' }}>
+                    <label style={{ color: '#888', fontSize: 13 }}>School</label>
+                    <div style={{ fontWeight: 500, fontSize: 16, background: '#f7f7fa', borderRadius: 8, padding: '10px 14px', marginTop: 4 }}>{profile.school || '-'}</div>
+                  </div>
+                  <div style={{ flex: '1 1 220px' }}>
+                    <label style={{ color: '#888', fontSize: 13 }}>Class</label>
+                    <div style={{ fontWeight: 500, fontSize: 16, background: '#f7f7fa', borderRadius: 8, padding: '10px 14px', marginTop: 4 }}>{profile.class || '-'}</div>
+                  </div>
+                </>
+              )}
             </div>
             <div style={{ marginTop: 24 }}>
               <div style={{ color: '#888', fontSize: 13, marginBottom: 6 }}>My email address</div>
@@ -97,6 +109,31 @@ export default function AccountSettings() {
                 <span style={{ fontWeight: 500, fontSize: 16 }}>{profile.email || '-'}</span>
               </div>
             </div>
+            {/* Show My Children for guardians */}
+            {Array.isArray(profile.child) && profile.child.length > 0 && (
+              <div style={{ marginTop: 32 }}>
+                <div style={{ color: '#888', fontSize: 13, marginBottom: 6 }}>My Children</div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', background: '#f7fafd', borderRadius: 8 }}>
+                  <thead>
+                    <tr style={{ background: '#e0e7ff' }}>
+                      <th style={{ padding: 8, textAlign: 'left', fontWeight: 600 }}>Email</th>
+                      <th style={{ padding: 8, textAlign: 'left', fontWeight: 600 }}>Class</th>
+                      <th style={{ padding: 8, textAlign: 'left', fontWeight: 600 }}>Role</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {profile.child.map((c, idx) => (
+                      <tr key={idx} style={{ borderBottom: '1px solid #e0e0e0' }}>
+                        <td style={{ padding: 8 }}>{c.email || '-'}</td>
+                        <td style={{ padding: 8 }}>{c.class || '-'}</td>
+                        <td style={{ padding: 8 }}>{c.role || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {/* Show My Guardian Info for students */}
             {Array.isArray(profile.guardian) && profile.guardian.length > 0 && (
               <div style={{ marginTop: 32 }}>
                 <div style={{ color: '#888', fontSize: 13, marginBottom: 6 }}>My Guardian Info</div>
@@ -192,4 +229,25 @@ export default function AccountSettings() {
       <div style={{ flex: 1, padding: 32 }}>{content}</div>
     </div>
   );
+}
+
+// Add getProfileUrl function (copied from settings.js)
+function getProfileUrl() {
+  const token = getToken();
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const role = payload.role ? payload.role.toLowerCase() : null;
+      switch (role) {
+        case 'admin': return "/admin/profile";
+        case 'student': return "/student/profile";
+        case 'teacher': return "/teacher/profile";
+        case 'guardian': return "/guardian/profile";
+        default: return "/";
+      }
+    } catch (err) {
+      return "/";
+    }
+  }
+  return "/";
 } 

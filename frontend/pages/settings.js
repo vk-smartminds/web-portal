@@ -78,7 +78,14 @@ export default function SettingsPage() {
     }
   }, [selected]);
 
-  const SelectedComponent = settingsComponents[selected] || null;
+  let SelectedComponent = null;
+  let accountSubOption = null;
+  if (selected === "delete" || selected === "login") {
+    SelectedComponent = AccountSettings;
+    accountSubOption = selected;
+  } else if (settingsComponents[selected]) {
+    SelectedComponent = settingsComponents[selected];
+  }
 
   function ProfileSummaryCard() {
     if (loading) return <div style={{ padding: 40 }}>Loading...</div>;
@@ -110,14 +117,19 @@ export default function SettingsPage() {
             <label style={{ color: '#888', fontSize: 13 }}>Phone</label>
             <div style={{ fontWeight: 500, fontSize: 16, background: '#f7f7fa', borderRadius: 8, padding: '10px 14px', marginTop: 4 }}>{profile.phone || '-'}</div>
           </div>
-          <div style={{ flex: '1 1 220px' }}>
-            <label style={{ color: '#888', fontSize: 13 }}>School</label>
-            <div style={{ fontWeight: 500, fontSize: 16, background: '#f7f7fa', borderRadius: 8, padding: '10px 14px', marginTop: 4 }}>{profile.school || '-'}</div>
-          </div>
-          <div style={{ flex: '1 1 220px' }}>
-            <label style={{ color: '#888', fontSize: 13 }}>Class</label>
-            <div style={{ fontWeight: 500, fontSize: 16, background: '#f7f7fa', borderRadius: 8, padding: '10px 14px', marginTop: 4 }}>{profile.class || '-'}</div>
-          </div>
+          {/* Only show School and Class if not guardian */}
+          {profile.userRole !== 'Guardian' && (
+            <>
+              <div style={{ flex: '1 1 220px' }}>
+                <label style={{ color: '#888', fontSize: 13 }}>School</label>
+                <div style={{ fontWeight: 500, fontSize: 16, background: '#f7f7fa', borderRadius: 8, padding: '10px 14px', marginTop: 4 }}>{profile.school || '-'}</div>
+              </div>
+              <div style={{ flex: '1 1 220px' }}>
+                <label style={{ color: '#888', fontSize: 13 }}>Class</label>
+                <div style={{ fontWeight: 500, fontSize: 16, background: '#f7f7fa', borderRadius: 8, padding: '10px 14px', marginTop: 4 }}>{profile.class || '-'}</div>
+              </div>
+            </>
+          )}
         </div>
         <div style={{ marginTop: 24 }}>
           <div style={{ color: '#888', fontSize: 13, marginBottom: 6 }}>My email address</div>
@@ -126,6 +138,31 @@ export default function SettingsPage() {
             <span style={{ fontWeight: 500, fontSize: 16 }}>{profile.email || '-'}</span>
           </div>
         </div>
+        {/* Show My Children for guardians */}
+        {Array.isArray(profile.child) && profile.child.length > 0 && (
+          <div style={{ marginTop: 32 }}>
+            <div style={{ color: '#888', fontSize: 13, marginBottom: 6 }}>My Children</div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', background: '#f7fafd', borderRadius: 8 }}>
+              <thead>
+                <tr style={{ background: '#e0e7ff' }}>
+                  <th style={{ padding: 8, textAlign: 'left', fontWeight: 600 }}>Email</th>
+                  <th style={{ padding: 8, textAlign: 'left', fontWeight: 600 }}>Class</th>
+                  <th style={{ padding: 8, textAlign: 'left', fontWeight: 600 }}>Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                {profile.child.map((c, idx) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid #e0e0e0' }}>
+                    <td style={{ padding: 8 }}>{c.email || '-'}</td>
+                    <td style={{ padding: 8 }}>{c.class || '-'}</td>
+                    <td style={{ padding: 8 }}>{c.role || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {/* Show My Guardian Info for students */}
         {Array.isArray(profile.guardian) && profile.guardian.length > 0 && (
           <div style={{ marginTop: 32 }}>
             <div style={{ color: '#888', fontSize: 13, marginBottom: 6 }}>My Guardian Info</div>
@@ -161,7 +198,7 @@ export default function SettingsPage() {
           {selected === null ? (
             <ProfileSummaryCard />
           ) : (
-            selected !== "update-profile" && <SelectedComponent />
+            selected !== "update-profile" && SelectedComponent && <SelectedComponent subOption={accountSubOption} />
           )}
         </div>
       </main>
