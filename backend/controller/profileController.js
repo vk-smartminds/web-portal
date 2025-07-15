@@ -4,6 +4,7 @@ import Guardian from '../models/Guardian.js';
 import Teacher from '../models/Teacher.js';
 import multer from 'multer';
 import path from 'path';
+import sharp from 'sharp';
 
 // Setup multer storage (reuse from userController if needed)
 const storage = multer.diskStorage({
@@ -103,14 +104,18 @@ export const updateProfile = async (req, res) => {
     if ((role === 'student' || role === 'teacher') && typeof body.school !== 'undefined') update.school = body.school;
     if (role === 'student' && typeof body.class !== 'undefined') update.class = body.class;
     if (role === 'student' && typeof body.username !== 'undefined') update.username = body.username;
-    // Allow guardians to update their role (Father, Mother, Guardian)
     if (role === 'guardian' && typeof body.role !== 'undefined') update.role = body.role;
     if (body.deletePhoto === true || body.deletePhoto === 'true') {
       update.photo = { data: undefined, contentType: undefined };
     } else if (req.file) {
+      // Compress image using sharp
+      const compressedBuffer = await sharp(req.file.buffer)
+        .resize({ width: 400 }) // Resize to max width 400px (optional)
+        .jpeg({ quality: 70 }) // Compress to JPEG, 70% quality
+        .toBuffer();
       update.photo = {
-        data: req.file.buffer,
-        contentType: req.file.mimetype
+        data: compressedBuffer,
+        contentType: 'image/jpeg'
       };
     }
     const user = await Model.findByIdAndUpdate(userId, { $set: update }, { new: true });

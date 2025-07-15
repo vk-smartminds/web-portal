@@ -5,9 +5,43 @@ import Guardian from '../models/Guardian.js';
 import Admin from '../models/Admin.js';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
+import fs from 'fs/promises';
 import { sendAnnouncementEmails } from './AnnouncementEmailController.js';
 import AnnouncementView from '../models/AnnouncementView.js';
+import sharp from 'sharp';
+import { execFile } from 'child_process';
+
+// Utility to compress PDF using Ghostscript
+async function compressPdfBuffer(buffer) {
+  const tmpIn = path.join(process.cwd(), 'tmp-in-' + Date.now() + '-' + Math.random() + '.pdf');
+  const tmpOut = path.join(process.cwd(), 'tmp-out-' + Date.now() + '-' + Math.random() + '.pdf');
+  try {
+    await fs.writeFile(tmpIn, buffer);
+    await new Promise((resolve, reject) => {
+      execFile(
+        'gswin64c',
+        [
+          '-sDEVICE=pdfwrite',
+          '-dCompatibilityLevel=1.4',
+          '-dPDFSETTINGS=/ebook',
+          '-dNOPAUSE',
+          '-dQUIET',
+          '-dBATCH',
+          `-sOutputFile=${tmpOut}`,
+          tmpIn
+        ],
+        (error) => {
+          if (error) reject(error); else resolve();
+        }
+      );
+    });
+    const outBuffer = await fs.readFile(tmpOut);
+    return outBuffer;
+  } finally {
+    fs.unlink(tmpIn).catch(() => {});
+    fs.unlink(tmpOut).catch(() => {});
+  }
+}
 
 // Multer config for memory storage (buffer)
 const storage = multer.memoryStorage();
@@ -66,10 +100,25 @@ export const createAnnouncement = async (req, res) => {
     }
     let images = [];
     if (req.files && req.files.length > 0) {
-      images = req.files.map(f => ({
-        data: f.buffer,
-        contentType: f.mimetype,
-        fileType: f.mimetype === 'application/pdf' ? 'pdf' : 'image'
+      images = await Promise.all(req.files.map(async (f) => {
+        if (f.mimetype.startsWith('image/')) {
+          const compressedBuffer = await sharp(f.buffer)
+            .resize({ width: 1000 })
+            .jpeg({ quality: 70 })
+            .toBuffer();
+          return {
+            data: compressedBuffer,
+            contentType: 'image/jpeg',
+            fileType: 'image'
+          };
+        } else if (f.mimetype === 'application/pdf') {
+          const compressedPdf = await compressPdfBuffer(f.buffer);
+          return {
+            data: compressedPdf,
+            contentType: f.mimetype,
+            fileType: 'pdf'
+          };
+        }
       }));
     }
     const creatorEmail = createdBy || (req.user && req.user.email);
@@ -242,10 +291,25 @@ export const updateAnnouncement = async (req, res) => {
     
     // Add new images
     if (req.files && req.files.length > 0) {
-      const newImages = req.files.map(f => ({
-        data: f.buffer,
-        contentType: f.mimetype,
-        fileType: f.mimetype === 'application/pdf' ? 'pdf' : 'image'
+      const newImages = await Promise.all(req.files.map(async (f) => {
+        if (f.mimetype.startsWith('image/')) {
+          const compressedBuffer = await sharp(f.buffer)
+            .resize({ width: 1000 })
+            .jpeg({ quality: 70 })
+            .toBuffer();
+          return {
+            data: compressedBuffer,
+            contentType: 'image/jpeg',
+            fileType: 'image'
+          };
+        } else if (f.mimetype === 'application/pdf') {
+          const compressedPdf = await compressPdfBuffer(f.buffer);
+          return {
+            data: compressedPdf,
+            contentType: f.mimetype,
+            fileType: 'pdf'
+          };
+        }
       }));
       announcement.images = [...(announcement.images || []), ...newImages];
     }

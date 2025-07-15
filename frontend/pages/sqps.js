@@ -4,6 +4,13 @@ import { BASE_API_URL } from "../utils/apiurl";
 import { getUserData, getToken, setUserData } from "../utils/auth";
 import { FaFilePdf } from "react-icons/fa";
 
+const PDF_TYPE_OPTIONS = [
+  { value: '', label: 'All Types' },
+  { value: 'questions', label: 'Questions Only' },
+  { value: 'solutions', label: 'Solutions Only' },
+  { value: 'both', label: 'Questions & Solutions' }
+];
+
 const SqpsPage = () => {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -14,9 +21,9 @@ const SqpsPage = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [editItem, setEditItem] = useState(null);
-  const [form, setForm] = useState({ class: '', subject: '', chapter: '', pdfs: [] });
+  const [form, setForm] = useState({ class: '', subject: '', chapter: '', pdfs: [], pdfType: '' });
   const [status, setStatus] = useState('');
-  const [filter, setFilter] = useState({ class: '', subject: '', chapter: '' });
+  const [filter, setFilter] = useState({ class: '', subject: '', chapter: '', pdfType: '' });
   const [searchInitiated, setSearchInitiated] = useState(false);
   const [previewPdf, setPreviewPdf] = useState({ open: false, url: '', loaded: false, id: '', idx: 0 });
 
@@ -74,6 +81,7 @@ const SqpsPage = () => {
     if (filter.class) params.append('class', filter.class);
     if (filter.subject) params.append('subject', filter.subject);
     if (filter.chapter) params.append('chapter', filter.chapter);
+    if (filter.pdfType) params.append('pdfType', filter.pdfType);
     let url = `${BASE_API_URL}/sqps?${params.toString()}`;
     fetch(url, {
       headers: { 'Authorization': `Bearer ${getToken()}` }
@@ -100,6 +108,8 @@ const SqpsPage = () => {
     const { name, value, files } = e.target;
     if (name === 'pdfs' && files) {
       setForm(f => ({ ...f, pdfs: Array.from(files) }));
+    } else if (name === 'pdfType') {
+      setForm(f => ({ ...f, pdfType: value }));
     } else {
       setForm(f => ({ ...f, [name]: value }));
     }
@@ -112,6 +122,7 @@ const SqpsPage = () => {
     formData.append('class', form.class);
     formData.append('subject', form.subject);
     formData.append('chapter', form.chapter);
+    formData.append('pdfType', form.pdfType);
     form.pdfs.forEach(f => formData.append('pdfs', f));
     try {
       const res = await fetch(`${BASE_API_URL}/sqp`, {
@@ -122,7 +133,7 @@ const SqpsPage = () => {
       const data = await res.json();
       if (res.ok) {
         setStatus("SQP added!");
-        setForm({ class: '', subject: '', chapter: '', pdfs: [] });
+        setForm({ class: '', subject: '', chapter: '', pdfs: [], pdfType: '' });
         setShowCreate(false);
         refetchIfSearched();
       } else {
@@ -139,7 +150,8 @@ const SqpsPage = () => {
       class: item.class,
       subject: item.subject,
       chapter: item.chapter,
-      pdfs: []
+      pdfs: [],
+      pdfType: item.pdfType || ''
     });
     setShowEdit(true);
     setStatus('');
@@ -152,6 +164,7 @@ const SqpsPage = () => {
     formData.append("class", form.class);
     formData.append("subject", form.subject);
     formData.append("chapter", form.chapter);
+    formData.append('pdfType', form.pdfType);
     form.pdfs.forEach(f => formData.append("pdfs", f));
     try {
       const res = await fetch(`${BASE_API_URL}/sqp/${editItem._id}`, {
@@ -217,14 +230,17 @@ const SqpsPage = () => {
         />
         <input type="text" placeholder="Subject" value={filter.subject} onChange={e => setFilter(f => ({ ...f, subject: e.target.value }))} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 15 }} />
         <input type="text" placeholder="Chapter" value={filter.chapter} onChange={e => setFilter(f => ({ ...f, chapter: e.target.value }))} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 15 }} />
+        <select value={filter.pdfType} onChange={e => setFilter(f => ({ ...f, pdfType: e.target.value }))} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 15 }}>
+          {PDF_TYPE_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+        </select>
         <button type="button" onClick={handleFilter} style={{ background: '#1e3c72', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}>Filter</button>
-        <button type="button" onClick={() => { setFilter({ class: role === 'student' && user && user.class ? user.class : '', subject: '', chapter: '' }); setSearchInitiated(false); setSqps([]); }} style={{ background: '#bbb', color: '#222', border: 'none', borderRadius: 6, padding: '8px 12px', fontWeight: 600, cursor: 'pointer' }}>Clear</button>
+        <button type="button" onClick={() => { setFilter({ class: role === 'student' && user && user.class ? user.class : '', subject: '', chapter: '', pdfType: '' }); setSearchInitiated(false); setSqps([]); }} style={{ background: '#bbb', color: '#222', border: 'none', borderRadius: 6, padding: '8px 12px', fontWeight: 600, cursor: 'pointer' }}>Clear</button>
       </div>
       {/* Only show add SQP section for non-students */}
       {role !== 'student' && (
         <>
           <button onClick={() => {
-            setForm({ class: '', subject: '', chapter: '', pdfs: [] });
+            setForm({ class: '', subject: '', chapter: '', pdfs: [], pdfType: '' });
             setStatus('');
           }} style={{ marginBottom: 24, background: '#1e3c72', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 28px', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>
             + Add SQP
@@ -236,6 +252,12 @@ const SqpsPage = () => {
                 <input type="text" name="class" value={form.class} onChange={handleFormChange} placeholder="Class" required style={{ flex: 1, padding: 10, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16 }} disabled={role === 'student'} />
                 <input type="text" name="subject" value={form.subject} onChange={handleFormChange} placeholder="Subject" required style={{ flex: 1, padding: 10, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16 }} />
                 <input type="text" name="chapter" value={form.chapter} onChange={handleFormChange} placeholder="Chapter" required style={{ flex: 1, padding: 10, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16 }} />
+                <select name="pdfType" value={form.pdfType} onChange={handleFormChange} required style={{ flex: 1, padding: 10, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16 }}>
+                  <option value="">Select PDF Type</option>
+                  <option value="questions">Questions Only</option>
+                  <option value="solutions">Solutions Only</option>
+                  <option value="both">Questions & Solutions</option>
+                </select>
               </div>
               <div style={{ display: 'flex', gap: 12, marginBottom: 12, alignItems: 'center' }}>
                 <input type="file" name="pdfs" accept="application/pdf" multiple onChange={handleFormChange} style={{ flex: 2 }} />
@@ -265,6 +287,7 @@ const SqpsPage = () => {
                   </div>
                 ))}
               </div>
+              <div><b>Type:</b> {item.pdfType ? PDF_TYPE_OPTIONS.find(opt => opt.value === item.pdfType)?.label : '-'}</div>
               {role !== 'student' && (
                 <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
                   <button onClick={() => handleEdit(item)} style={{ background: "#1e3c72", color: "#fff", border: "none", borderRadius: 6, padding: "6px 18px", fontWeight: 600, cursor: "pointer" }}>Edit</button>
@@ -283,6 +306,12 @@ const SqpsPage = () => {
             <input type="text" name="class" value={form.class} onChange={handleFormChange} required style={{ width: '100%', marginBottom: 12, padding: 10, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16 }} disabled={role === 'student'} />
             <input type="text" name="subject" value={form.subject} onChange={handleFormChange} required style={{ width: '100%', marginBottom: 12, padding: 10, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16 }} />
             <input type="text" name="chapter" value={form.chapter} onChange={handleFormChange} required style={{ width: '100%', marginBottom: 12, padding: 10, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16 }} />
+            <select name="pdfType" value={form.pdfType} onChange={handleFormChange} required style={{ width: '100%', marginBottom: 12, padding: 10, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16 }}>
+              <option value="">Select PDF Type</option>
+              <option value="questions">Questions Only</option>
+              <option value="solutions">Solutions Only</option>
+              <option value="both">Questions & Solutions</option>
+            </select>
             <input type="file" name="pdfs" accept="application/pdf" multiple onChange={handleFormChange} style={{ marginBottom: 12 }} />
             <div style={{ marginTop: 10, color: '#1e3c72', fontWeight: 500 }}>{status}</div>
             <div style={{ marginTop: 18, display: 'flex', gap: 12, justifyContent: 'center' }}>
