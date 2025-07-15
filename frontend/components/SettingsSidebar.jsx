@@ -1,5 +1,5 @@
 import React from "react";
-import { FaUserEdit, FaUser, FaLock, FaEnvelope, FaBell, FaPalette, FaShieldAlt, FaQuestionCircle, FaTrashAlt, FaHistory } from "react-icons/fa";
+import { FaUserEdit, FaUser, FaLock, FaEnvelope, FaBell, FaPalette, FaShieldAlt, FaQuestionCircle, FaTrashAlt, FaHistory, FaClock } from "react-icons/fa";
 
 const settingsOptions = [
   { key: "update-profile", label: "Update Profile", icon: <FaUserEdit /> },
@@ -9,6 +9,7 @@ const settingsOptions = [
   { key: "notification", label: "Notification Settings", icon: <FaBell /> },
   { key: "appearance", label: "Appearance", icon: <FaPalette /> },
   { key: "privacy", label: "Privacy Settings", icon: <FaShieldAlt /> },
+  { key: "screen-time", label: "Screen Time", icon: <FaClock /> },
   { key: "support", label: "Support & Help", icon: <FaQuestionCircle /> },
   // Add more as needed
 ];
