@@ -5,7 +5,7 @@ const DiscussionNotificationSchema = new mongoose.Schema({
   userModel: { type: String, enum: ['Student', 'Teacher', 'Guardian', 'Admin'], required: true },
   type: { type: String, enum: ['reply', 'comment', 'vote'], required: true },
   thread: { type: mongoose.Schema.Types.ObjectId, ref: 'DiscussionThread', required: true },
-  post: { type: mongoose.Schema.Types.ObjectId, ref: 'DiscussionPost', required: true },
+  post: { type: mongoose.Schema.Types.ObjectId, ref: 'DiscussionPost', required: false },
   isRead: { type: Boolean, default: false },
 }, { timestamps: true });
 

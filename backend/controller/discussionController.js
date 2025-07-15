@@ -349,11 +349,13 @@ export const voteThread = async (req, res) => {
   try {
     const { threadId } = req.params;
     const { value } = req.body;
+    console.log('[voteThread] threadId:', threadId, 'user:', req.user, 'value:', value);
     if (![1, 0, -1].includes(value)) {
       return res.status(400).json({ message: 'Invalid vote value' });
     }
     const thread = await DiscussionThread.findById(threadId);
     if (!thread) {
+      console.error('[voteThread] Thread not found:', threadId);
       return res.status(404).json({ message: 'Thread not found' });
     }
     const model = normalizeUserModel(req.user.role);
@@ -367,19 +369,23 @@ export const voteThread = async (req, res) => {
     }
     await thread.save();
     if (value !== 0 && thread.createdBy && thread.createdByModel && req.user._id.toString() !== thread.createdBy.toString()) {
+      // For thread votes, do not include 'post' field (or set to undefined)
       await DiscussionNotification.create({
         user: thread.createdBy,
         userModel: thread.createdByModel,
         type: 'vote',
         thread: thread._id,
-        post: null,
+        // post: null, // REMOVE this line to avoid validation error
         isRead: false
       });
     }
-    // Return updated votes array
     res.json({ message: 'Vote recorded', votes: thread.votes });
   } catch (err) {
-    console.error('VoteThread error:', err, err.stack);
+    console.error('[voteThread ERROR]', err, err.stack, {
+      threadId: req.params.threadId,
+      user: req.user,
+      body: req.body
+    });
     res.status(500).json({ message: err.message, stack: err.stack });
   }
 };

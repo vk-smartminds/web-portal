@@ -9,6 +9,7 @@ import ChangePassword from "./Settings/ChangePassword";
 import AlternativeEmail from "./Settings/AlternativeEmail";
 import { BASE_API_URL } from "../utils/apiurl";
 import { getToken } from "../utils/auth";
+import { useRouter } from "next/router";
 
 const Placeholder = ({ label }) => (
   <div style={{ background: '#fff', borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32 }}>
@@ -54,6 +55,14 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const router = useRouter();
+
+  useEffect(() => {
+    // Check for tab query param on mount
+    if (router && router.query && router.query.tab) {
+      setSelected(router.query.tab);
+    }
+  }, [router.query]);
 
   useEffect(() => {
     setLoading(true);
