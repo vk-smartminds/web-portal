@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import LoginActivityTable from "../../components/LoginActivityTable";
 import { BASE_API_URL } from "../../utils/apiurl";
 import { getToken, getUserData } from "../../utils/auth";
+import { FaTrashAlt, FaHistory } from "react-icons/fa";
 
 const subOptions = [
-  { key: "delete", label: "Delete Account" },
-  { key: "login", label: "Login Activity" },
+  { key: "delete", label: "Delete Account", icon: <FaTrashAlt /> },
+  { key: "login", label: "Login Activity", icon: <FaHistory /> },
 ];
 
 export default function AccountSettings() {
@@ -128,28 +129,65 @@ export default function AccountSettings() {
   }
 
   return (
-    <div style={{ display: 'flex', background: '#fff', borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", minHeight: 400 }}>
-      <aside style={{ width: 180, borderRight: '1px solid #e5e7eb', padding: '32px 0', background: '#f8fafc', borderTopLeftRadius: 16, borderBottomLeftRadius: 16 }}>
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+    <div style={{ display: 'flex', background: 'transparent', borderRadius: 16, minHeight: 400 }}>
+      <aside className="settings-sidebar-custom">
+        <div className="sidebar-title-custom">Account</div>
+        <ul>
           {subOptions.map(opt => (
             <li
               key={opt.key}
+              className={selected === opt.key ? 'active-custom' : ''}
               onClick={() => setSelected(opt.key)}
-              style={{
-                padding: '12px 24px',
-                cursor: 'pointer',
-                background: selected === opt.key ? '#e0e7ff' : 'transparent',
-                fontWeight: selected === opt.key ? 700 : 500,
-                color: selected === opt.key ? '#1e3c72' : '#444',
-                borderRadius: 6,
-                marginBottom: 4,
-                transition: 'background 0.2s',
-              }}
             >
+              <span className="icon-custom">{opt.icon}</span>
               {opt.label}
             </li>
           ))}
         </ul>
+        <style jsx>{`
+          .settings-sidebar-custom {
+            width: 220px;
+            background: #181d23;
+            border-right: 1px solid #23272e;
+            padding: 32px 0 0 0;
+            color: #fff;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            border-top-left-radius: 16px;
+            border-bottom-left-radius: 16px;
+          }
+          .sidebar-title-custom {
+            font-weight: bold;
+            font-size: 1.3rem;
+            margin-bottom: 28px;
+            text-align: center;
+            letter-spacing: 1px;
+            color: #fff;
+          }
+          ul {
+            list-style: none;
+            padding: 0;
+          }
+          li {
+            padding: 14px 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            transition: background 0.2s, color 0.2s;
+            color: #cfd8dc;
+          }
+          li.active-custom, li:hover {
+            background: #2563eb;
+            color: #fff;
+          }
+          .icon-custom {
+            margin-right: 16px;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+          }
+        `}</style>
       </aside>
       <div style={{ flex: 1, padding: 32 }}>{content}</div>
     </div>
