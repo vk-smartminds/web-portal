@@ -9,18 +9,26 @@
         "lint": "next lint"
     },
     "dependencies": {
+        "@tabler/icons-react": "^3.34.0",
         "axios": "^1.7.9",
         "browser-image-compression": "^2.0.2",
         "chart.js": "^4.5.0",
+        "clsx": "^2.1.1",
         "dotenv": "^16.4.7",
+<<<<<<< HEAD
+        "motion": "^12.23.5",
+=======
         "lucide-react": "^0.525.0",
+>>>>>>> 1517befbdd2f043b3f83f202b46e91a40013c420
         "multer": "^2.0.1",
         "next": "^15.3.4",
         "nodemailer": "^6.10.0",
         "react": "^19.0.0",
         "react-chartjs-2": "^5.3.0",
         "react-dom": "^19.0.0",
-        "react-icons": "^5.5.0"
+        "react-icons": "^5.5.0",
+        "swiper": "^11.2.10",
+        "tailwind-merge": "^3.3.1"
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3",
