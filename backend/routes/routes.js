@@ -28,6 +28,7 @@ import { getStudentById, getStudentPhoto } from '../controller/studentController
 import { createSqp, getSqps, updateSqp, deleteSqp, sqpUpload, getSqpPdf } from '../controller/sqpController.js';
 import { createPyq, getPyqs, updatePyq, deletePyq, pyqUpload, getPyqPdf } from '../controller/pyqController.js';
 import { createPyp, getPyps, updatePyp, deletePyp, pypUpload, getPypPdf } from '../controller/pypController.js';
+import * as screenTimeController from '../controller/screenTimeController.js';
 
 const router = express.Router();
 
@@ -226,6 +227,9 @@ import adminQuizRoutes from '../quiz/routes/adminQuizRoutes.js';
 import quizRoutes from '../quiz/routes/quizRoutes.js';
 router.use('/api/admin/quiz', adminQuizRoutes);
 router.use('/api/quiz', quizRoutes);
+
+router.get('/api/screen-time', authenticateToken, screenTimeController.getScreenTime);
+router.post('/api/screen-time/increment', authenticateToken, screenTimeController.incrementScreenTime);
 
 
 export default router;

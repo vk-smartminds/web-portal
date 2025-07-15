@@ -1,9 +1,11 @@
 import '../quiz/styles/globals.css';
 import Script from 'next/script';
+import ScreenTimeTracker from '../components/ScreenTimeTracker';
 
 export default function App({ Component, pageProps }) {
   return (
     <>
+      <ScreenTimeTracker />
       <Script id="mathjax-config" strategy="beforeInteractive">
         {`
           window.MathJax = {

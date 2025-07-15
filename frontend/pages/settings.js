@@ -7,6 +7,7 @@ import PrivacySettings from "./Settings/PrivacySettings";
 import SupportHelp from "./Settings/SupportHelp";
 import ChangePassword from "./Settings/ChangePassword";
 import AlternativeEmail from "./Settings/AlternativeEmail";
+import ScreenTime from '../components/ScreenTime';
 import { BASE_API_URL } from "../utils/apiurl";
 import { getToken } from "../utils/auth";
 import { useRouter } from "next/router";
@@ -25,6 +26,7 @@ const settingsComponents = {
   "notification": NotificationSettings,
   "appearance": AppearanceSettings,
   "privacy": PrivacySettings,
+  "screen-time": ScreenTime,
   "payment": () => <Placeholder label="Payment & Subscriptions" />,
   "support": SupportHelp,
 };
