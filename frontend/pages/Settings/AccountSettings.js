@@ -2,17 +2,25 @@ import React, { useState, useEffect } from "react";
 import LoginActivityTable from "../../components/LoginActivityTable";
 import { BASE_API_URL } from "../../utils/apiurl";
 import { getToken, getUserData } from "../../utils/auth";
+import { FaTrashAlt, FaHistory } from "react-icons/fa";
 
 const subOptions = [
-  { key: "delete", label: "Delete Account" },
-  { key: "login", label: "Login Activity" },
+  { key: "delete", label: "Delete Account", icon: <FaTrashAlt /> },
+  { key: "login", label: "Login Activity", icon: <FaHistory /> },
 ];
 
-export default function AccountSettings() {
-  const [selected, setSelected] = useState(null); // null means show main account settings
+export default function AccountSettings({ subOption }) {
+  const [selected, setSelected] = useState(subOption || null); // Use subOption as initial value
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Update selected if subOption changes
+  React.useEffect(() => {
+    if (subOption && selected !== subOption) {
+      setSelected(subOption);
+    }
+  }, [subOption]);
 
   useEffect(() => {
     setLoading(true);
@@ -80,14 +88,19 @@ export default function AccountSettings() {
                 <label style={{ color: '#888', fontSize: 13 }}>Phone</label>
                 <div style={{ fontWeight: 500, fontSize: 16, background: '#f7f7fa', borderRadius: 8, padding: '10px 14px', marginTop: 4 }}>{profile.phone || '-'}</div>
               </div>
-              <div style={{ flex: '1 1 220px' }}>
-                <label style={{ color: '#888', fontSize: 13 }}>School</label>
-                <div style={{ fontWeight: 500, fontSize: 16, background: '#f7f7fa', borderRadius: 8, padding: '10px 14px', marginTop: 4 }}>{profile.school || '-'}</div>
-              </div>
-              <div style={{ flex: '1 1 220px' }}>
-                <label style={{ color: '#888', fontSize: 13 }}>Class</label>
-                <div style={{ fontWeight: 500, fontSize: 16, background: '#f7f7fa', borderRadius: 8, padding: '10px 14px', marginTop: 4 }}>{profile.class || '-'}</div>
-              </div>
+              {/* Only show School and Class if not guardian */}
+              {profile.userRole !== 'Guardian' && (
+                <>
+                  <div style={{ flex: '1 1 220px' }}>
+                    <label style={{ color: '#888', fontSize: 13 }}>School</label>
+                    <div style={{ fontWeight: 500, fontSize: 16, background: '#f7f7fa', borderRadius: 8, padding: '10px 14px', marginTop: 4 }}>{profile.school || '-'}</div>
+                  </div>
+                  <div style={{ flex: '1 1 220px' }}>
+                    <label style={{ color: '#888', fontSize: 13 }}>Class</label>
+                    <div style={{ fontWeight: 500, fontSize: 16, background: '#f7f7fa', borderRadius: 8, padding: '10px 14px', marginTop: 4 }}>{profile.class || '-'}</div>
+                  </div>
+                </>
+              )}
             </div>
             <div style={{ marginTop: 24 }}>
               <div style={{ color: '#888', fontSize: 13, marginBottom: 6 }}>My email address</div>
@@ -96,6 +109,31 @@ export default function AccountSettings() {
                 <span style={{ fontWeight: 500, fontSize: 16 }}>{profile.email || '-'}</span>
               </div>
             </div>
+            {/* Show My Children for guardians */}
+            {Array.isArray(profile.child) && profile.child.length > 0 && (
+              <div style={{ marginTop: 32 }}>
+                <div style={{ color: '#888', fontSize: 13, marginBottom: 6 }}>My Children</div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', background: '#f7fafd', borderRadius: 8 }}>
+                  <thead>
+                    <tr style={{ background: '#e0e7ff' }}>
+                      <th style={{ padding: 8, textAlign: 'left', fontWeight: 600 }}>Email</th>
+                      <th style={{ padding: 8, textAlign: 'left', fontWeight: 600 }}>Class</th>
+                      <th style={{ padding: 8, textAlign: 'left', fontWeight: 600 }}>Role</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {profile.child.map((c, idx) => (
+                      <tr key={idx} style={{ borderBottom: '1px solid #e0e0e0' }}>
+                        <td style={{ padding: 8 }}>{c.email || '-'}</td>
+                        <td style={{ padding: 8 }}>{c.class || '-'}</td>
+                        <td style={{ padding: 8 }}>{c.role || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {/* Show My Guardian Info for students */}
             {Array.isArray(profile.guardian) && profile.guardian.length > 0 && (
               <div style={{ marginTop: 32 }}>
                 <div style={{ color: '#888', fontSize: 13, marginBottom: 6 }}>My Guardian Info</div>
@@ -128,30 +166,88 @@ export default function AccountSettings() {
   }
 
   return (
-    <div style={{ display: 'flex', background: '#fff', borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", minHeight: 400 }}>
-      <aside style={{ width: 180, borderRight: '1px solid #e5e7eb', padding: '32px 0', background: '#f8fafc', borderTopLeftRadius: 16, borderBottomLeftRadius: 16 }}>
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+    <div style={{ display: 'flex', background: 'transparent', borderRadius: 16, minHeight: 400 }}>
+      <aside className="settings-sidebar-custom">
+        <div className="sidebar-title-custom">Account</div>
+        <ul>
           {subOptions.map(opt => (
             <li
               key={opt.key}
+              className={selected === opt.key ? 'active-custom' : ''}
               onClick={() => setSelected(opt.key)}
-              style={{
-                padding: '12px 24px',
-                cursor: 'pointer',
-                background: selected === opt.key ? '#e0e7ff' : 'transparent',
-                fontWeight: selected === opt.key ? 700 : 500,
-                color: selected === opt.key ? '#1e3c72' : '#444',
-                borderRadius: 6,
-                marginBottom: 4,
-                transition: 'background 0.2s',
-              }}
             >
+              <span className="icon-custom">{opt.icon}</span>
               {opt.label}
             </li>
           ))}
         </ul>
+        <style jsx>{`
+          .settings-sidebar-custom {
+            width: 220px;
+            background: #181d23;
+            border-right: 1px solid #23272e;
+            padding: 32px 0 0 0;
+            color: #fff;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            border-top-left-radius: 16px;
+            border-bottom-left-radius: 16px;
+          }
+          .sidebar-title-custom {
+            font-weight: bold;
+            font-size: 1.3rem;
+            margin-bottom: 28px;
+            text-align: center;
+            letter-spacing: 1px;
+            color: #fff;
+          }
+          ul {
+            list-style: none;
+            padding: 0;
+          }
+          li {
+            padding: 14px 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            transition: background 0.2s, color 0.2s;
+            color: #cfd8dc;
+          }
+          li.active-custom, li:hover {
+            background: #2563eb;
+            color: #fff;
+          }
+          .icon-custom {
+            margin-right: 16px;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+          }
+        `}</style>
       </aside>
       <div style={{ flex: 1, padding: 32 }}>{content}</div>
     </div>
   );
+}
+
+// Add getProfileUrl function (copied from settings.js)
+function getProfileUrl() {
+  const token = getToken();
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const role = payload.role ? payload.role.toLowerCase() : null;
+      switch (role) {
+        case 'admin': return "/admin/profile";
+        case 'student': return "/student/profile";
+        case 'teacher': return "/teacher/profile";
+        case 'guardian': return "/guardian/profile";
+        default: return "/";
+      }
+    } catch (err) {
+      return "/";
+    }
+  }
+  return "/";
 } 

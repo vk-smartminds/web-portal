@@ -1,4 +1,4 @@
-import '../styles/globals.css';
+import '../quiz/styles/globals.css';
 import Script from 'next/script';
 
 export default function App({ Component, pageProps }) {
@@ -22,4 +22,4 @@ export default function App({ Component, pageProps }) {
       <Component {...pageProps} />
     </>
   );
-}
+} 

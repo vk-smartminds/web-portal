@@ -1,7 +1,15 @@
-import '../styles/globals.css';
 import Script from 'next/script';
+import { useEffect, useRef } from 'react';
 
-export default function App({ Component, pageProps }) {
+export default function TestMathJax() {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (window.MathJax && ref.current) {
+      window.MathJax.typesetPromise([ref.current]);
+    }
+  }, []);
+
   return (
     <>
       <Script id="mathjax-config" strategy="beforeInteractive">
@@ -19,7 +27,9 @@ export default function App({ Component, pageProps }) {
         src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"
         strategy="afterInteractive"
       />
-      <Component {...pageProps} />
+      <div ref={ref} style={{ fontSize: 24, margin: 40 }}>
+        Here is some math: $E=mc^2$
+      </div>
     </>
   );
-}
+} 
