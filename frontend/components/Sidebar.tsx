@@ -81,7 +81,6 @@ export default function Sidebar({
   };
 
   const staticsItems = [
-    { key: "sample-papers", label: "Sample Papers", icon: icons.book },
     { key: "avlrs", label: "AVLRs", icon: icons.laptop, href: "/avlrs" },
     { key: "dlrs", label: "DLRs", icon: icons.pdf, href: "/dlrs" },
     { key: "mind-maps", label: "Mind Maps", icon: icons.chart, href: "/mindmaps" },
@@ -110,7 +109,7 @@ export default function Sidebar({
     <div
       className={`${
         collapsed ? "w-20" : "w-64"
-      } bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 fixed top-20 left-0 bottom-0 z-50 flex flex-col transition-all duration-300`}
+      } bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col transition-all duration-300`}
     >
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700">
         {!collapsed && (
@@ -144,6 +143,7 @@ export default function Sidebar({
       )}
 
       <div className="flex-1 overflow-y-auto py-2 space-y-1">
+        {/* Announcements Section */}
         <div className="px-2">
           <button
             onClick={toggleAnnouncements}
@@ -154,7 +154,7 @@ export default function Sidebar({
             {!collapsed && <span className="transform transition-transform">{announcementsOpen ? "▲" : "▼"}</span>}
           </button>
           {!collapsed && announcementsOpen && (
-            <div className="mt-1 ml-4 space-y-1">
+            <div className="space-y-1">
               {announcementItems.map((item) => (
                 <button
                   key={item.key}
@@ -169,19 +169,21 @@ export default function Sidebar({
                 >
                   {item.icon}
                   <span>{item.label}</span>
+                  {item.key === "announcements" && renderAnnouncementBadge && renderAnnouncementBadge(newAnnouncementCount)}
                 </button>
               ))}
             </div>
           )}
         </div>
 
+        {/* Main Menu Items */}
         {menuItems.map((item) => (
           <button
             key={item.key}
             onClick={() =>
               item.href ? (window.location.href = item.href) : onMenuSelect(item.key)
             }
-            className={`flex items-center pl-7 py-2 gap-2 text-sm rounded-md w-full text-left ${
+            className={`flex items-center px-3 py-2 gap-2 text-sm rounded-md w-full text-left ${
                     selectedMenu === item.key
                       ? "bg-indigo-100 dark:bg-gray-700 text-indigo-800 dark:text-white"
                       : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -192,6 +194,7 @@ export default function Sidebar({
           </button>
         ))}
 
+        {/* Statics Section */}
         <div className="px-2">
           <button
             onClick={toggleStatics}
@@ -202,7 +205,7 @@ export default function Sidebar({
             {!collapsed && <span className="transform transition-transform">{staticsOpen ? "▲" : "▼"}</span>}
           </button>
           {!collapsed && staticsOpen && (
-            <div className="mt-1 ml-4 space-y-1">
+            <div className="space-y-1">
               {staticsItems.map((item) => (
                 <button
                   key={item.key}

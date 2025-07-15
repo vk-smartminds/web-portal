@@ -1,20 +1,17 @@
 "use client";
-
-import React from "react";
-
 import DashboardCommon from "../../../pages/DashboardCommon";
 // import { getToken, logout } from "../../../utils/auth";
 // import ProtectedRoute from '../../../components/ProtectedRoute';
 // import { BASE_API_URL } from "../../../utils/apiurl";
 import AnnouncementPage from "../../../pages/announcement";
 import Sidebar from "../../../components/Sidebar";
+import PracticeDashboard from "../../../components/PracticeDashboard";
 
 
 const menuItems = [
   { key: "cbse-updates", label: "CBSE Updates" },
   { key: "announcements", label: "Announcements" },
-  { key: "quizzes", label: "Quizzes" },
-  { key: "sample-papers", label: "Sample Papers" },
+  { key: "quizzes", label: "Quizzes" },,
   { key: "avlrs", label: "AVLRs" },
   { key: "dlrs", label: "DLRs" },
   { key: "mind-maps", label: "Mind Maps" },
@@ -29,15 +26,17 @@ const menuItems = [
 
 export default function StudentDashboardPage() {
   return (
-    <DashboardCommon
-      SidebarComponent={Sidebar}
-      menuItems={menuItems}
-      userType="Student"
-      renderContent={({ selectedMenu, ...rest }) =>
-        selectedMenu === "announcements"
-          ? <AnnouncementPage {...rest} />
-          : null
-      }
-    />
+    <div>
+      <DashboardCommon
+        SidebarComponent={Sidebar}
+        menuItems={menuItems}
+        userType="Student"
+        renderContent={({ selectedMenu, ...rest }) =>
+          selectedMenu === "announcements"
+            ? <AnnouncementPage {...rest} />
+            : null
+        }
+      />
+    </div>
   );
 }
