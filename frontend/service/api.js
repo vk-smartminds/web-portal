@@ -126,3 +126,8 @@ export async function deleteDiscussionPost(threadId, postId, token) {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
+
+// Search discussion threads by title/heading
+export async function searchDiscussionThreads(query) {
+  return api.get(`/discussion/posts/search?query=${encodeURIComponent(query)}`);
+}

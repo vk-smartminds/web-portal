@@ -1,9 +1,12 @@
 import Script from 'next/script';
 
+import './globals.css'
+import Header from '../components/Header.jsx'
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
+        <Header />
         {children}
         <Script id="mathjax-config" strategy="beforeInteractive">
           {`

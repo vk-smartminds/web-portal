@@ -7,7 +7,13 @@ const DiscussionThreadSchema = new mongoose.Schema({
   editedAt: { type: Date },
   deleted: { type: Boolean, default: false },
   deletedAt: { type: Date },
-  tags: [{ type: String, enum: ['CBSE', 'Maths', 'Science', 'JEE', 'NEET'] }],
+  tags: [{ type: String, enum: [
+    'CBSE', 'Maths', 'Chemistry', 'Physics', 'Science', 'JEE', 'NEET', 'Biology', 'English', 'Hindi', 'Social Studies',
+    'History', 'Geography', 'Civics', 'Economics', 'Political Science', 'Philosophy', 'Religion', 'Art', 'Music', 'Dance',
+    'Theatre', 'Film', 'Literature', 'Language', 'Communication', 'Public Speaking', 'Leadership', 'Management',
+    'Entrepreneurship', 'Marketing', 'Sales', 'Customer Service', 'HR', 'Finance', 'Accounting', 'Taxation', 'Law',
+    'Criminal Justice', 'Social Work', 'Psychology', 'Sociology', 'Anthropology'
+  ] }],
   createdBy: { type: mongoose.Schema.Types.ObjectId, required: true },
   createdByModel: { type: String, enum: ['Student', 'Teacher', 'Guardian', 'Admin'], required: true },
   images: [{
