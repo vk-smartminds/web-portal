@@ -152,7 +152,7 @@ export default function ManageUsers({ userEmail, isSuperAdmin }) {
               </div>
             )}
             {Object.entries(searchedUser).map(([key, value]) => {
-              if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds" && key !== "name" && key !== "profileVisibility" && key !== "notificationSettings") {
+              if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds" && key !== "name") {
                 return (
                   <div key={key} style={{ display: "flex", gap: 10 }}>
                     <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>

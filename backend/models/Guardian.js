@@ -41,7 +41,6 @@ const guardianSchema = new mongoose.Schema({
   },
   notificationSettings: {
     announcements: { type: Boolean, default: true },
-    discussionReplies: { type: Boolean, default: true },
     assignmentDeadlines: { type: Boolean, default: false },
     newResources: { type: Boolean, default: true },
     systemUpdates: { type: Boolean, default: false }

@@ -1,14 +1,16 @@
 import mongoose from 'mongoose';
 
-const DiscussionNotificationSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, required: true },
-  userModel: { type: String, enum: ['Student', 'Teacher', 'Guardian', 'Admin'], required: true },
-  type: { type: String, enum: ['reply', 'comment', 'vote'], required: true },
-  thread: { type: mongoose.Schema.Types.ObjectId, ref: 'DiscussionThread', required: true },
-  post: { type: mongoose.Schema.Types.ObjectId, ref: 'DiscussionPost', required: false },
-  isRead: { type: Boolean, default: false },
-}, { timestamps: true });
+const discussionNotificationSchema = new mongoose.Schema({
+  recipientId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },
+  senderId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },
+  type: { type: String, required: true, enum: ['NEW_COMMENT', 'REPLY', 'POST_LIKED', 'COMMENT_LIKED'] },
+  threadId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'DiscussionThread' },
+  postId: { type: mongoose.Schema.Types.ObjectId, ref: 'DiscussionPost' },
+  read: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+  message: { type: String, required: true }
+});
 
-DiscussionNotificationSchema.index({ user: 1, userModel: 1, createdAt: -1 });
+const DiscussionNotification = mongoose.model('DiscussionNotification', discussionNotificationSchema);
 
-export default mongoose.model('DiscussionNotification', DiscussionNotificationSchema); 
+export default DiscussionNotification; 

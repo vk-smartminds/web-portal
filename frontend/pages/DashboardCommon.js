@@ -27,10 +27,10 @@ export default function DashboardCommon({
   const [userPhoto, setUserPhoto] = useState('');
   const [userName, setUserName] = useState("");
   const [newAnnouncementCount, setNewAnnouncementCount] = useState(0);
+  const [blink, setBlink] = useState(true);
   // Remove all useEffect and state related to blink
   const [notifSettings, setNotifSettings] = useState(null);
   const [announcementCountLoading, setAnnouncementCountLoading] = useState(true);
-
   // Fetch profile logic (can be overridden)
   const fetchProfile = useCallback(() => {
     if (typeof customProfileFetch === "function") return customProfileFetch();
@@ -98,19 +98,9 @@ export default function DashboardCommon({
       .catch(() => {
         setAnnouncementCountLoading(false);
       });
-  }, [userType, notifSettings]);
+  }, [userType]);
 
   // Remove all useEffect and state related to blink
-
-  // Fetch notification settings
-  useEffect(() => {
-    fetch(`${BASE_API_URL}/notification-settings`, {
-      headers: { 'Authorization': `Bearer ${getToken()}` }
-    })
-      .then(res => res.json())
-      .then(data => setNotifSettings(data.notificationSettings || { announcements: true }))
-      .catch(() => setNotifSettings({ announcements: true }));
-  }, []);
 
   const handleEdit = () => setEditMode(true);
   const handleCancel = () => {
@@ -136,6 +126,19 @@ export default function DashboardCommon({
 
   // Render badge function to be used by all sidebars
   const renderAnnouncementBadge = (count) => (
+    count > 0 ? (
+      <span className="blink-badge" style={{
+        marginLeft: 8,
+        background: "#1e3c72",
+        color: "#fff",
+        borderRadius: "50%",
+        padding: "2px 8px",
+        fontSize: 13,
+        fontWeight: 700,
+        minWidth: 22,
+        textAlign: "center",
+        display: "inline-block"
+      }}>{count}</span>
     notifSettings && notifSettings.announcements ? (
       announcementCountLoading ? (
         <span style={{
@@ -189,7 +192,6 @@ export default function DashboardCommon({
     profile,
     newAnnouncementCount,
     renderAnnouncementBadge,
-    notifSettings,
     ...customSidebarProps
   };
 
