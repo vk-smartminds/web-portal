@@ -40,6 +40,7 @@ export default function AdminQuizPage() {
     correct_option: '',
     difficulty: 'Medium',
     marks: 1,
+    bloomsTaxonomy: 'Remember',
   });
   const [editing, setEditing] = useState(null);
   // Add preview state for question, options, and answer
@@ -98,6 +99,7 @@ export default function AdminQuizPage() {
         class: dbClass,
         topics: form.topics.split(',').map(t => t.trim()).filter(Boolean),
         options: optionInputs.map(o => o.trim()).filter(Boolean),
+        bloomsTaxonomy: form.bloomsTaxonomy,
       };
       if (editing) {
         await updateQuestion(editing, data);
@@ -124,7 +126,8 @@ export default function AdminQuizPage() {
     setForm({
       ...form,
       ...q,
-      topics: q.topics?.join(', ') || ''
+      topics: q.topics?.join(', ') || '',
+      bloomsTaxonomy: q.bloomsTaxonomy || 'Remember',
     });
     setOptionInputs(q.options && Array.isArray(q.options) ? q.options.concat(['', '', '', '']).slice(0, 4) : ['', '', '', '']);
     setEditing(q._id);
@@ -308,6 +311,17 @@ export default function AdminQuizPage() {
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', fontWeight: 600, color: '#2563eb', marginBottom: 4 }}>Marks</label>
                   <input name="marks" type="number" min={1} value={form.marks} onChange={handleChange} placeholder="Marks" style={{ width: '100%', border: '1px solid #c7d2fe', borderRadius: 8, padding: '8px 12px', background: '#f1f5fe', outline: 'none' }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', fontWeight: 600, color: '#2563eb', marginBottom: 4 }}>Bloom's Taxonomy</label>
+                  <select name="bloomsTaxonomy" value={form.bloomsTaxonomy} onChange={handleChange} style={{ width: '100%', border: '1px solid #c7d2fe', borderRadius: 8, padding: '8px 12px', background: '#f1f5fe', outline: 'none' }}>
+                    <option value="Remember">Remember</option>
+                    <option value="Understand">Understand</option>
+                    <option value="Apply">Apply</option>
+                    <option value="Analyze">Analyze</option>
+                    <option value="Evaluate">Evaluate</option>
+                    <option value="Create">Create</option>
+                  </select>
                 </div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>

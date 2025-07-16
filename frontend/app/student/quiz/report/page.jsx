@@ -323,25 +323,21 @@ export default function QuizReportStandalonePage() {
             return (
               <div key={q._id} style={qBlockStyle}>
                 <div style={qTextStyle}>Q{i+1}. {q.question}</div>
+                {/* --- Topics and Difficulty --- */}
+                <div style={{ margin: '6px 0 12px 0', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                  <span style={qMetaPillStyle}>
+                    <b>Topics:</b> {q.topics && q.topics.length ? q.topics.join(', ') : '-'}
+                  </span>
+                  <span style={qMetaPillStyle}>
+                    <b>Difficulty:</b> {q.difficulty || '-'}
+                  </span>
+                  <span style={qMetaPillStyle}>
+                    <b>Bloom's:</b> {q.bloomsTaxonomy || '-'}
+                  </span>
+                </div>
                 <div style={{ display: 'flex', flexDirection: 'row', gap: 32, alignItems: 'stretch' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                    {/* Show 'Unattempted' badge if no option is selected */}
-                    {(!resp || !selectedOpt.length) && (
-                      <span style={{
-                        display: 'inline-block',
-                        marginBottom: 10,
-                        padding: '6px 18px',
-                        borderRadius: 16,
-                        background: '#fef9c3',
-                        color: '#b45309',
-                        fontWeight: 700,
-                        fontSize: 15,
-                        border: '2px solid #fde68a',
-                        width: 'fit-content',
-                      }}>
-                        Unattempted
-                      </span>
-                    )}
+                    {/* Remove 'Unattempted' badge from the left completely */}
                     {q.options.map((opt, idx) => {
                       // --- Robust, case-insensitive matching for correct option ---
                       const correct = correctOpt.some(cOpt => {
@@ -410,7 +406,16 @@ export default function QuizReportStandalonePage() {
                         <span style={{ color: '#222', fontWeight: 600 }}>Your Answer: </span>
                         <span
                           style={
-                            (!resp || !selectedOpt.length || selectedOpt.every(sel => sel === undefined || sel === null || sel === ''))
+                            (!resp ||
+                              !selectedOpt.length ||
+                              selectedOpt.every(
+                                sel =>
+                                  sel === undefined ||
+                                  sel === null ||
+                                  sel === '' ||
+                                  sel === false ||
+                                  (typeof sel === 'number' && sel === 0)
+                              ))
                               ? {
                                   color: '#b45309', // Mustard yellow
                                   background: '#fef9c3',
@@ -430,24 +435,47 @@ export default function QuizReportStandalonePage() {
                                 }
                           }
                         >
-                          {(!resp || !selectedOpt.length || selectedOpt.every(sel => sel === undefined || sel === null || sel === ''))
+                          {(!resp ||
+                            !selectedOpt.length ||
+                            selectedOpt.every(
+                              sel =>
+                                sel === undefined ||
+                                sel === null ||
+                                sel === '' ||
+                                sel === false ||
+                                (typeof sel === 'number' && sel === 0)
+                            ))
                             ? 'Unattempted'
-                            : selectedOpt.map(sel => {
-                                let idx = -1;
-                                if (typeof sel === 'string' && sel.length === 1 && /[a-zA-Z]/.test(sel)) {
-                                  idx = sel.toLowerCase().charCodeAt(0) - 97;
-                                } else {
-                                  idx = q.options.findIndex(o => String(o).toLowerCase() === String(sel).toLowerCase());
-                                }
-                                if (idx >= 0 && q.options[idx]) {
-                                  return String.fromCharCode(65 + idx); // Only show the letter
-                                } else if (typeof sel === 'string' && sel.length === 1 && /[a-zA-Z]/.test(sel)) {
-                                  return sel.toUpperCase();
-                                } else {
-                                  return '';
-                                }
-                              }).filter(Boolean).join(', ')}
-                          {selectedOpt.length && isCorrect && <span style={{ color: '#22c55e', fontWeight: 900, marginLeft: 6 }}>✔</span>}
+                            : selectedOpt
+                                .map(sel => {
+                                  let idx = -1;
+                                  if (typeof sel === 'string' && sel.length === 1 && /[a-zA-Z]/.test(sel)) {
+                                    idx = sel.toLowerCase().charCodeAt(0) - 97;
+                                  } else {
+                                    idx = q.options.findIndex(o => String(o).toLowerCase() === String(sel).toLowerCase());
+                                  }
+                                  if (idx >= 0 && q.options[idx]) {
+                                    return String.fromCharCode(65 + idx); // Only show the letter
+                                  } else if (typeof sel === 'string' && sel.length === 1 && /[a-zA-Z]/.test(sel)) {
+                                    return sel.toUpperCase();
+                                  } else {
+                                    return '';
+                                  }
+                                })
+                                .filter(Boolean)
+                                .join(', ')}
+                          {selectedOpt.length && isCorrect && !(
+                            !resp ||
+                            !selectedOpt.length ||
+                            selectedOpt.every(
+                              sel =>
+                                sel === undefined ||
+                                sel === null ||
+                                sel === '' ||
+                                sel === false ||
+                                (typeof sel === 'number' && sel === 0)
+                            )
+                          ) && <span style={{ color: '#22c55e', fontWeight: 900, marginLeft: 6 }}>✔</span>}
                         </span>
                       </div>
                       <div style={{ ...timeStyle, marginBottom: 16 }}>Time Spent: {resp?.timeSpent ? `${resp.timeSpent}s` : 'N/A'}</div>
