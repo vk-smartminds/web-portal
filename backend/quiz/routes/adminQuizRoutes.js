@@ -7,6 +7,9 @@ import Question from '../models/Question.js';
 router.post('/question', async (req, res) => {
   try {
     const data = { ...req.body };
+    if (!data.bloomsTaxonomy || !['Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create'].includes(data.bloomsTaxonomy)) {
+      return res.status(400).json({ error: "bloomsTaxonomy is required and must be one of: Remember, Understand, Apply, Analyze, Evaluate, Create" });
+    }
     if (!data.type && data.category) {
       data.type = data.category;
     }
@@ -68,6 +71,9 @@ router.get('/questions', async (req, res) => {
 router.put('/question/:id', async (req, res) => {
   try {
     const data = { ...req.body };
+    if (!data.bloomsTaxonomy || !['Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create'].includes(data.bloomsTaxonomy)) {
+      return res.status(400).json({ error: "bloomsTaxonomy is required and must be one of: Remember, Understand, Apply, Analyze, Evaluate, Create" });
+    }
     if (!data.type && data.category) {
       data.type = data.category;
     }

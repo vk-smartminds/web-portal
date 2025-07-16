@@ -13,6 +13,7 @@ const questionSchema = new Schema({
   answer: { type: String, required: true }, // solution/explanation
   // For MCQ: single string (a/b/c/d). For select-all: array of strings (['a','c'])
   correct_option: { type: [String], required: true },
+  bloomsTaxonomy: { type: String, required: true, enum: ['Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create'] },
   difficulty: { type: String, enum: ['Easy', 'Medium', 'Hard'], default: 'Medium' },
   marks: { type: Number, default: 1 },
   createdAt: { type: Date, default: Date.now }
