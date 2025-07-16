@@ -323,6 +323,15 @@ export default function QuizReportStandalonePage() {
             return (
               <div key={q._id} style={qBlockStyle}>
                 <div style={qTextStyle}>Q{i+1}. {q.question}</div>
+                {/* --- Topics and Difficulty --- */}
+                <div style={{ margin: '6px 0 12px 0', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                  <span style={qMetaPillStyle}>
+                    <b>Topics:</b> {q.topics && q.topics.length ? q.topics.join(', ') : '-'}
+                  </span>
+                  <span style={qMetaPillStyle}>
+                    <b>Difficulty:</b> {q.difficulty || '-'}
+                  </span>
+                </div>
                 <div style={{ display: 'flex', flexDirection: 'row', gap: 32, alignItems: 'stretch' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                     {/* Show 'Unattempted' badge if no option is selected */}
