@@ -38,15 +38,49 @@ export default function TrackScreenTimePage() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  // New: time range filter state
+  const [timeRange, setTimeRange] = useState('day');
+  const [customYearInput, setCustomYearInput] = useState(new Date().getFullYear());
+  const [customYear, setCustomYear] = useState(new Date().getFullYear());
+  const [customRangeInput, setCustomRangeInput] = useState({ start: '', end: '' });
+  const [customRange, setCustomRange] = useState({ start: '', end: '' });
 
+  // Helper to build query params for time range
+  function getTimeRangeParams() {
+    if (roleFilter !== 'all') return '';
+    if (timeRange === 'day') {
+      return '&range=day';
+    } else if (timeRange === 'week') {
+      return '&range=week';
+    } else if (timeRange === 'month') {
+      return '&range=month';
+    } else if (timeRange === 'year') {
+      return '&range=year';
+    } else if (timeRange === 'customYear') {
+      return `&range=customYear&year=${customYear}`;
+    } else if (timeRange === 'customRange') {
+      return `&range=customRange&start=${customRange.start}&end=${customRange.end}`;
+    }
+    return '';
+  }
+
+  // Only fetch when relevant state changes
   useEffect(() => {
     if (typeof window !== "undefined" && localStorage.getItem("isSuperAdmin") !== "true") {
       setError("Access denied: Superadmin only.");
       setLoading(false);
       return;
     }
+    // For customYear, only fetch when customYear changes (not input)
+    // For customRange, only fetch when customRange changes (not input)
+    if (timeRange === 'customYear' && !customYear) return;
+    if (timeRange === 'customRange' && (!customRange.start || !customRange.end)) return;
     setLoading(true);
-    fetch(`${BASE_API_URL}/track-screen-time?role=${roleFilter}`, {
+    let url = `${BASE_API_URL}/track-screen-time?role=${roleFilter}`;
+    if (roleFilter === 'all') {
+      url += getTimeRangeParams();
+    }
+    fetch(url, {
       headers: { Authorization: `Bearer ${getToken()}` },
     })
       .then((res) => res.json())
@@ -58,19 +92,26 @@ export default function TrackScreenTimePage() {
         setError("Failed to fetch screen time data.");
         setLoading(false);
       });
-  }, [roleFilter]);
+  }, [roleFilter, timeRange, customYear, customRange]);
+
+  // Reset custom inputs when switching filter
+  useEffect(() => {
+    if (timeRange !== 'customYear') setCustomYearInput(new Date().getFullYear());
+    if (timeRange !== 'customRange') setCustomRangeInput({ start: '', end: '' });
+  }, [timeRange]);
 
   if (loading) return <div style={{ padding: 40 }}>Loading...</div>;
   if (error) return <div style={{ color: "#c00", padding: 40 }}>{error}</div>;
   if (!data) return null;
 
-  // Prepare graph data
+  // Prepare graph data as percentage
+  const total = Object.values(data.roleTotals).reduce((a, b) => a + b, 0);
   const chartData = {
     labels: Object.keys(data.roleTotals),
     datasets: [
       {
-        label: "Total Screen Time (minutes)",
-        data: Object.values(data.roleTotals).map((v) => Math.round(v / 60)),
+        label: 'Screen Time (%)',
+        data: Object.values(data.roleTotals).map((v) => total > 0 ? Math.round((v / total) * 100) : 0),
         backgroundColor: [
           "#a855f7",
           "#3b82f6",
@@ -98,26 +139,72 @@ export default function TrackScreenTimePage() {
           </select>
         </div>
         {roleFilter === 'all' && (
-          <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32 }}>
-            <h3 style={{ fontWeight: 700, fontSize: 22, marginBottom: 18, color: "#1e3c72" }}>Screen Time by Role</h3>
-            <Bar
-              data={chartData}
-              options={{
-                plugins: { legend: { display: false } },
-                scales: {
-                  y: {
-                    title: {
-                      display: true,
-                      text: 'Screen Time (minutes)',
-                      font: { size: 16, weight: 'bold' },
-                      color: '#1e3c72'
+          <div>
+            {/* Time range filter UI (no unit selector) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 0 }}>
+              <div style={{ background: '#f4f6fa', border: '1.5px solid #dbeafe', borderRadius: 12, padding: '18px 12px 10px 12px', marginBottom: 18, display: 'inline-block', minWidth: 260 }}>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
+                  {[
+                    { key: 'day', label: 'Today' },
+                    { key: 'week', label: 'This Week' },
+                    { key: 'month', label: 'This Month' },
+                    { key: 'year', label: 'This Year' },
+                    { key: 'customYear', label: 'Year (Custom)' },
+                    { key: 'customRange', label: 'Date Range' },
+                  ].map(opt => (
+                    <button key={opt.key} onClick={() => setTimeRange(opt.key)}
+                      style={{ padding: '6px 16px', borderRadius: 6, background: timeRange === opt.key ? '#1e3c72' : '#eee', color: timeRange === opt.key ? '#fff' : '#1e3c72', border: 'none', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                  {timeRange === 'customYear' && (
+                    <>
+                      <span style={{ fontWeight: 600, color: '#1e3c72', fontSize: 15 }}>Year:</span>
+                      <input type="number" min="2000" max="2100" value={customYearInput} onChange={e => setCustomYearInput(e.target.value)}
+                        placeholder="e.g. 2024" style={{ width: 90, padding: '6px 8px', borderRadius: 6, border: '1px solid #bbb', fontSize: 15 }} />
+                      <button onClick={() => setCustomYear(customYearInput)} style={{ marginLeft: 8, padding: '6px 16px', borderRadius: 6, background: '#2563eb', color: '#fff', border: 'none', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>Apply</button>
+                    </>
+                  )}
+                  {timeRange === 'customRange' && (
+                    <>
+                      <span style={{ fontWeight: 600, color: '#1e3c72', fontSize: 15 }}>Date Range:</span>
+                      <input type="date" value={customRangeInput.start} onChange={e => setCustomRangeInput(r => ({ ...r, start: e.target.value }))}
+                        style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid #bbb', fontSize: 15 }} />
+                      <span style={{ margin: '0 6px' }}>to</span>
+                      <input type="date" value={customRangeInput.end} onChange={e => setCustomRangeInput(r => ({ ...r, end: e.target.value }))}
+                        style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid #bbb', fontSize: 15 }} />
+                      <button onClick={() => { if (customRangeInput.start && customRangeInput.end) setCustomRange(customRangeInput); }} style={{ marginLeft: 8, padding: '6px 16px', borderRadius: 6, background: '#2563eb', color: '#fff', border: 'none', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>Apply</button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32 }}>
+              <h3 style={{ fontWeight: 700, fontSize: 22, marginBottom: 18, color: "#1e3c72" }}>Screen Time by Role {timeRange !== 'day' ? '(Filtered)' : ''}</h3>
+              <Bar
+                data={chartData}
+                options={{
+                  plugins: { legend: { display: false } },
+                  scales: {
+                    y: {
+                      title: {
+                        display: true,
+                        text: 'Screen Time (%)',
+                        font: { size: 16, weight: 'bold' },
+                        color: '#1e3c72'
+                      },
+                      min: 0,
+                      max: 100,
+                      ticks: { stepSize: 10, callback: v => v + '%' }
                     }
-                  }
-                },
-                barPercentage: 0.4,
-                categoryPercentage: 0.5
-              }}
-            />
+                  },
+                  barPercentage: 0.4,
+                  categoryPercentage: 0.5
+                }}
+              />
+            </div>
           </div>
         )}
         <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32 }}>
@@ -146,6 +233,7 @@ export default function TrackScreenTimePage() {
                 <th style={{ padding: 8, textAlign: "left", fontWeight: 600 }}>Email</th>
                 <th style={{ padding: 8, textAlign: "left", fontWeight: 600 }}>Role</th>
                 <th style={{ padding: 8, textAlign: "left", fontWeight: 600 }}>Total Screen Time</th>
+                <th style={{ padding: 8, textAlign: "left", fontWeight: 600 }}>Last Active</th>
               </tr>
             </thead>
             <tbody>
@@ -159,6 +247,7 @@ export default function TrackScreenTimePage() {
                   <td style={{ padding: 8 }}>{u.email || "-"}</td>
                   <td style={{ padding: 8 }}>{u.role}</td>
                   <td style={{ padding: 8 }}>{formatDuration(u.totalTime)}</td>
+                  <td style={{ padding: 8 }}>{u.lastActive ? new Date(u.lastActive).toLocaleString() : '-'}</td>
                 </tr>
               ))}
             </tbody>
