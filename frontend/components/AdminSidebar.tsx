@@ -46,7 +46,6 @@ export default function Sidebar({ newAnnouncementCount = 0, loadingAnnouncement 
   }, []);
 
   const mainMenu = [
-    { label: "Dashboard", icon: dashboardIcon(), href: "/admin/dashboard" },
     { label: "Manage Users & Admins", icon: userIcon(), href: "/manage-admins-users" },
     { label: "Creative Corner", icon: paintIcon(), href: "/creative-corner" },
     { label: "Activity", icon: activityIcon(), href: "/admin/activity" },
@@ -203,23 +202,7 @@ export default function Sidebar({ newAnnouncementCount = 0, loadingAnnouncement 
         </nav>
       </div>
 
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <Link href="/settings">          
-            <div className="text-gray-400 text-sm flex items-center gap-3 hover:text-white transition">{settingsIcon()} Settings</div>
-          </Link>
-          <button className="text-gray-400 text-sm flex items-center gap-3 hover:text-white transition">{userIcon()} User Management</button>
-          <button className="text-gray-400 text-sm flex items-center gap-3 hover:text-white transition">{supportIcon()} Help & Support</button>
-        </div>
-
-        <div className="flex items-center gap-3 p-3 bg-[#1A1B21] rounded-lg">
-          <div className="w-8 h-8 rounded-full bg-gray-500"></div>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold">Austin Martin</span>
-            <span className="text-xs text-gray-400">austin@gmail.com</span>
-          </div>
-        </div>
-      </div>
+      {/* Remove the bottom section with Settings, User Management, Help & Support, and user info */}
     </aside>
   );
 }
