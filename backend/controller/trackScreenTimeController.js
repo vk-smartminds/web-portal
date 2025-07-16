@@ -21,15 +21,54 @@ async function getUserInfo(role, id) {
   return null;
 }
 
-// GET /api/track-screen-time?role=student|teacher|guardian|admin|all
+// GET /api/track-screen-time?role=student|teacher|guardian|admin|all&range=day|week|month|year|customYear|customRange&year=YYYY&start=YYYY-MM-DD&end=YYYY-MM-DD
 export async function getScreenTime(req, res) {
   try {
-    const { role } = req.query;
+    const { role, range, year, start, end } = req.query;
     let filter = {};
     if (role && role !== 'all') {
       filter.userRole = new RegExp(`^${role}$`, 'i');
     }
     const screenTimes = await ScreenTime.find(filter);
+
+    // Helper to get date range
+    function getDateRange(range, year, start, end) {
+      const today = new Date();
+      let from, to;
+      if (range === 'day') {
+        from = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        to = new Date(from); to.setDate(from.getDate() + 1);
+      } else if (range === 'week') {
+        const day = today.getDay();
+        from = new Date(today.getFullYear(), today.getMonth(), today.getDate() - day);
+        to = new Date(from); to.setDate(from.getDate() + 7);
+      } else if (range === 'month') {
+        from = new Date(today.getFullYear(), today.getMonth(), 1);
+        to = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+      } else if (range === 'year') {
+        from = new Date(today.getFullYear(), 0, 1);
+        to = new Date(today.getFullYear() + 1, 0, 1);
+      } else if (range === 'customYear' && year) {
+        const y = parseInt(year);
+        if (!isNaN(y)) {
+          from = new Date(y, 0, 1);
+          to = new Date(y + 1, 0, 1);
+        }
+      } else if (range === 'customRange' && start && end) {
+        from = new Date(start);
+        to = new Date(end);
+        to.setDate(to.getDate() + 1);
+      }
+      return { from, to };
+    }
+
+    const { from, to } = getDateRange(range, year, start, end);
+    function isInRange(dateStr) {
+      if (!from || !to) return true;
+      const d = new Date(dateStr);
+      return d >= from && d < to;
+    }
+
     // Group by user and role
     const userMap = {};
     for (const st of screenTimes) {
@@ -46,19 +85,18 @@ export async function getScreenTime(req, res) {
           sessions: [],
         };
       }
-      // Sum all days' screenTime for this user
-      const totalScreenTime = Array.isArray(st.days)
-        ? st.days.reduce((sum, d) => sum + (d.screenTime || 0), 0)
-        : 0;
+      // Sum only filtered days' screenTime for this user
+      const filteredDays = Array.isArray(st.days)
+        ? st.days.filter(d => !d.date || isInRange(d.date))
+        : [];
+      const totalScreenTime = filteredDays.reduce((sum, d) => sum + (d.screenTime || 0), 0);
       userMap[st.userId].totalTime += totalScreenTime;
-      // Add each day as a session
-      if (Array.isArray(st.days)) {
-        userMap[st.userId].sessions.push(...st.days.map(d => ({
-          date: d.date,
-          screenTime: d.screenTime,
-          lastActive: d.lastActive
-        })));
-      }
+      // Add each filtered day as a session
+      userMap[st.userId].sessions.push(...filteredDays.map(d => ({
+        date: d.date,
+        screenTime: d.screenTime,
+        lastActive: d.lastActive
+      })));
     }
     // Prepare data for graph (e.g., total time per role)
     const roleTotals = {};
@@ -66,8 +104,21 @@ export async function getScreenTime(req, res) {
       if (!roleTotals[u.role]) roleTotals[u.role] = 0;
       roleTotals[u.role] += u.totalTime;
     });
+    // Add lastActive to each user (most recent from sessions)
+    const usersWithLastActive = Object.values(userMap).map(u => {
+      let lastActive = null;
+      if (u.sessions && u.sessions.length > 0) {
+        lastActive = u.sessions.reduce((latest, s) => {
+          if (s.lastActive && (!latest || new Date(s.lastActive) > new Date(latest))) {
+            return s.lastActive;
+          }
+          return latest;
+        }, null);
+      }
+      return { ...u, lastActive };
+    });
     res.json({
-      users: Object.values(userMap),
+      users: usersWithLastActive,
       roleTotals,
       combinedTotal: Object.values(userMap).reduce((sum, u) => sum + u.totalTime, 0),
     });
