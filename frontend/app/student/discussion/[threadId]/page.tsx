@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useThread } from "../hooks/useThread";
 import PostTree from "../components/PostTree";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { addDiscussionPost, votePost, editDiscussionPost, deleteDiscussionPost, voteThread } from "../api/discussionApi";
 import { DiscussionUser, DiscussionPost } from "../types";
 import { ChevronUp, ChevronDown, User, Users, Shield, GraduationCap, MessageSquare } from "lucide-react";
@@ -79,6 +79,8 @@ export default function ThreadDetailPage() {
   const [mainReplyBody, setMainReplyBody] = useState("");
   const [mainReplyImages, setMainReplyImages] = useState<File[]>([]);
   const [threadVote, setThreadVote] = useState<1 | -1 | 0>(0);
+  const searchParams = useSearchParams();
+  const highlightId = searchParams ? searchParams.get('highlight') || undefined : undefined;
 
   const handleReply = async (parentPostId: string, body: string, files: File[]) => {
     if (!body.trim()) return;
@@ -230,6 +232,7 @@ export default function ThreadDetailPage() {
                     replyImages={replyImages}
                     setReplyImages={setReplyImages}
                     setImagePreview={setImagePreview}
+                    highlightId={highlightId}
                   />
                 ))
               ) : (

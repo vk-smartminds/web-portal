@@ -7,6 +7,8 @@ import { createDiscussionThread } from "./api/discussionApi";
 import { voteThread } from "./api/discussionApi";
 import { logout } from '../../../utils/auth.js';
 import { getUserData } from '../../../utils/auth.js';
+import BellIcon from '../../../icons/BellIcon';
+import { useNotifications } from '../../../components/NotificationProvider';
 
 const TAG_OPTIONS = [
   "CBSE", "Maths", "Chemistry", "Physics", "Science", "JEE", "NEET", "Biology", "English", "Hindi", "Social Studies",
@@ -63,6 +65,8 @@ export default function DiscussionPanel() {
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const [visibleThreads, setVisibleThreads] = useState(8);
   const subjectsMenuCloseTimeout = useRef<NodeJS.Timeout | null>(null);
+  const { notifications, unreadCount, markAsRead } = useNotifications();
+  const [showNotif, setShowNotif] = useState(false);
 
   const userData = typeof window !== 'undefined' ? getUserData() : null;
   const userEmail = userData && userData.email ? userData.email : '';
@@ -133,6 +137,23 @@ export default function DiscussionPanel() {
     }
   };
 
+  const handleNotifClick = () => {
+    setShowNotif((prev) => !prev);
+    if (unreadCount > 0) {
+      const unreadIds = notifications.filter(n => !n.read).map(n => n._id);
+      if (unreadIds.length) markAsRead(unreadIds);
+    }
+  };
+
+  const handleNotificationItemClick = (notif) => {
+    setShowNotif(false);
+    if (notif.threadId && notif.postId) {
+      router.push(`/student/discussion/${notif.threadId}?highlight=${notif.postId}`);
+    } else if (notif.threadId) {
+      router.push(`/student/discussion/${notif.threadId}`);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -145,7 +166,7 @@ export default function DiscussionPanel() {
                   <span className="sr-only">VK Global Logo</span>
                 </div>  
                 <span className="text-xl font-bold text-gray-900">
-                Discussion</span>
+                iscussion</span>
               </div>
               <div className="flex items-center space-x-6">
                 <button onClick={() => setActiveTab('latest')} className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === 'latest' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900'}`}>Latest</button>
@@ -237,7 +258,34 @@ export default function DiscussionPanel() {
                   className="pl-10 pr-4 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-              <Bell className="w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600" />
+              <div className="relative">
+                <button onClick={handleNotifClick} className="p-2 rounded-full hover:bg-gray-100 transition relative">
+                  <BellIcon className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+                {showNotif && (
+                  <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-xl z-50">
+                    <div className="p-3 border-b font-semibold">Notifications</div>
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-gray-500 text-sm">No notifications</div>
+                    ) : (
+                      notifications.slice(0, 15).map((n) => (
+                        <div
+                          key={n._id}
+                          className={`px-4 py-2 text-sm border-b last:border-b-0 cursor-pointer ${n.read ? 'bg-white' : 'bg-blue-50'} hover:bg-blue-100`}
+                          onClick={() => handleNotificationItemClick(n)}
+                        >
+                          {n.message}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
               <div className="relative" ref={profileMenuRef}>
                 <button
                   onClick={() => setProfileMenuOpen((v) => !v)}

@@ -36,7 +36,6 @@ export default function DashboardCommon({
   const [userName, setUserName] = useState("");
   const [newAnnouncementCount, setNewAnnouncementCount] = useState(0);
   const [blink, setBlink] = useState(true);
-  const [notifSettings, setNotifSettings] = useState(null);
 
   // Fetch profile logic (can be overridden)
   const fetchProfile = useCallback(() => {
@@ -83,10 +82,6 @@ export default function DashboardCommon({
   }, [form.photo]);
 
   useEffect(() => {
-    if (!notifSettings || !notifSettings.announcements) {
-      setNewAnnouncementCount(0);
-      return;
-    }
     let registeredAs = userType;
     if (userType === 'Guardian') registeredAs = 'Parent';
     fetch(`${BASE_API_URL}/getannouncements?registeredAs=${registeredAs}`, {
@@ -99,7 +94,7 @@ export default function DashboardCommon({
           setNewAnnouncementCount(count);
         }
       });
-  }, [userType, notifSettings]);
+  }, [userType]);
 
   // Blinking effect for announcement count
   useEffect(() => {
@@ -112,16 +107,6 @@ export default function DashboardCommon({
       setBlink(true);
     }
   }, [newAnnouncementCount]);
-
-  // Fetch notification settings
-  useEffect(() => {
-    fetch(`${BASE_API_URL}/notification-settings`, {
-      headers: { 'Authorization': `Bearer ${getToken()}` }
-    })
-      .then(res => res.json())
-      .then(data => setNotifSettings(data.notificationSettings || { announcements: true }))
-      .catch(() => setNotifSettings({ announcements: true }));
-  }, []);
 
   const handleEdit = () => setEditMode(true);
   const handleCancel = () => {
@@ -147,7 +132,7 @@ export default function DashboardCommon({
 
   // Render badge function to be used by all sidebars
   const renderAnnouncementBadge = (count) => (
-    notifSettings && notifSettings.announcements && count > 0 ? (
+    count > 0 ? (
       <span className="blink-badge" style={{
         marginLeft: 8,
         background: "#1e3c72",
@@ -173,7 +158,6 @@ export default function DashboardCommon({
     profile,
     newAnnouncementCount,
     renderAnnouncementBadge,
-    notifSettings,
     ...customSidebarProps
   };
 

@@ -1,13 +1,16 @@
-import Script from 'next/script';
-
 import './globals.css'
 import Header from '../components/Header.jsx'
+import { NotificationProvider } from '../components/NotificationProvider';
+import Script from 'next/script';
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <Header />
-        {children}
+        <NotificationProvider>
+          <Header />
+          {children}
+        </NotificationProvider>
         <Script id="mathjax-config" strategy="beforeInteractive">
           {`
             window.MathJax = {

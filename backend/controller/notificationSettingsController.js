@@ -24,7 +24,6 @@ export const getNotificationSettings = async (req, res) => {
       // Set all defaults from schema
       user.notificationSettings = {
         announcements: true,
-        discussionReplies: true,
         assignmentDeadlines: false,
         newResources: true,
         systemUpdates: false
@@ -46,7 +45,6 @@ export const updateNotificationSettings = async (req, res) => {
     if (!user.notificationSettings) {
       user.notificationSettings = {
         announcements: true,
-        discussionReplies: true,
         assignmentDeadlines: false,
         newResources: true,
         systemUpdates: false

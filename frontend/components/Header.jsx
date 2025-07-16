@@ -4,6 +4,8 @@ import { usePathname, useRouter } from "next/navigation";
 import ProfileIcon from "../icons/ProfileIcon";
 import Link from "next/link";
 import { getToken, logout } from "../utils/auth";
+import BellIcon from '../icons/BellIcon';
+import { useNotifications } from './NotificationProvider';
 
 export default function Header() {
   const pathname = usePathname();
@@ -12,6 +14,8 @@ export default function Header() {
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const { notifications, unreadCount, markAsRead } = useNotifications();
+  const [showNotif, setShowNotif] = useState(false);
 
   useEffect(() => {
     const token = getToken();
@@ -49,6 +53,15 @@ export default function Header() {
   const handleProfile = () => {
     setShowDropdown(false);
     router.push("/student/profile");
+  };
+
+  const handleNotifClick = () => {
+    setShowNotif((prev) => !prev);
+    // Mark all as read when opening
+    if (unreadCount > 0) {
+      const unreadIds = notifications.filter(n => !n.read).map(n => n._id);
+      if (unreadIds.length) markAsRead(unreadIds);
+    }
   };
 
   const navItems = [
@@ -90,31 +103,34 @@ export default function Header() {
         })}
       </ul>
 
-      {/* Profile */}
-      <div className="relative" ref={dropdownRef}>
-        <button
-          onClick={handleProfileClick}
-          className="p-2 rounded-full hover:bg-gray-100 transition"
-        >
-          <ProfileIcon className="w-6 h-6 text-gray-600 hover:text-[#4f46e5]" />
-        </button>
+      {/* Notifications & Profile */}
+      <div className="flex items-center gap-4">
+        {/* Profile */}
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={handleProfileClick}
+            className="p-2 rounded-full hover:bg-gray-100 transition"
+          >
+            <ProfileIcon className="w-6 h-6 text-gray-600 hover:text-[#4f46e5]" />
+          </button>
 
-        {showDropdown && (
-          <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
-            <button
-              onClick={handleProfile}
-              className="block w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-50"
-            >
-              Profile
-            </button>
-            <button
-              onClick={handleLogout}
-              className="block w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-gray-50"
-            >
-              Logout
-            </button>
-          </div>
-        )}
+          {showDropdown && (
+            <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
+              <button
+                onClick={handleProfile}
+                className="block w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-50"
+              >
+                Profile
+              </button>
+              <button
+                onClick={handleLogout}
+                className="block w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-gray-50"
+              >
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </nav>
   );

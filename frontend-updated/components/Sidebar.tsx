@@ -26,9 +26,7 @@ export default function Sidebar() {
           <nav className="space-y-1">
             <SidebarItem icon={<DashboardIcon />} label="Dashboard" active />
             <SidebarItem icon={<CalenderIcon />} label="Time Schedule" />
-            {/* <SidebarItem icon={<Bell size={16} />} label="Notifications" />
-            <SidebarItem icon={<Flag size={16} />} label="Messages" />
-            <SidebarItem icon={<BookOpen size={16} />} label="Learning Plan" />
+            {/* <SidebarItem icon={<BookOpen size={16} />} label="Learning Plan" />
             <SidebarItem icon={<Settings size={16} />} label="Time Schedule" /> */}
           </nav>
         </div>

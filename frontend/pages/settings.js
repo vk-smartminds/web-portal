@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import SettingsSidebar from "../components/SettingsSidebar";
 import AccountSettings from "./Settings/AccountSettings";
 import AppearanceSettings from "./Settings/AppearanceSettings";
-import NotificationSettings from "./Settings/NotificationSettings";
 import PrivacySettings from "./Settings/PrivacySettings";
 import SupportHelp from "./Settings/SupportHelp";
 import ChangePassword from "./Settings/ChangePassword";
@@ -22,7 +21,7 @@ const settingsComponents = {
   "change-password": ChangePassword,
   "alternative-email": AlternativeEmail,
   "account-settings": AccountSettings,
-  "notification": NotificationSettings,
+  "notification": () => <Placeholder label="Notification Settings" />,
   "appearance": AppearanceSettings,
   "privacy": PrivacySettings,
   "payment": () => <Placeholder label="Payment & Subscriptions" />,

@@ -4,8 +4,8 @@ import Teacher from '../models/Teacher.js';
 import Guardian from '../models/Guardian.js';
 import Admin from '../models/Admin.js';
 import multer from 'multer';
-import DiscussionNotification from '../models/discussion/DiscussionNotification.js';
 import DiscussionPost from '../models/discussion/DiscussionPost.js';
+import DiscussionNotification from '../models/discussion/DiscussionNotification.js';
 
 // Utility function to batch fetch user information
 const batchGetUserInfo = async (userIds, userModelMap) => {
@@ -117,6 +117,25 @@ function normalizeUserModel(role) {
   if (r === 'guardian') return 'Guardian';
   if (r === 'admin') return 'Admin';
   return 'Student';
+}
+
+// Helper to send notification
+async function sendNotification({ req, recipientId, senderId, type, threadId, postId, message }) {
+  const io = req.app.get('io');
+  const userSocketMap = req.app.get('userSocketMap');
+  const notification = await DiscussionNotification.create({
+    recipientId,
+    senderId,
+    type,
+    threadId,
+    postId,
+    message
+  });
+  // Emit real-time notification if user is online
+  const socketId = userSocketMap.get(recipientId.toString());
+  if (io && socketId) {
+    io.to(socketId).emit('notification', notification);
+  }
 }
 
 // Create a thread
@@ -324,21 +343,35 @@ export const addPost = async (req, res) => {
     };
     thread.posts.push(newPost);
     await thread.save();
-    // Notify parent post creator if not the replier
+    res.status(201).json(newPost);
+
+    // Notify thread owner if not the same as commenter
+    if (thread.createdBy && thread.createdBy.toString() !== req.user._id.toString()) {
+      await sendNotification({
+        req,
+        recipientId: thread.createdBy,
+        senderId: req.user._id,
+        type: parentPost ? 'REPLY' : 'NEW_COMMENT',
+        threadId: thread._id,
+        postId: thread.posts[thread.posts.length - 1]._id,
+        message: `${req.user.name || 'Someone'} ${parentPost ? 'replied to' : 'commented on'} your thread.`
+      });
+    }
+    // If replying to a comment, notify comment owner (if not self or thread owner)
     if (parentPost) {
       const parent = thread.posts.id(parentPost);
-      if (parent && parent.createdBy && parent.createdByModel && req.user._id.toString() !== parent.createdBy.toString()) {
-        await DiscussionNotification.create({
-          user: parent.createdBy,
-          userModel: parent.createdByModel,
-          type: 'reply',
-          thread: thread._id,
-          post: parent._id,
-          isRead: false
+      if (parent && parent.createdBy.toString() !== req.user._id.toString() && parent.createdBy.toString() !== thread.createdBy.toString()) {
+        await sendNotification({
+          req,
+          recipientId: parent.createdBy,
+          senderId: req.user._id,
+          type: 'REPLY',
+          threadId: thread._id,
+          postId: parent._id,
+          message: `${req.user.name || 'Someone'} replied to your comment.`
         });
       }
     }
-    res.status(201).json(newPost);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -369,14 +402,14 @@ export const voteThread = async (req, res) => {
     }
     await thread.save();
     if (value !== 0 && thread.createdBy && thread.createdByModel && req.user._id.toString() !== thread.createdBy.toString()) {
-      // For thread votes, do not include 'post' field (or set to undefined)
-      await DiscussionNotification.create({
-        user: thread.createdBy,
-        userModel: thread.createdByModel,
-        type: 'vote',
-        thread: thread._id,
-        // post: null, // REMOVE this line to avoid validation error
-        isRead: false
+      await sendNotification({
+        req,
+        recipientId: thread.createdBy,
+        senderId: req.user._id,
+        type: 'POST_LIKED',
+        threadId: thread._id,
+        postId: undefined,
+        message: `${req.user.name || 'Someone'} liked your thread.`
       });
     }
     res.json({ message: 'Vote recorded', votes: thread.votes });
@@ -426,6 +459,19 @@ export const votePost = async (req, res) => {
     // Fetch the updated post votes
     const updatedThread = await DiscussionThread.findOne({ _id: threadId, 'posts._id': postId }, { 'posts.$': 1 });
     res.json({ message: 'Vote recorded', votes: updatedThread.posts[0].votes });
+
+    // Notify post owner if not self
+    if (post.createdBy.toString() !== req.user._id.toString()) {
+      await sendNotification({
+        req,
+        recipientId: post.createdBy,
+        senderId: req.user._id,
+        type: 'COMMENT_LIKED',
+        threadId: threadId,
+        postId: postId,
+        message: `${req.user.name || 'Someone'} voted on your comment.`
+      });
+    }
   } catch (err) {
     console.error('VotePost error:', err, err.stack);
     res.status(500).json({ message: err.message, stack: err.stack });
@@ -543,65 +589,6 @@ export const deletePost = async (req, res) => {
     post.images = [];
     await thread.save();
     res.json({ message: 'Post deleted' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-// --- Discussion Notification Controller Functions ---
-// Get notifications for current user
-export const getDiscussionNotifications = async (req, res) => {
-  try {
-    console.time('getDiscussionNotifications');
-    const model = normalizeUserModel(req.user.role);
-    const notifications = await DiscussionNotification.find({
-      user: req.user._id,
-      userModel: model
-    })
-      .sort({ createdAt: -1 })
-      .populate('thread', 'title')
-      .populate('post', 'body');
-    console.timeEnd('getDiscussionNotifications');
-    res.json(notifications);
-  } catch (err) {
-    console.error('GetDiscussionNotifications error:', err);
-    res.status(500).json({ message: err.message });
-  }
-};
-
-// Mark notification as read
-export const markDiscussionNotificationRead = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const model = normalizeUserModel(req.user.role);
-    const notification = await DiscussionNotification.findOneAndUpdate(
-      {
-        _id: id,
-        user: req.user._id,
-        userModel: model
-      },
-      { isRead: true },
-      { new: true }
-    );
-    if (!notification) return res.status(404).json({ message: 'Notification not found' });
-    res.json(notification);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-// Delete notification
-export const deleteDiscussionNotification = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const model = normalizeUserModel(req.user.role);
-    const notification = await DiscussionNotification.findOneAndDelete({
-      _id: id,
-      user: req.user._id,
-      userModel: model
-    });
-    if (!notification) return res.status(404).json({ message: 'Notification not found' });
-    res.json({ message: 'Notification deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

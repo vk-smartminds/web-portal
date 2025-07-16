@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { DiscussionPost, DiscussionUser } from '../types';
 import { useState } from 'react';
 import { Plus, Minus } from 'lucide-react';
