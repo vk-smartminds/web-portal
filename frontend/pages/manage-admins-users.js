@@ -400,11 +400,38 @@ function UserCountPieChart({ userEmail, isSuperAdmin }) {
 function ScreenTimeBarChart({ userEmail, isSuperAdmin }) {
   const [data, setData] = useState(null);
   const [status, setStatus] = useState("");
+  // Time range filter state
+  const [timeRange, setTimeRange] = useState('day');
+  const [customYearInput, setCustomYearInput] = useState(new Date().getFullYear());
+  const [customYear, setCustomYear] = useState(new Date().getFullYear());
+  const [customRangeInput, setCustomRangeInput] = useState({ start: '', end: '' });
+  const [customRange, setCustomRange] = useState({ start: '', end: '' });
+
+  function getTimeRangeParams() {
+    if (timeRange === 'day') {
+      return '&range=day';
+    } else if (timeRange === 'week') {
+      return '&range=week';
+    } else if (timeRange === 'month') {
+      return '&range=month';
+    } else if (timeRange === 'year') {
+      return '&range=year';
+    } else if (timeRange === 'customYear') {
+      return `&range=customYear&year=${customYear}`;
+    } else if (timeRange === 'customRange') {
+      return `&range=customRange&start=${customRange.start}&end=${customRange.end}`;
+    }
+    return '';
+  }
 
   useEffect(() => {
     if (!isSuperAdmin) return;
+    if (timeRange === 'customYear' && !customYear) return;
+    if (timeRange === 'customRange' && (!customRange.start || !customRange.end)) return;
     setStatus("Loading...");
-    fetch(`${BASE_API_URL}/track-screen-time?role=all`, {
+    let url = `${BASE_API_URL}/track-screen-time?role=all`;
+    url += getTimeRangeParams();
+    fetch(url, {
       headers: { Authorization: `Bearer ${getToken()}` },
     })
       .then((res) => res.json())
@@ -415,10 +442,16 @@ function ScreenTimeBarChart({ userEmail, isSuperAdmin }) {
       .catch(() => {
         setStatus("Failed to fetch screen time data.");
       });
-  }, [isSuperAdmin, userEmail]);
+  }, [isSuperAdmin, userEmail, timeRange, customYear, customRange]);
+
+  // Reset custom inputs when switching filter
+  useEffect(() => {
+    if (timeRange !== 'customYear') setCustomYearInput(new Date().getFullYear());
+    if (timeRange !== 'customRange') setCustomRangeInput({ start: '', end: '' });
+  }, [timeRange]);
 
   if (!isSuperAdmin) return null;
-  if (status) return <div style={{ color: '#c00', margin: 12, textAlign: 'center' }}>{status}</div>;
+  if (status && status !== 'Loading...') return <div style={{ color: '#c00', margin: 12, textAlign: 'center' }}>{status}</div>;
   if (!data) return <div style={{ color: '#888', margin: 12, textAlign: 'center' }}>Loading...</div>;
 
   const chartData = {
@@ -453,7 +486,46 @@ function ScreenTimeBarChart({ userEmail, isSuperAdmin }) {
       alignItems: 'center',
       justifyContent: 'center',
     }}>
-      <div style={{ fontWeight: 700, fontSize: 20, color: '#1e3c72', marginBottom: 18 }}>Screen Time by Role</div>
+      {/* Time range filter UI */}
+      <div style={{ background: '#f4f6fa', border: '1.5px solid #dbeafe', borderRadius: 12, padding: '18px 12px 10px 12px', marginBottom: 18, display: 'inline-block', minWidth: 260 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
+          {[
+            { key: 'day', label: 'Today' },
+            { key: 'week', label: 'This Week' },
+            { key: 'month', label: 'This Month' },
+            { key: 'year', label: 'This Year' },
+            { key: 'customYear', label: 'Year (Custom)' },
+            { key: 'customRange', label: 'Date Range' },
+          ].map(opt => (
+            <button key={opt.key} onClick={() => setTimeRange(opt.key)}
+              style={{ padding: '6px 16px', borderRadius: 6, background: timeRange === opt.key ? '#1e3c72' : '#eee', color: timeRange === opt.key ? '#fff' : '#1e3c72', border: 'none', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          {timeRange === 'customYear' && (
+            <>
+              <span style={{ fontWeight: 600, color: '#1e3c72', fontSize: 15 }}>Year:</span>
+              <input type="number" min="2000" max="2100" value={customYearInput} onChange={e => setCustomYearInput(e.target.value)}
+                placeholder="e.g. 2024" style={{ width: 90, padding: '6px 8px', borderRadius: 6, border: '1px solid #bbb', fontSize: 15 }} />
+              <button onClick={() => setCustomYear(customYearInput)} style={{ marginLeft: 8, padding: '6px 16px', borderRadius: 6, background: '#2563eb', color: '#fff', border: 'none', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>Apply</button>
+            </>
+          )}
+          {timeRange === 'customRange' && (
+            <>
+              <span style={{ fontWeight: 600, color: '#1e3c72', fontSize: 15 }}>Date Range:</span>
+              <input type="date" value={customRangeInput.start} onChange={e => setCustomRangeInput(r => ({ ...r, start: e.target.value }))}
+                style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid #bbb', fontSize: 15 }} />
+              <span style={{ margin: '0 6px' }}>to</span>
+              <input type="date" value={customRangeInput.end} onChange={e => setCustomRangeInput(r => ({ ...r, end: e.target.value }))}
+                style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid #bbb', fontSize: 15 }} />
+              <button onClick={() => { if (customRangeInput.start && customRangeInput.end) setCustomRange(customRangeInput); }} style={{ marginLeft: 8, padding: '6px 16px', borderRadius: 6, background: '#2563eb', color: '#fff', border: 'none', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>Apply</button>
+            </>
+          )}
+        </div>
+      </div>
+      <div style={{ fontWeight: 700, fontSize: 20, color: '#1e3c72', marginBottom: 18 }}>Screen Time by Role {timeRange !== 'day' ? '(Filtered)' : ''}</div>
       <Bar
         data={chartData}
         options={{
