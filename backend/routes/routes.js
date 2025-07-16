@@ -230,6 +230,7 @@ router.use('/api/quiz', quizRoutes);
 
 router.get('/api/screen-time', authenticateToken, screenTimeController.getScreenTime);
 router.post('/api/screen-time/increment', authenticateToken, screenTimeController.incrementScreenTime);
+router.get('/api/screen-time/history', authenticateToken, screenTimeController.getScreenTimeHistory);
 
 
 export default router;
