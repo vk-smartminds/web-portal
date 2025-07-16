@@ -1,5 +1,8 @@
 import Sqp from '../models/Sqp.js';
 import multer from 'multer';
+import { execFile } from 'child_process';
+import fs from 'fs/promises';
+import path from 'path';
 
 const storage = multer.memoryStorage();
 export const sqpUpload = multer({
@@ -11,23 +14,60 @@ export const sqpUpload = multer({
   }
 });
 
+// Utility to compress PDF using Ghostscript
+async function compressPdfBuffer(buffer) {
+  const tmpIn = path.join(process.cwd(), 'tmp-in-' + Date.now() + '-' + Math.random() + '.pdf');
+  const tmpOut = path.join(process.cwd(), 'tmp-out-' + Date.now() + '-' + Math.random() + '.pdf');
+  try {
+    await fs.writeFile(tmpIn, buffer);
+    await new Promise((resolve, reject) => {
+      execFile(
+        'gswin64c',
+        [
+          '-sDEVICE=pdfwrite',
+          '-dCompatibilityLevel=1.4',
+          '-dPDFSETTINGS=/ebook',
+          '-dNOPAUSE',
+          '-dQUIET',
+          '-dBATCH',
+          `-sOutputFile=${tmpOut}`,
+          tmpIn
+        ],
+        (error) => {
+          if (error) reject(error); else resolve();
+        }
+      );
+    });
+    const outBuffer = await fs.readFile(tmpOut);
+    return outBuffer;
+  } finally {
+    fs.unlink(tmpIn).catch(() => {});
+    fs.unlink(tmpOut).catch(() => {});
+  }
+}
+
 export const createSqp = async (req, res) => {
   try {
-    const { class: sqpClass, subject, chapter } = req.body;
-    if (!sqpClass || !subject || !chapter) {
-      return res.status(400).json({ message: 'Class, subject, and chapter are required' });
+    const { class: sqpClass, subject, chapter, pdfType } = req.body;
+    if (!sqpClass || !subject || !chapter || !pdfType) {
+      return res.status(400).json({ message: 'Class, subject, chapter, and pdfType are required' });
     }
     let pdfs = [];
     if (req.files && req.files.length > 0) {
-      pdfs = req.files.map(f => ({
-        data: f.buffer,
-        contentType: f.mimetype,
-        fileType: 'pdf'
+      pdfs = await Promise.all(req.files.map(async (f) => {
+        if (f.mimetype === 'application/pdf') {
+          const compressedPdf = await compressPdfBuffer(f.buffer);
+          return {
+            data: compressedPdf,
+            contentType: f.mimetype,
+            fileType: 'pdf'
+          };
+        }
       }));
     } else {
       return res.status(400).json({ message: 'At least one PDF is required' });
     }
-    const sqp = await Sqp.create({ class: sqpClass, subject, chapter, pdfs });
+    const sqp = await Sqp.create({ class: sqpClass, subject, chapter, pdfType, pdfs });
     res.status(201).json({ message: 'SQP created', sqp });
   } catch (err) {
     res.status(500).json({ message: 'Error creating SQP', error: err.message });
@@ -36,11 +76,12 @@ export const createSqp = async (req, res) => {
 
 export const getSqps = async (req, res) => {
   try {
-    const { class: sqpClass, subject, chapter } = req.query;
+    const { class: sqpClass, subject, chapter, pdfType } = req.query;
     let query = {};
     if (sqpClass) query.class = sqpClass;
     if (subject) query.subject = subject;
     if (chapter) query.chapter = chapter;
+    if (pdfType) query.pdfType = pdfType;
     const sqps = await Sqp.find(query).sort({ createdAt: -1 });
     const sqpsWithBase64 = sqps.map(sqp => ({
       _id: sqp._id,
@@ -63,17 +104,23 @@ export const getSqps = async (req, res) => {
 export const updateSqp = async (req, res) => {
   try {
     const { id } = req.params;
-    const { class: sqpClass, subject, chapter } = req.body;
+    const { class: sqpClass, subject, chapter, pdfType } = req.body;
     const sqp = await Sqp.findById(id);
     if (!sqp) return res.status(404).json({ message: 'SQP not found' });
     if (sqpClass) sqp.class = sqpClass;
     if (subject) sqp.subject = subject;
     if (chapter) sqp.chapter = chapter;
+    if (pdfType) sqp.pdfType = pdfType;
     if (req.files && req.files.length > 0) {
-      const newPdfs = req.files.map(f => ({
-        data: f.buffer,
-        contentType: f.mimetype,
-        fileType: 'pdf'
+      const newPdfs = await Promise.all(req.files.map(async (f) => {
+        if (f.mimetype === 'application/pdf') {
+          const compressedPdf = await compressPdfBuffer(f.buffer);
+          return {
+            data: compressedPdf,
+            contentType: f.mimetype,
+            fileType: 'pdf'
+          };
+        }
       }));
       sqp.pdfs = [...(sqp.pdfs || []), ...newPdfs];
     }

@@ -1,5 +1,9 @@
 import CreativeCorner from '../models/CreativeCorner.js';
 import multer from 'multer';
+import sharp from 'sharp';
+import { execFile } from 'child_process';
+import fs from 'fs/promises';
+import path from 'path';
 
 const storage = multer.memoryStorage();
 export const creativeCornerUpload = multer({
@@ -13,6 +17,38 @@ export const creativeCornerUpload = multer({
   }
 });
 
+// Utility to compress PDF using Ghostscript
+async function compressPdfBuffer(buffer) {
+  const tmpIn = path.join(process.cwd(), 'tmp-in-' + Date.now() + '-' + Math.random() + '.pdf');
+  const tmpOut = path.join(process.cwd(), 'tmp-out-' + Date.now() + '-' + Math.random() + '.pdf');
+  try {
+    await fs.writeFile(tmpIn, buffer);
+    await new Promise((resolve, reject) => {
+      execFile(
+        'gswin64c',
+        [
+          '-sDEVICE=pdfwrite',
+          '-dCompatibilityLevel=1.4',
+          '-dPDFSETTINGS=/ebook',
+          '-dNOPAUSE',
+          '-dQUIET',
+          '-dBATCH',
+          `-sOutputFile=${tmpOut}`,
+          tmpIn
+        ],
+        (error) => {
+          if (error) reject(error); else resolve();
+        }
+      );
+    });
+    const outBuffer = await fs.readFile(tmpOut);
+    return outBuffer;
+  } finally {
+    fs.unlink(tmpIn).catch(() => {});
+    fs.unlink(tmpOut).catch(() => {});
+  }
+}
+
 // Add Creative Item
 export const addCreativeItem = async (req, res) => {
   try {
@@ -22,12 +58,28 @@ export const addCreativeItem = async (req, res) => {
     }
     // Use authenticated user's email for createdBy
     const createdBy = req.user?.email || req.body.createdBy || 'Unknown';
-    const files = (req.files || []).map(file => ({
-      data: file.buffer,
-      contentType: file.mimetype,
-      fileType: file.mimetype.includes('pdf') ? 'pdf' : 'image',
-      originalName: file.originalname
-    }));
+    const files = req.files && req.files.length > 0 ? await Promise.all(req.files.map(async (f) => {
+      if (f.mimetype.startsWith('image/')) {
+        const compressedBuffer = await sharp(f.buffer)
+          .resize({ width: 1000 })
+          .jpeg({ quality: 70 })
+          .toBuffer();
+        return {
+          data: compressedBuffer,
+          contentType: 'image/jpeg',
+          fileType: 'image',
+          originalName: f.originalname
+        };
+      } else if (f.mimetype === 'application/pdf') {
+        const compressedPdf = await compressPdfBuffer(f.buffer);
+        return {
+          data: compressedPdf,
+          contentType: f.mimetype,
+          fileType: 'pdf',
+          originalName: f.originalname
+        };
+      }
+    })) : [];
     const item = await CreativeCorner.create({
       class: className,
       subject,
@@ -115,11 +167,27 @@ export const updateCreativeItem = async (req, res) => {
     }
     // Add new files
     if (req.files && req.files.length > 0) {
-      const newFiles = req.files.map(f => ({
-        data: f.buffer,
-        contentType: f.mimetype,
-        fileType: f.mimetype.startsWith('image/') ? 'image' : 'pdf',
-        originalName: f.originalname
+      const newFiles = await Promise.all(req.files.map(async (f) => {
+        if (f.mimetype.startsWith('image/')) {
+          const compressedBuffer = await sharp(f.buffer)
+            .resize({ width: 1000 })
+            .jpeg({ quality: 70 })
+            .toBuffer();
+          return {
+            data: compressedBuffer,
+            contentType: 'image/jpeg',
+            fileType: 'image',
+            originalName: f.originalname
+          };
+        } else if (f.mimetype === 'application/pdf') {
+          const compressedPdf = await compressPdfBuffer(f.buffer);
+          return {
+            data: compressedPdf,
+            contentType: f.mimetype,
+            fileType: 'pdf',
+            originalName: f.originalname
+          };
+        }
       }));
       item.files = [...(item.files || []), ...newFiles];
     }

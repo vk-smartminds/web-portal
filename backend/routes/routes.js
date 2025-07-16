@@ -29,6 +29,8 @@ import { createSqp, getSqps, updateSqp, deleteSqp, sqpUpload, getSqpPdf } from '
 import { createPyq, getPyqs, updatePyq, deletePyq, pyqUpload, getPyqPdf } from '../controller/pyqController.js';
 import { createPyp, getPyps, updatePyp, deletePyp, pypUpload, getPypPdf } from '../controller/pypController.js';
 import * as notificationController from '../controller/notificationController.js';
+import * as screenTimeController from '../controller/screenTimeController.js';
+import * as trackScreenTimeController from '../controller/trackScreenTimeController.js';
 
 const router = express.Router();
 
@@ -225,6 +227,10 @@ router.use('/api/quiz', quizRoutes);
 // Notification API endpoints
 router.get('/api/notifications', notificationController.getNotifications);
 router.post('/api/notifications/mark-read', notificationController.markNotificationsRead);
+router.get('/api/screen-time', authenticateToken, screenTimeController.getScreenTime);
+router.post('/api/screen-time/increment', authenticateToken, screenTimeController.incrementScreenTime);
+router.get('/api/screen-time/history', authenticateToken, screenTimeController.getScreenTimeHistory);
+router.get('/api/track-screen-time', trackScreenTimeController.getScreenTime);
 
 
 export default router;

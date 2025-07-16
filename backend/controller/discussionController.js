@@ -6,6 +6,7 @@ import Admin from '../models/Admin.js';
 import multer from 'multer';
 import DiscussionPost from '../models/discussion/DiscussionPost.js';
 import DiscussionNotification from '../models/discussion/DiscussionNotification.js';
+import sharp from 'sharp';
 
 // Utility function to batch fetch user information
 const batchGetUserInfo = async (userIds, userModelMap) => {
@@ -148,10 +149,18 @@ export const createThread = async (req, res) => {
     else if (typeof tags === 'string') tagsArr = [tags];
     let images = [];
     if (req.files && req.files.length > 0) {
-      images = req.files.map(f => ({
-        data: f.buffer,
-        contentType: f.mimetype,
-        fileType: 'image'
+      images = await Promise.all(req.files.map(async (f) => {
+        if (f.mimetype.startsWith('image/')) {
+          const compressedBuffer = await sharp(f.buffer)
+            .resize({ width: 1000 })
+            .jpeg({ quality: 70 })
+            .toBuffer();
+          return {
+            data: compressedBuffer,
+            contentType: 'image/jpeg',
+            fileType: 'image'
+          };
+        }
       }));
     }
     if (!title || !body) {

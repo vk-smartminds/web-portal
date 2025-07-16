@@ -2,6 +2,7 @@ import './globals.css'
 import Header from '../components/Header.jsx'
 import { NotificationProvider } from '../components/NotificationProvider';
 import Script from 'next/script';
+import ScreenTimeTracker from '../components/ScreenTimeTracker';
 
 export default function RootLayout({ children }) {
   return (
@@ -11,6 +12,9 @@ export default function RootLayout({ children }) {
           <Header />
           {children}
         </NotificationProvider>
+        <Header />
+        <ScreenTimeTracker />
+        {children}
         <Script id="mathjax-config" strategy="beforeInteractive">
           {`
             window.MathJax = {

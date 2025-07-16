@@ -1,5 +1,41 @@
 import MindMap from '../models/MindMap.js';
 import multer from 'multer';
+import sharp from 'sharp';
+import { execFile } from 'child_process';
+import fs from 'fs/promises';
+import path from 'path';
+
+// Utility to compress PDF using Ghostscript
+async function compressPdfBuffer(buffer) {
+  const tmpIn = path.join(process.cwd(), 'tmp-in-' + Date.now() + '-' + Math.random() + '.pdf');
+  const tmpOut = path.join(process.cwd(), 'tmp-out-' + Date.now() + '-' + Math.random() + '.pdf');
+  try {
+    await fs.writeFile(tmpIn, buffer);
+    await new Promise((resolve, reject) => {
+      execFile(
+        'gswin64c',
+        [
+          '-sDEVICE=pdfwrite',
+          '-dCompatibilityLevel=1.4',
+          '-dPDFSETTINGS=/ebook',
+          '-dNOPAUSE',
+          '-dQUIET',
+          '-dBATCH',
+          `-sOutputFile=${tmpOut}`,
+          tmpIn
+        ],
+        (error) => {
+          if (error) reject(error); else resolve();
+        }
+      );
+    });
+    const outBuffer = await fs.readFile(tmpOut);
+    return outBuffer;
+  } finally {
+    fs.unlink(tmpIn).catch(() => {});
+    fs.unlink(tmpOut).catch(() => {});
+  }
+}
 
 const storage = multer.memoryStorage();
 export const mindMapUpload = multer({
@@ -26,9 +62,23 @@ export const addMindMap = async (req, res) => {
     const chapterLower = chapter.trim().toLowerCase();
     let mindmap = [];
     if (req.files && req.files.length > 0) {
-      mindmap = req.files.map(f => ({
-        data: f.buffer,
-        contentType: f.mimetype
+      mindmap = await Promise.all(req.files.map(async (f) => {
+        if (f.mimetype.startsWith('image/')) {
+          const compressedBuffer = await sharp(f.buffer)
+            .resize({ width: 1000 })
+            .jpeg({ quality: 70 })
+            .toBuffer();
+          return {
+            data: compressedBuffer,
+            contentType: 'image/jpeg'
+          };
+        } else if (f.mimetype === 'application/pdf') {
+          const compressedPdf = await compressPdfBuffer(f.buffer);
+          return {
+            data: compressedPdf,
+            contentType: f.mimetype
+          };
+        }
       }));
     }
     const mindMapDoc = await MindMap.create({
@@ -122,9 +172,23 @@ export const updateMindMap = async (req, res) => {
 
     // Add new images/pdfs
     if (req.files && req.files.length > 0) {
-      const newFiles = req.files.map(f => ({
-        data: f.buffer,
-        contentType: f.mimetype
+      const newFiles = await Promise.all(req.files.map(async (f) => {
+        if (f.mimetype.startsWith('image/')) {
+          const compressedBuffer = await sharp(f.buffer)
+            .resize({ width: 1000 })
+            .jpeg({ quality: 70 })
+            .toBuffer();
+          return {
+            data: compressedBuffer,
+            contentType: 'image/jpeg'
+          };
+        } else if (f.mimetype === 'application/pdf') {
+          const compressedPdf = await compressPdfBuffer(f.buffer);
+          return {
+            data: compressedPdf,
+            contentType: f.mimetype
+          };
+        }
       }));
       mindMap.mindmap = [...(mindMap.mindmap || []), ...newFiles];
     }

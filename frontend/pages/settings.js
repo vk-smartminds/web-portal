@@ -6,6 +6,7 @@ import PrivacySettings from "./Settings/PrivacySettings";
 import SupportHelp from "./Settings/SupportHelp";
 import ChangePassword from "./Settings/ChangePassword";
 import AlternativeEmail from "./Settings/AlternativeEmail";
+import ScreenTime from '../components/ScreenTime';
 import { BASE_API_URL } from "../utils/apiurl";
 import { getToken } from "../utils/auth";
 import { useRouter } from "next/router";
@@ -24,28 +25,38 @@ const settingsComponents = {
   "notification": () => <Placeholder label="Notification Settings" />,
   "appearance": AppearanceSettings,
   "privacy": PrivacySettings,
+  "screen-time": ScreenTime,
   "payment": () => <Placeholder label="Payment & Subscriptions" />,
   "support": SupportHelp,
 };
 
+function getRoleFromToken() {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.role ? payload.role.toLowerCase() : null;
+  } catch {
+    return null;
+  }
+}
+
 function getProfileUrl() {
   const token = getToken();
-  if (token) {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const role = payload.role ? payload.role.toLowerCase() : null;
-      switch (role) {
-        case 'admin': return "/admin/profile";
-        case 'student': return "/student/profile";
-        case 'teacher': return "/teacher/profile";
-        case 'guardian': return "/guardian/profile";
-        default: return "/";
-      }
-    } catch (err) {
-      return "/";
+  if (!token) return "/";
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const role = payload.role ? payload.role.toLowerCase() : null;
+    switch (role) {
+      case 'admin': return "/admins/profile";
+      case 'student': return "/student/profile";
+      case 'teacher': return "/teacher/profile";
+      case 'guardian': return "/guardian/profile";
+      default: return "/";
     }
+  } catch {
+    return "/";
   }
-  return "/";
 }
 
 export default function SettingsPage() {
@@ -99,6 +110,9 @@ export default function SettingsPage() {
     if (loading) return <div style={{ padding: 40 }}>Loading...</div>;
     if (error) return <div style={{ color: '#c00', padding: 40 }}>{error}</div>;
     if (!profile) return null;
+    const role = getRoleFromToken();
+    // Only show School and Class if not guardian and not admin
+    const showSchoolClass = role !== 'guardian' && role !== 'admin';
     return (
       <div style={{ background: '#fff', borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32, maxWidth: 700, margin: '0 auto', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 32, justifyContent: 'space-between' }}>
@@ -125,8 +139,7 @@ export default function SettingsPage() {
             <label style={{ color: '#888', fontSize: 13 }}>Phone</label>
             <div style={{ fontWeight: 500, fontSize: 16, background: '#f7f7fa', borderRadius: 8, padding: '10px 14px', marginTop: 4 }}>{profile.phone || '-'}</div>
           </div>
-          {/* Only show School and Class if not guardian */}
-          {profile.userRole !== 'Guardian' && (
+          {showSchoolClass && (
             <>
               <div style={{ flex: '1 1 220px' }}>
                 <label style={{ color: '#888', fontSize: 13 }}>School</label>
