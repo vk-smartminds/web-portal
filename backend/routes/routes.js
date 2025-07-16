@@ -16,7 +16,7 @@ import { addCreativeItem, getCreativeItems, deleteCreativeItem, creativeCornerUp
 import { verifyChildEmail, verifyChildOtp as verifyGuardianChildOtp } from '../controller/guardianController';
 import { checkGuardianEmail, validateGuardianPassword } from '../controller/guardianController';
 import * as discussionController from '../controller/discussionController.js';
-import { threadUpload, postUpload, getDiscussionNotifications, markDiscussionNotificationRead, deleteDiscussionNotification } from '../controller/discussionController.js';
+import { threadUpload, postUpload } from '../controller/discussionController.js';
 import { deleteAccount } from '../controller/deleteAccountController.js';
 import * as forgotPasswordController from '../controller/forgotPasswordController.js';
 import { changePassword } from '../controller/passwordController.js';
@@ -28,7 +28,9 @@ import { getStudentById, getStudentPhoto } from '../controller/studentController
 import { createSqp, getSqps, updateSqp, deleteSqp, sqpUpload, getSqpPdf } from '../controller/sqpController.js';
 import { createPyq, getPyqs, updatePyq, deletePyq, pyqUpload, getPyqPdf } from '../controller/pyqController.js';
 import { createPyp, getPyps, updatePyp, deletePyp, pypUpload, getPypPdf } from '../controller/pypController.js';
+import * as notificationController from '../controller/notificationController.js';
 import * as screenTimeController from '../controller/screenTimeController.js';
+import * as trackScreenTimeController from '../controller/trackScreenTimeController.js';
 
 const router = express.Router();
 
@@ -205,12 +207,6 @@ router.delete('/api/discussion/threads/:threadId/posts/:postId', authenticateTok
 router.post('/api/discussion/threads/:threadId/vote', authenticateToken, discussionController.voteThread);
 router.post('/api/discussion/threads/:threadId/posts/:postId/vote', authenticateToken, discussionController.votePost);
 
-// Discussion notification routes
-router.get('/api/discussion/notifications', authenticateToken, getDiscussionNotifications);
-router.post('/api/discussion/notifications/:id/read', authenticateToken, markDiscussionNotificationRead);
-router.delete('/api/discussion/notifications/:id', authenticateToken, deleteDiscussionNotification);
-
-
 // New route for searching posts
 router.get('/api/discussion/posts/search', discussionController.searchPosts);
 
@@ -228,8 +224,13 @@ import quizRoutes from '../quiz/routes/quizRoutes.js';
 router.use('/api/admin/quiz', adminQuizRoutes);
 router.use('/api/quiz', quizRoutes);
 
+// Notification API endpoints
+router.get('/api/notifications', notificationController.getNotifications);
+router.post('/api/notifications/mark-read', notificationController.markNotificationsRead);
 router.get('/api/screen-time', authenticateToken, screenTimeController.getScreenTime);
 router.post('/api/screen-time/increment', authenticateToken, screenTimeController.incrementScreenTime);
+router.get('/api/screen-time/history', authenticateToken, screenTimeController.getScreenTimeHistory);
+router.get('/api/track-screen-time', trackScreenTimeController.getScreenTime);
 
 
 export default router;

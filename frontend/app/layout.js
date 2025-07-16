@@ -1,15 +1,18 @@
-import Script from 'next/script';
-
 import './globals.css'
 import Header from '../components/Header.jsx'
+import { NotificationProvider } from '../components/NotificationProvider';
+import Script from 'next/script';
 import ScreenTimeTracker from '../components/ScreenTimeTracker';
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <Header />
-        <ScreenTimeTracker />
-        {children}
+        <NotificationProvider>
+          <Header />
+          <ScreenTimeTracker />
+          {children}
+        </NotificationProvider>
         <Script id="mathjax-config" strategy="beforeInteractive">
           {`
             window.MathJax = {

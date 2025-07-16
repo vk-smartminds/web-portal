@@ -85,15 +85,16 @@ export default function ViewAdmins({ userEmail, isSuperAdmin }) {
                     </div>
                   )}
                   {Object.entries(admin).map(([key, value]) => {
-                    if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds" && key !== "name" && key !== "profileVisibility" && key !== "notificationSettings") {
-                      return (
-                        <div key={key} style={{ display: "flex", gap: 10 }}>
-                          <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
-                          <span style={{ color: "#222" }}>{String(value) || "-"}</span>
-                        </div>
-                      );
+                    // Exclude sensitive or backend-only fields
+                    if (["password", "__v", "_id", "photo", "guardianIds", "quizIds", "name", "profileVisibility", "notificationSettings"].includes(key)) {
+                      return null;
                     }
-                    return null;
+                    return (
+                      <div key={key} style={{ display: "flex", gap: 10 }}>
+                        <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
+                        <span style={{ color: "#222" }}>{String(value) || "-"}</span>
+                      </div>
+                    );
                   })}
                 </div>
               </div>
@@ -136,15 +137,16 @@ export default function ViewAdmins({ userEmail, isSuperAdmin }) {
                   </div>
                 )}
                 {Object.entries(searchedAdmin).map(([key, value]) => {
-                  if (key !== "password" && key !== "__v" && key !== "_id" && key !== "photo" && key !== "guardianIds" && key !== "quizIds" && key !== "name" && key !== "profileVisibility" && key !== "notificationSettings") {
-                    return (
-                      <div key={key} style={{ display: "flex", gap: 10 }}>
-                        <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
-                        <span style={{ color: "#222" }}>{String(value) || "-"}</span>
-                      </div>
-                    );
+                  // Exclude sensitive or backend-only fields
+                  if (["password", "__v", "_id", "photo", "guardianIds", "quizIds", "name", "profileVisibility", "notificationSettings"].includes(key)) {
+                    return null;
                   }
-                  return null;
+                  return (
+                    <div key={key} style={{ display: "flex", gap: 10 }}>
+                      <span style={{ fontWeight: 600, minWidth: 120, color: "#444" }}>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
+                      <span style={{ color: "#222" }}>{String(value) || "-"}</span>
+                    </div>
+                  );
                 })}
               </div>
             </div>

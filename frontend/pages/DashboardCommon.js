@@ -27,10 +27,10 @@ export default function DashboardCommon({
   const [userPhoto, setUserPhoto] = useState('');
   const [userName, setUserName] = useState("");
   const [newAnnouncementCount, setNewAnnouncementCount] = useState(0);
+  const [blink, setBlink] = useState(true);
   // Remove all useEffect and state related to blink
   const [notifSettings, setNotifSettings] = useState(null);
   const [announcementCountLoading, setAnnouncementCountLoading] = useState(true);
-
   // Fetch profile logic (can be overridden)
   const fetchProfile = useCallback(() => {
     if (typeof customProfileFetch === "function") return customProfileFetch();
@@ -98,19 +98,9 @@ export default function DashboardCommon({
       .catch(() => {
         setAnnouncementCountLoading(false);
       });
-  }, [userType, notifSettings]);
+  }, [userType]);
 
   // Remove all useEffect and state related to blink
-
-  // Fetch notification settings
-  useEffect(() => {
-    fetch(`${BASE_API_URL}/notification-settings`, {
-      headers: { 'Authorization': `Bearer ${getToken()}` }
-    })
-      .then(res => res.json())
-      .then(data => setNotifSettings(data.notificationSettings || { announcements: true }))
-      .catch(() => setNotifSettings({ announcements: true }));
-  }, []);
 
   const handleEdit = () => setEditMode(true);
   const handleCancel = () => {
@@ -135,9 +125,10 @@ export default function DashboardCommon({
   };
 
   // Render badge function to be used by all sidebars
-  const renderAnnouncementBadge = (count) => (
-    notifSettings && notifSettings.announcements ? (
-      announcementCountLoading ? (
+  const renderAnnouncementBadge = (count) => {
+    if (!notifSettings || !notifSettings.announcements) return null;
+    if (announcementCountLoading) {
+      return (
         <span style={{
           marginLeft: 8,
           background: "#1e3c72",
@@ -162,8 +153,11 @@ export default function DashboardCommon({
           }} />
           <style>{`@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
         </span>
-      ) : count > 0 ? (
-        <span style={{
+      );
+    }
+    if (count > 0) {
+      return (
+        <span className="blink-badge" style={{
           marginLeft: 8,
           background: "#1e3c72",
           color: "#fff",
@@ -175,9 +169,10 @@ export default function DashboardCommon({
           textAlign: "center",
           display: "inline-block"
         }}>{count}</span>
-      ) : null
-    ) : null
-  );
+      );
+    }
+    return null;
+  };
 
   // Sidebar props
   const sidebarProps = {
@@ -189,7 +184,6 @@ export default function DashboardCommon({
     profile,
     newAnnouncementCount,
     renderAnnouncementBadge,
-    notifSettings,
     ...customSidebarProps
   };
 

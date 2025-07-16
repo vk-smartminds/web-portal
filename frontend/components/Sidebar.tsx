@@ -101,7 +101,6 @@ export default function Sidebar({
     { key: "creative-corner", label: "Creative Corner", icon: icons.paint, href: "/creative-corner" },
     { key: "books", label: "Books", icon: icons.book },
     { key: "performance", label: "Performance", icon: icons.chart },
-    { key: "notifications", label: "Notifications", icon: icons.bell },
     { key: "settings", label: "Settings", icon: icons.cog, href: "/settings" },
   ];
 

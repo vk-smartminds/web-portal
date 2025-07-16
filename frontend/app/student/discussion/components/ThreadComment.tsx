@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronUp, ChevronDown, MessageSquare, Award, Share2, MoreHorizontal } from 'lucide-react';
 import { DiscussionPost, DiscussionUser } from '../types';
 
 interface ThreadCommentProps {
   post: DiscussionPost;
   level?: number;
+  highlight?: boolean;
 }
 
 const getUserAvatar = (post: DiscussionPost) => {
@@ -22,10 +23,17 @@ const getTimeAgo = (post: DiscussionPost) => {
   return post.createdAt ? new Date(post.createdAt).toLocaleString() : '';
 };
 
-const ThreadComment: React.FC<ThreadCommentProps> = ({ post, level = 0 }) => {
+const ThreadComment: React.FC<ThreadCommentProps> = ({ post, level = 0, highlight }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [votes, setVotes] = useState(() => (post.votes || []).reduce((sum, v) => sum + v.value, 0));
   const [userVote, setUserVote] = useState<null | 'up' | 'down'>(null);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (highlight && ref.current) {
+      ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [highlight]);
 
   const handleVote = (type: 'up' | 'down') => {
     if (userVote === type) {
@@ -41,7 +49,10 @@ const ThreadComment: React.FC<ThreadCommentProps> = ({ post, level = 0 }) => {
   const toggleExpanded = () => setIsExpanded((v) => !v);
 
   return (
-    <div className={`${level > 0 ? 'ml-8 border-l-2 border-gray-700 pl-4' : ''}`}>
+    <div
+      ref={ref}
+      className={`${level > 0 ? 'ml-8 border-l-2 border-gray-700 pl-4' : ''} rounded-md ${highlight ? 'bg-yellow-100 border-2 border-yellow-400' : ''}`}
+    >
       <div className="bg-gray-800 rounded-lg p-4 mb-3">
         {/* Comment Header */}
         <div className="flex items-center gap-2 mb-3">
