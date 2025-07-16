@@ -12,6 +12,56 @@ import ViewGuardians from "./manageusersandadmins/ViewGuardians";
 import UsersLoginActivity from "./manageusersandadmins/UsersLoginActivity";
 import LoginStatistics from "./manageusersandadmins/LoginStatistics";
 
+function ManageSidebar({ activeBox, setActiveBox, isSuperAdmin }) {
+  const [hovered, setHovered] = React.useState(null);
+  const items = [
+    ...(isSuperAdmin ? [{ key: "add-admin", label: "Add Admin", icon: <FaUserPlus /> }] : []),
+    ...(isSuperAdmin ? [{ key: "remove-admin", label: "Remove Admin", icon: <FaUserMinus style={{ color: '#c0392b' }} /> }] : []),
+    { key: "view-admins", label: "View Admins", icon: <FaUsers /> },
+    ...(isSuperAdmin ? [{ key: "manage-users", label: "Manage Users", icon: <FaUserShield /> }] : []),
+    { key: "view-students", label: "View Students", icon: <FaUserGraduate /> },
+    { key: "view-teachers", label: "View Teachers", icon: <FaChalkboardTeacher /> },
+    { key: "view-guardians", label: "View Guardians", icon: <FaUserFriends /> },
+    ...(isSuperAdmin ? [{ key: "users-login-activity", label: "Users Login Activity", icon: <FaChartBar /> }] : []),
+    ...(isSuperAdmin ? [{ key: "login-statistics", label: "Login Statistics", icon: <FaChartBar /> }] : []),
+  ];
+  return (
+    <aside style={{ width: 240, background: '#181d23', color: '#fff', minHeight: '100vh', paddingTop: 32, borderTopLeftRadius: 16, borderBottomLeftRadius: 16 }}>
+      <div style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 32, textAlign: 'center', letterSpacing: 1 }}>Manage Admins & Users</div>
+      <ul style={{ listStyle: 'none', padding: 0 }}>
+        {items.map(item => {
+          const isActive = activeBox === item.key;
+          const isHovered = hovered === item.key;
+          return (
+            <li
+              key={item.key}
+              onClick={() => setActiveBox(item.key)}
+              onMouseEnter={() => setHovered(item.key)}
+              onMouseLeave={() => setHovered(null)}
+              style={{
+                padding: '14px 28px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                borderRadius: 8,
+                marginBottom: 6,
+                background: isActive || isHovered ? '#2563eb' : 'none',
+                color: isActive || isHovered ? '#fff' : '#cfd8dc',
+                fontWeight: isActive ? 700 : 500,
+                transition: 'background 0.2s, color 0.2s',
+                fontSize: 16
+              }}
+            >
+              <span style={{ marginRight: 16, fontSize: 18, display: 'flex', alignItems: 'center' }}>{item.icon}</span>
+              {item.label}
+            </li>
+          );
+        })}
+      </ul>
+    </aside>
+  );
+}
+
 function ManageAdminsUsersPage() {
   const [activeBox, setActiveBox] = useState(null);
   const [userEmail, setUserEmail] = useState("");
@@ -34,72 +84,6 @@ function ManageAdminsUsersPage() {
     }
   }, []);
 
-  const featureCards = [
-    ...(isSuperAdmin ? [{
-      key: "add-admin",
-      icon: <FaUserPlus style={{ fontSize: 36, marginBottom: 10, color: activeBox === "add-admin" ? '#1e3c72' : '#888' }} />,
-      title: "Add Admin",
-      desc: "Create a new admin or superadmin",
-      onClick: () => setActiveBox("add-admin")
-    }] : []),
-    ...(isSuperAdmin ? [{
-      key: "remove-admin",
-      icon: <FaUserMinus style={{ fontSize: 36, marginBottom: 10, color: '#c0392b' }} />,
-      title: "Remove Admin",
-      desc: "Delete an existing admin",
-      onClick: () => setActiveBox("remove-admin")
-    }] : []),
-    {
-      key: "view-admins",
-      icon: <FaUsers style={{ fontSize: 36, marginBottom: 10, color: activeBox === "view-admins" ? '#1e3c72' : '#888' }} />,
-      title: "View Admins",
-      desc: "See all admins and superadmins",
-      onClick: () => setActiveBox("view-admins")
-    },
-    ...(isSuperAdmin ? [{
-      key: "manage-users",
-      icon: <FaUserShield style={{ fontSize: 36, marginBottom: 10, color: activeBox === "manage-users" ? '#1e3c72' : '#888' }} />,
-      title: "Manage Users",
-      desc: "Search, view, or delete any user",
-      onClick: () => setActiveBox("manage-users")
-    }] : []),
-    {
-      key: "view-students",
-      icon: <FaUserGraduate style={{ fontSize: 36, marginBottom: 10, color: activeBox === "view-students" ? '#1e3c72' : '#888' }} />,
-      title: "View Students",
-      desc: "Browse or search all students",
-      onClick: () => setActiveBox("view-students")
-    },
-    {
-      key: "view-teachers",
-      icon: <FaChalkboardTeacher style={{ fontSize: 36, marginBottom: 10, color: activeBox === "view-teachers" ? '#1e3c72' : '#888' }} />,
-      title: "View Teachers",
-      desc: "Browse or search all teachers",
-      onClick: () => setActiveBox("view-teachers")
-    },
-    {
-      key: "view-guardians",
-      icon: <FaUserFriends style={{ fontSize: 36, marginBottom: 10, color: activeBox === "view-guardians" ? '#1e3c72' : '#888' }} />,
-      title: "View Guardians",
-      desc: "Browse or search all guardians",
-      onClick: () => setActiveBox("view-guardians")
-    },
-    ...(isSuperAdmin ? [{
-      key: "users-login-activity",
-      icon: <FaChartBar style={{ fontSize: 36, marginBottom: 10, color: activeBox === "users-login-activity" ? '#1e3c72' : '#888' }} />,
-      title: "Users Login Activity",
-      desc: "View login sessions for any user",
-      onClick: () => setActiveBox("users-login-activity")
-    }] : []),
-    ...(isSuperAdmin ? [{
-      key: "login-statistics",
-      icon: <FaChartBar style={{ fontSize: 36, marginBottom: 10, color: activeBox === "login-statistics" ? '#1e3c72' : '#888' }} />,
-      title: "Login Statistics",
-      desc: "Aggregate and visualize login data",
-      onClick: () => setActiveBox("login-statistics")
-    }] : []),
-  ];
-
   let featureSection = null;
   if (activeBox === "add-admin" && isSuperAdmin) featureSection = <AddAdmin userEmail={userEmail} isSuperAdmin={isSuperAdmin} />;
   else if (activeBox === "remove-admin" && isSuperAdmin) featureSection = <RemoveAdmin userEmail={userEmail} isSuperAdmin={isSuperAdmin} />;
@@ -111,66 +95,29 @@ function ManageAdminsUsersPage() {
   else if (activeBox === "users-login-activity") featureSection = <UsersLoginActivity userEmail={userEmail} isSuperAdmin={isSuperAdmin} />;
   else if (activeBox === "login-statistics") featureSection = <LoginStatistics userEmail={userEmail} isSuperAdmin={isSuperAdmin} />;
 
-  function InlineCommonManageUsersAdmins({ title, featureCards, activeBox, setActiveBox, children }) {
-    return (
-      <div style={{ padding: 48, maxWidth: 900, margin: "0 auto" }}>
-        <h2 style={{ fontWeight: 700, fontSize: 32, marginBottom: 28, color: "#1e3c72", letterSpacing: 1, textAlign: "center" }}>
-          {title || "Manage Admins and Users"}
-        </h2>
-        {/* Feature cards grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: 24,
-          marginBottom: 40,
-          marginTop: 24
-        }}>
-          {featureCards.map(card => (
-            <div
-              key={card.key}
-              style={{
-                background: activeBox === card.key ? "linear-gradient(90deg,#e0e7ff 0%,#f7fafd 100%)" : "#fff",
-                border: activeBox === card.key ? "2px solid #1e3c72" : "2px solid #e0e0e0",
-                borderRadius: 18,
-                boxShadow: activeBox === card.key ? "0 4px 24px rgba(30,60,114,0.10)" : "0 2px 8px rgba(30,60,114,0.06)",
-                padding: 28,
-                cursor: "pointer",
-                transition: "all 0.18s",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: 160,
-                minWidth: 220,
-                fontWeight: 600,
-                fontSize: 18,
-                color: activeBox === card.key ? "#1e3c72" : "#444",
-                position: "relative",
-                outline: "none"
-              }}
-              onClick={card.onClick}
-            >
-              {card.icon}
-              <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 4 }}>{card.title}</div>
-              <div style={{ color: '#888', fontSize: 14 }}>{card.desc}</div>
-            </div>
-          ))}
-        </div>
-        {children}
-      </div>
-    );
-  }
+  const isCentered = activeBox === 'add-admin' || activeBox === 'remove-admin';
 
   return (
     <ProtectedRoute>
-      <InlineCommonManageUsersAdmins
-        title="Manage Admins and Users"
-        featureCards={featureCards}
-        activeBox={activeBox}
-        setActiveBox={setActiveBox}
-      >
-        {featureSection}
-      </InlineCommonManageUsersAdmins>
+      <div style={{ display: 'flex', minHeight: '100vh' }}>
+        <ManageSidebar activeBox={activeBox} setActiveBox={setActiveBox} isSuperAdmin={isSuperAdmin} />
+        <main style={{ 
+          flex: 1, 
+          minHeight: '100vh', 
+          padding: '48px 0', 
+          display: 'flex', 
+          alignItems: isCentered ? 'center' : 'flex-start', 
+          justifyContent: 'center' 
+        }}>
+          <div style={{ width: '100%', maxWidth: 900 }}>
+            {featureSection || (
+              <div style={{ color: '#888', fontSize: 20, textAlign: 'center', marginTop: 80 }}>
+                Select a feature from the sidebar to begin.
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
     </ProtectedRoute>
   );
 }

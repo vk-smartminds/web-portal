@@ -125,22 +125,10 @@ export default function DashboardCommon({
   };
 
   // Render badge function to be used by all sidebars
-  const renderAnnouncementBadge = (count) => (
-    count > 0 ? (
-      <span className="blink-badge" style={{
-        marginLeft: 8,
-        background: "#1e3c72",
-        color: "#fff",
-        borderRadius: "50%",
-        padding: "2px 8px",
-        fontSize: 13,
-        fontWeight: 700,
-        minWidth: 22,
-        textAlign: "center",
-        display: "inline-block"
-      }}>{count}</span>
-    notifSettings && notifSettings.announcements ? (
-      announcementCountLoading ? (
+  const renderAnnouncementBadge = (count) => {
+    if (!notifSettings || !notifSettings.announcements) return null;
+    if (announcementCountLoading) {
+      return (
         <span style={{
           marginLeft: 8,
           background: "#1e3c72",
@@ -165,8 +153,11 @@ export default function DashboardCommon({
           }} />
           <style>{`@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
         </span>
-      ) : count > 0 ? (
-        <span style={{
+      );
+    }
+    if (count > 0) {
+      return (
+        <span className="blink-badge" style={{
           marginLeft: 8,
           background: "#1e3c72",
           color: "#fff",
@@ -178,9 +169,10 @@ export default function DashboardCommon({
           textAlign: "center",
           display: "inline-block"
         }}>{count}</span>
-      ) : null
-    ) : null
-  );
+      );
+    }
+    return null;
+  };
 
   // Sidebar props
   const sidebarProps = {

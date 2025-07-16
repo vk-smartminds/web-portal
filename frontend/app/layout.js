@@ -10,11 +10,9 @@ export default function RootLayout({ children }) {
       <body>
         <NotificationProvider>
           <Header />
+          <ScreenTimeTracker />
           {children}
         </NotificationProvider>
-        <Header />
-        <ScreenTimeTracker />
-        {children}
         <Script id="mathjax-config" strategy="beforeInteractive">
           {`
             window.MathJax = {
