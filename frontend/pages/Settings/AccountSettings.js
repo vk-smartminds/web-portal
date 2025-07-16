@@ -61,6 +61,8 @@ export default function AccountSettings({ subOption }) {
     } else if (error) {
       content = <div style={{ color: '#c00', padding: 40 }}>{error}</div>;
     } else if (profile) {
+      const role = getRoleFromToken();
+      const showSchoolClass = role !== 'guardian' && role !== 'admin';
       content = (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', minHeight: '60vh', width: '100%' }}>
           <div style={{ background: '#fff', borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32, maxWidth: 700, width: '100%', marginTop: 32 }}>
@@ -88,8 +90,7 @@ export default function AccountSettings({ subOption }) {
                 <label style={{ color: '#888', fontSize: 13 }}>Phone</label>
                 <div style={{ fontWeight: 500, fontSize: 16, background: '#f7f7fa', borderRadius: 8, padding: '10px 14px', marginTop: 4 }}>{profile.phone || '-'}</div>
               </div>
-              {/* Only show School and Class if not guardian */}
-              {profile.userRole !== 'Guardian' && (
+              {showSchoolClass && (
                 <>
                   <div style={{ flex: '1 1 220px' }}>
                     <label style={{ color: '#888', fontSize: 13 }}>School</label>
@@ -231,23 +232,31 @@ export default function AccountSettings({ subOption }) {
   );
 }
 
-// Add getProfileUrl function (copied from settings.js)
 function getProfileUrl() {
   const token = getToken();
-  if (token) {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const role = payload.role ? payload.role.toLowerCase() : null;
-      switch (role) {
-        case 'admin': return "/admin/profile";
-        case 'student': return "/student/profile";
-        case 'teacher': return "/teacher/profile";
-        case 'guardian': return "/guardian/profile";
-        default: return "/";
-      }
-    } catch (err) {
-      return "/";
+  if (!token) return "/";
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const role = payload.role ? payload.role.toLowerCase() : null;
+    switch (role) {
+      case 'admin': return "/admins/profile";
+      case 'student': return "/student/profile";
+      case 'teacher': return "/teacher/profile";
+      case 'guardian': return "/guardian/profile";
+      default: return "/";
     }
+  } catch {
+    return "/";
   }
-  return "/";
+}
+
+function getRoleFromToken() {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.role ? payload.role.toLowerCase() : null;
+  } catch {
+    return null;
+  }
 } 

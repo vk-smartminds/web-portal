@@ -1,18 +1,72 @@
 "use client";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { getUserData, getToken } from "../utils/auth";
+import { BASE_API_URL } from "../utils/apiurl";
 
-export default function Sidebar() {
+interface SidebarProps {
+  newAnnouncementCount?: number;
+  loadingAnnouncement?: boolean;
+}
+
+export default function Sidebar({ newAnnouncementCount = 0, loadingAnnouncement = false }: SidebarProps) {
   const [active, setActive] = useState("Dashboard");
+  const [staticsOpen, setStaticsOpen] = useState(false);
+  const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const router = useRouter();
+  const [user, setUser] = useState({ name: "", email: "", photo: "" });
+  const [photoUrl, setPhotoUrl] = useState("/default-avatar.png");
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  useEffect(() => {
+    // Fetch user info from backend for accurate photo (like student dashboard)
+    const u = getUserData();
+    if (u && u.email) {
+      setUser({
+        name: u.name || "",
+        email: u.email || "",
+        photo: ""
+      });
+      fetch(`${BASE_API_URL}/profile`, {
+        headers: { 'Authorization': `Bearer ${getToken()}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.user && data.user.photo && data.user.photo !== "") {
+            setPhotoUrl(data.user.photo);
+          } else {
+            setPhotoUrl("/default-avatar.png");
+          }
+        })
+        .catch(() => setPhotoUrl("/default-avatar.png"));
+    }
+    // Check superadmin status
+    setIsSuperAdmin(localStorage.getItem("isSuperAdmin") === "true");
+  }, []);
 
   const mainMenu = [
-    { label: "Dashboard", icon: dashboardIcon()},
-    { label: "Users", icon: calendarIcon()},
-    { label: "Announcements", icon: messageIcon() },
-    { label: "Activity", icon: activityIcon() },
+    { label: "Dashboard", icon: dashboardIcon(), href: "/admin/dashboard" },
+    { label: "Manage Users & Admins", icon: userIcon(), href: "/manage-admins-users" },
+    { label: "Creative Corner", icon: paintIcon(), href: "/creative-corner" },
+    { label: "Activity", icon: activityIcon(), href: "/admin/activity" },
+    ...(isSuperAdmin ? [{ label: "Track Screen Time", icon: clockIcon(), href: "/track-screen-time" }] : []),
+    { label: "Settings", icon: settingsIcon(), href: "/settings" },
     // { label: "Report", icon: reportIcon() },
+  ];
+
+  const announcementMenu = [
+    { label: "CBSE Updates", icon: cbseIcon(), href: "/cbse-updates" },
+    { label: "Announcements", icon: messageIcon(), href: "/admin/announcements" },
+  ];
+
+  const staticsMenu = [
+    { label: "AVLRs", icon: laptopIcon(), href: "/avlrs" },
+    { label: "DLRs", icon: pdfIcon(), href: "/dlrs" },
+    { label: "Mind Maps", icon: chartIcon(), href: "/mindmaps" },
+    { label: "SQPs", icon: pdfIcon(), href: "/sqps" },
+    { label: "PYQs", icon: pdfIcon(), href: "/pyqs" },
+    { label: "PYPs", icon: pdfIcon(), href: "/pyps" },
   ];
 
   const paymentMenu = [
@@ -24,30 +78,112 @@ export default function Sidebar() {
   return (
     <aside className="bg-[#0D0E12] text-white h-screen w-64 flex flex-col justify-between p-4">
       <div>
-        <div className="text-xl font-bold mb-8 flex items-center gap-2">
-          <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full" />
-          <span>HR Manager</span>
+        {/* User info at the top */}
+        <div className="flex flex-col items-center mb-8">
+          <img
+            src={photoUrl}
+            alt="Profile"
+            className="w-14 h-14 rounded-full border-2 border-gray-400 mb-2 object-cover"
+          />
+          <span className="text-base font-bold text-white">
+            {user.name ? user.name : user.email}
+          </span>
         </div>
 
         <div className="text-gray-400 text-xs font-semibold mb-2">MAIN MENU</div>
         <nav className="flex flex-col gap-1 mb-6">
-          {mainMenu.map(({ label, icon }) => (
-            // <Link href={`/admin/${label.toLowerCase()}`} key={label}>
-              <button
-                key={label}
-                onClick={() => {
-                  // Navigate to the corresponding page
-                  router.push(`/admin/${label.toLowerCase()}`);
-                  setActive(label);
-                }}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-[#1A1B21] transition ${
-                  active === label ? "bg-[#1A1B21] text-white" : "text-gray-400"
-                }`}
-              >
-                {icon}
-                <span>{label}</span>
-              </button>
+          {/* Announcements collapsible menu */}
+          <div>
+            <button
+              onClick={() => setAnnouncementsOpen((prev) => !prev)}
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-[#1A1B21] transition text-gray-400 w-full"
+            >
+              {messageIcon()}
+              <span>Announcements</span>
+              <span className="ml-auto">{announcementsOpen ? "▲" : "▼"}</span>
+            </button>
+            {announcementsOpen && (
+              <div className="ml-6 mt-1 flex flex-col gap-1">
+                {announcementMenu.map(({ label, icon, href }) => (
+                  <button
+                    key={label}
+                    onClick={() => {
+                      if (href) router.push(href);
+                      setActive(label);
+                    }}
+                    className={`flex items-center gap-2 px-2 py-1 rounded-md text-sm hover:bg-[#23243a] transition ${
+                      active === label ? "bg-[#23243a] text-white" : "text-gray-400"
+                    }`}
+                  >
+                    {icon}
+                    <span>{label}</span>
+                    {label === "Announcements" && (
+                      <span className="ml-2">
+                        {loadingAnnouncement ? (
+                          <span className="inline-block align-middle">
+                            <svg className="animate-spin h-4 w-4 text-purple-400" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                            </svg>
+                          </span>
+                        ) : newAnnouncementCount > 0 ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-pink-600 text-white animate-pulse">
+                            {newAnnouncementCount}
+                          </span>
+                        ) : null}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* Main menu */}
+          {mainMenu.map(({ label, icon, href }) => (
+            <button
+              key={label}
+              onClick={() => {
+                if (href) router.push(href);
+                setActive(label);
+              }}
+              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-[#1A1B21] transition ${
+                active === label ? "bg-[#1A1B21] text-white" : "text-gray-400"
+              }`}
+            >
+              {icon}
+              <span>{label}</span>
+            </button>
           ))}
+          {/* Statics collapsible menu */}
+          <div>
+            <button
+              onClick={() => setStaticsOpen((prev) => !prev)}
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-[#1A1B21] transition text-gray-400 w-full"
+            >
+              {chartIcon()}
+              <span>Statics</span>
+              <span className="ml-auto">{staticsOpen ? "▲" : "▼"}</span>
+            </button>
+            {staticsOpen && (
+              <div className="ml-6 mt-1 flex flex-col gap-1">
+                {staticsMenu.map(({ label, icon, href }) => (
+                  <button
+                    key={label}
+                    onClick={() => {
+                      if (href) router.push(href);
+                      setActive(label);
+                    }}
+                    className={`flex items-center gap-2 px-2 py-1 rounded-md text-sm hover:bg-[#23243a] transition ${
+                      active === label ? "bg-[#23243a] text-white" : "text-gray-400"
+                    }`}
+                  >
+                    {icon}
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
 
         <div className="text-gray-400 text-xs font-semibold mb-2">PAYMENTS</div>
@@ -172,7 +308,7 @@ function settingsIcon() {
   return (
     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
       <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09c.7 0 1.29-.4 1.51-1a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09c0 .7.4 1.29 1 1.51a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09c0 .7.4 1.29 1 1.51.22.1.46.16.71.16H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09c.7 0 1.29-.4 1.51-1a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09c0 .7.4 1.29 1 1.51.22.1.46.16.71.16H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </svg>
   );
 }
@@ -191,6 +327,56 @@ function supportIcon() {
     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
       <path d="M18 10c0-3.31-2.69-6-6-6S6 6.69 6 10v4h12v-4z" />
       <path d="M6 14a6 6 0 0 0 12 0" />
+    </svg>
+  );
+}
+
+// Add icons for new menu items
+function paintIcon() {
+  return (
+    <svg className="w-5 h-5 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <circle cx="12" cy="12" r="3" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12h3m12 0h3M12 3v3m0 12v3" />
+    </svg>
+  );
+}
+function pdfIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 2h9l5 5v15H6z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 2v5h9M9 9v3M9 15h6" />
+    </svg>
+  );
+}
+function laptopIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <rect x="2" y="5" width="20" height="14" rx="2" ry="2" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2 19h20M5 5v14" />
+    </svg>
+  );
+}
+function chartIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3v18h18M9 17l3-6 3 6" />
+    </svg>
+  );
+}
+
+function cbseIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7h18M3 12h18M3 17h18" />
+    </svg>
+  );
+}
+
+function clockIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <circle cx="12" cy="12" r="10" strokeWidth="2" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6l4 2" />
     </svg>
   );
 }
