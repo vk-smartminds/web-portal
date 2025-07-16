@@ -66,7 +66,13 @@ export const getScreenTimeHistory = async (req, res) => {
     let filtered = record.days;
     if (start) filtered = filtered.filter(d => d.date >= start);
     if (end) filtered = filtered.filter(d => d.date <= end);
-    res.status(200).json({ history: filtered });
+    // Ensure lastActive is included for each day
+    const history = filtered.map(d => ({
+      date: d.date,
+      screenTime: d.screenTime,
+      lastActive: d.lastActive || null
+    }));
+    res.status(200).json({ history });
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch screen time history', error: err.message });
   }

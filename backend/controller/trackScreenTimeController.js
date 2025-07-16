@@ -66,8 +66,21 @@ export async function getScreenTime(req, res) {
       if (!roleTotals[u.role]) roleTotals[u.role] = 0;
       roleTotals[u.role] += u.totalTime;
     });
+    // Add lastActive to each user (most recent from sessions)
+    const usersWithLastActive = Object.values(userMap).map(u => {
+      let lastActive = null;
+      if (u.sessions && u.sessions.length > 0) {
+        lastActive = u.sessions.reduce((latest, s) => {
+          if (s.lastActive && (!latest || new Date(s.lastActive) > new Date(latest))) {
+            return s.lastActive;
+          }
+          return latest;
+        }, null);
+      }
+      return { ...u, lastActive };
+    });
     res.json({
-      users: Object.values(userMap),
+      users: usersWithLastActive,
       roleTotals,
       combinedTotal: Object.values(userMap).reduce((sum, u) => sum + u.totalTime, 0),
     });

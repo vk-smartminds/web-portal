@@ -146,6 +146,7 @@ export default function TrackScreenTimePage() {
                 <th style={{ padding: 8, textAlign: "left", fontWeight: 600 }}>Email</th>
                 <th style={{ padding: 8, textAlign: "left", fontWeight: 600 }}>Role</th>
                 <th style={{ padding: 8, textAlign: "left", fontWeight: 600 }}>Total Screen Time</th>
+                <th style={{ padding: 8, textAlign: "left", fontWeight: 600 }}>Last Active</th>
               </tr>
             </thead>
             <tbody>
@@ -159,6 +160,7 @@ export default function TrackScreenTimePage() {
                   <td style={{ padding: 8 }}>{u.email || "-"}</td>
                   <td style={{ padding: 8 }}>{u.role}</td>
                   <td style={{ padding: 8 }}>{formatDuration(u.totalTime)}</td>
+                  <td style={{ padding: 8 }}>{u.lastActive ? new Date(u.lastActive).toLocaleString() : '-'}</td>
                 </tr>
               ))}
             </tbody>
