@@ -363,7 +363,7 @@ function UserCountPieChart({ userEmail, isSuperAdmin }) {
       background: '#fff',
       borderRadius: 16,
       boxShadow: '0 4px 12px rgba(30,60,114,0.10)',
-      padding: 32,
+      padding: 16,
       minWidth: 340,
       maxWidth: 400,
       textAlign: 'center',
@@ -374,19 +374,19 @@ function UserCountPieChart({ userEmail, isSuperAdmin }) {
       <div style={{ fontWeight: 700, fontSize: 22, color: '#1e3c72', marginBottom: 12 }}>User Distribution</div>
       {status ? <div style={{ color: '#c00', margin: 12 }}>{status}</div> : null}
       {total > 0 ? (
-        <svg width={180} height={180} viewBox="0 0 180 180" style={{ display: 'block', margin: '0 auto' }}>
+        <svg width={150} height={150} viewBox="0 0 150 150" style={{ display: 'block', margin: '0 auto' }}>
           {arcs}
           {labels}
         </svg>
       ) : (
-        <div style={{height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666'}}>No data</div>
+        <div style={{height: 150, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666'}}>No data</div>
       )}
       {/* Vertical legend with color dots and counts */}
-      <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start', width: '100%', maxWidth: 220, marginLeft: 'auto', marginRight: 'auto' }}>
+      <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start', width: '100%', maxWidth: 220, marginLeft: 'auto', marginRight: 'auto' }}>
         {legendOrder.map(role => (
-          <div key={role} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 500, background: '#f7fafd', borderRadius: 8, padding: '8px 16px', width: '100%', justifyContent: 'space-between' }}>
+          <div key={role} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 500, background: '#f7fafd', borderRadius: 8, padding: '4px 10px', width: '100%', justifyContent: 'space-between' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ width: 16, height: 16, borderRadius: 8, background: colors[role], display: 'inline-block' }}></span>
+              <span style={{ width: 12, height: 12, borderRadius: 6, background: colors[role], display: 'inline-block' }}></span>
               <span>{role}</span>
             </span>
             <span style={{ fontWeight: 700 }}>{counts[role]}</span>
@@ -600,16 +600,22 @@ function ManageAdminsUsersPage() {
         {/* Main content column */}
         <div style={{ flex: 1, display: 'flex', gap: 32, alignItems: 'flex-start', justifyContent: 'center', padding: '2rem 0' }}>
           {/* Left: SessionPieChart + featureSection */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: 32 }}>
-            <SessionPieChart />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', gap: 32 }}>
+            <div style={{ marginLeft: 24, marginTop: 150 }}>
+              <SessionPieChart />
+            </div>
             <div style={{ width: '100%', maxWidth: 900 }}>
               {featureSection}
             </div>
           </div>
           {/* Right: UserCountPieChart + ScreenTimeBarChart stacked */}
-          <div style={{ width: 400, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32 }}>
-            <UserCountPieChart userEmail={userEmail} isSuperAdmin={isSuperAdmin} />
-            <ScreenTimeBarChart userEmail={userEmail} isSuperAdmin={isSuperAdmin} />
+          <div style={{ width: 400, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 32 }}>
+            <div style={{ marginLeft: -200 }}>
+              <UserCountPieChart userEmail={userEmail} isSuperAdmin={isSuperAdmin} />
+            </div>
+            <div style={{ marginLeft: -200 }}>
+              <ScreenTimeBarChart userEmail={userEmail} isSuperAdmin={isSuperAdmin} />
+            </div>
           </div>
         </div>
       </div>
