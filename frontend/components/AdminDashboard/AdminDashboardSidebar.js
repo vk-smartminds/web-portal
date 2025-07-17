@@ -1,5 +1,5 @@
 import React from "react";
-import { FaUsers, FaUserTie, FaBook, FaRegListAlt, FaCog, FaBullhorn, FaChartBar, FaUserShield, FaUser, FaBookOpen } from "react-icons/fa";
+import { FaUsers, FaUserTie, FaBook, FaRegListAlt, FaCog, FaBullhorn, FaChartBar, FaUserShield, FaUser, FaBookOpen, FaTasks } from "react-icons/fa";
 
 export default function AdminDashboardSidebar({ userEmail, userPhoto, onMenuSelect, selectedMenu, isSuperAdmin, setShowAddAdmin, setShowRemoveAdmin, setShowViewAdmins }) {
   const menuItems = [
@@ -18,6 +18,7 @@ export default function AdminDashboardSidebar({ userEmail, userPhoto, onMenuSele
     { key: "settings", label: "Settings", icon: <FaCog className="text-lg" /> },
     { key: "profile", label: "Profile", icon: <FaUser className="text-lg" /> },
     { key: "avlr", label: "AVLR", icon: <FaBookOpen className="text-lg" /> },
+    { key: "quiz", label: "Quiz", icon: <FaTasks className="text-lg" />, action: () => window.location.href = "/quiz/admin" },
   ];
   return (
     <aside className="w-[260px] bg-white border-r border-gray-200 min-h-screen pt-8 fixed left-0 top-0 z-[2000] shadow-lg overflow-hidden">

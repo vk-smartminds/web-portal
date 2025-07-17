@@ -19,7 +19,7 @@ const blinkStyle = `
 
 function AdminSidebar({ userEmail, userPhoto, onMenuSelect, selectedMenu, isSuperAdmin, newAnnouncementCount, renderAnnouncementBadge }) {
   const menuItems = [
-    { key: "manage-admins-users", label: "Manage Admins and Users", icon: <FaUserShield style={{ fontSize: 18 }} />, action: () => window.location.href = "/manage-admins-users" },
+    { key: "manage-admins-users", label: "Manage Admins and Users", icon: <FaUserShield style={{ fontSize: 18 }} />, action: () => window.location.href = "/admin/manage-admins-users" },
     { key: "manage-books", label: "Manage Books", icon: <FaBook style={{ fontSize: 18 }} /> },
     { key: "records", label: "Records", icon: <FaRegListAlt style={{ fontSize: 18 }} /> },
     { key: "announcements", label: "Announcements", icon: <FaBullhorn style={{ fontSize: 18 }} />, action: () => window.location.href = "/announcement" },

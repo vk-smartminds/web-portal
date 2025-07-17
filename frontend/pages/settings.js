@@ -9,7 +9,7 @@ import AlternativeEmail from "./Settings/AlternativeEmail";
 import ScreenTime from '../components/ScreenTime';
 import { BASE_API_URL } from "../utils/apiurl";
 import { getToken } from "../utils/auth";
-import { useRouter } from "next/router";
+import { useSearchParams } from "next/navigation";
 
 const Placeholder = ({ label }) => (
   <div style={{ background: '#fff', borderRadius: 16, boxShadow: "0 2px 8px rgba(30,60,114,0.08)", padding: 32, marginBottom: 32 }}>
@@ -65,14 +65,14 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const router = useRouter();
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
 
   useEffect(() => {
     // Check for tab query param on mount
-    if (router && router.query && router.query.tab) {
-      setSelected(router.query.tab);
+    if (searchParams && searchParams.get('tab')) {
+      setSelected(searchParams.get('tab'));
     }
-  }, [router.query]);
+  }, [searchParams]);
 
   useEffect(() => {
     setLoading(true);

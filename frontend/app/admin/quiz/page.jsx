@@ -1,19 +1,16 @@
 "use client";
-import DashboardCommon from "../../../pages/DashboardCommon";
-import Sidebar from "../../../components/Sidebar";
+import Sidebar from '../../../components/AdminSidebar';
 import AdminQuizPage from "../../../quiz/pages/admin";
-
-const menuItems = [
-  { key: "quiz", label: "Quiz" },
-];
 
 export default function AdminQuizAppPage() {
   return (
-    <DashboardCommon
-      SidebarComponent={Sidebar}
-      menuItems={menuItems}
-      userType="Admin"
-      renderContent={() => <AdminQuizPage />}
-    />
+    <>
+      <div className="fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 z-60">
+        <Sidebar />
+      </div>
+      <main className="pl-64">
+        <AdminQuizPage />
+      </main>
+    </>
   );
 } 

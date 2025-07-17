@@ -46,12 +46,13 @@ export default function Sidebar({ newAnnouncementCount = 0, loadingAnnouncement 
   }, []);
 
   const mainMenu = [
-    { label: "Manage Users & Admins", icon: userIcon(), href: "/manage-admins-users" },
+    { label: "Manage Users & Admins", icon: userIcon(), href: "/admin/manage-admins-users" },
     { label: "Creative Corner", icon: paintIcon(), href: "/creative-corner" },
     { label: "Activity", icon: activityIcon(), href: "/admin/activity" },
-    ...(isSuperAdmin ? [{ label: "Track Screen Time", icon: clockIcon(), href: "/track-screen-time" }] : []),
     { label: "Discussion Panel", icon: messageIcon(), href: "/admin/discussion" }, // Use messageIcon for Discussion Panel
-    { label: "Settings", icon: settingsIcon(), href: "/settings" },
+    ...(isSuperAdmin ? [{ label: "Track Screen Time", icon: clockIcon(), href: "/admin/track-screen-time" }] : []),
+    { label: "Settings", icon: settingsIcon(), href: "/admin/settings" },
+    { label: "Quiz", icon: quizIcon(), href: "/admin/quiz" },
     // { label: "Report", icon: reportIcon() },
   ];
 
@@ -76,7 +77,7 @@ export default function Sidebar({ newAnnouncementCount = 0, loadingAnnouncement 
   ];
 
   return (
-    <aside className="bg-[#0D0E12] text-white h-screen w-64 flex flex-col justify-between p-4">
+    <aside className="bg-[#0D0E12] text-white h-full min-h-full w-64 flex flex-col p-4">
       <div>
         {/* User info at the top */}
         <div className="flex flex-col items-center mb-8">
@@ -88,6 +89,9 @@ export default function Sidebar({ newAnnouncementCount = 0, loadingAnnouncement 
           <span className="text-base font-bold text-white">
             {user.name ? user.name : user.email}
           </span>
+          {user.email && (
+            <span className="text-xs text-gray-400 mt-1">{user.email}</span>
+          )}
         </div>
 
         <div className="text-gray-400 text-xs font-semibold mb-2">MAIN MENU</div>
@@ -187,7 +191,7 @@ export default function Sidebar({ newAnnouncementCount = 0, loadingAnnouncement 
         </nav>
 
         <div className="text-gray-400 text-xs font-semibold mb-2">PAYMENTS</div>
-        <nav className="flex flex-col gap-1">
+        <nav className="flex flex-col gap-1 mb-2">
           {paymentMenu.map(({ label, icon }) => (
             <button
               key={label}
@@ -202,8 +206,6 @@ export default function Sidebar({ newAnnouncementCount = 0, loadingAnnouncement 
           ))}
         </nav>
       </div>
-
-      {/* Remove the bottom section with Settings, User Management, Help & Support, and user info */}
     </aside>
   );
 }
@@ -361,6 +363,14 @@ function clockIcon() {
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <circle cx="12" cy="12" r="10" strokeWidth="2" />
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6l4 2" />
+    </svg>
+  );
+}
+
+function quizIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18zm0-2a7 7 0 1 0 0-14 7 7 0 0 0 0 14zm-3-5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm6 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
     </svg>
   );
 }

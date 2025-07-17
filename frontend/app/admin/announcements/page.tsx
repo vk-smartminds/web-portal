@@ -417,8 +417,10 @@ export default function AdminAnnouncements() {
   // --- UI ---
   return (
     <div className="flex">
-      <AdminSidebar />
-      <div className="bg-[#1A1B21] p-6 w-full min-h-screen text-white space-y-6">
+      <div className="fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 z-60">
+        <AdminSidebar />
+      </div>
+      <div className="bg-[#1A1B21] p-6 w-full min-h-screen text-white space-y-6" style={{ marginLeft: '16rem' }}>
         <style>{blinkStyle}</style>
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold">Announcements</h2>
