@@ -88,6 +88,7 @@ export const getSqps = async (req, res) => {
       class: sqp.class,
       subject: sqp.subject,
       chapter: sqp.chapter,
+      pdfType: sqp.pdfType,
       pdfs: (sqp.pdfs || []).map(pdf => ({
         url: `data:application/pdf;base64,${pdf.data.toString('base64')}`,
         fileType: 'pdf'

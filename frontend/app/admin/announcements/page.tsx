@@ -72,6 +72,36 @@ interface User {
   [key: string]: any;
 }
 
+// Tooltip component
+function InfoTooltip({ text }: { text: string }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span style={{ position: 'relative', display: 'inline-block', marginLeft: 6 }}>
+      <span
+        tabIndex={0}
+        style={{
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          width: 18, height: 18, borderRadius: '50%', background: '#a259ec22', color: '#a259ec', fontWeight: 700, fontSize: 14, cursor: 'pointer', border: '1.5px solid #a259ec',
+        }}
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        onFocus={() => setShow(true)}
+        onBlur={() => setShow(false)}
+        aria-label="Help"
+      >
+        i
+      </span>
+      {show && (
+        <div style={{
+          position: 'absolute', left: '110%', top: '50%', transform: 'translateY(-50%)', background: '#23243a', color: '#fff', border: '1.5px solid #a259ec', borderRadius: 8, padding: '10px 14px', fontSize: 14, boxShadow: '0 2px 8px rgba(162,89,236,0.10)', zIndex: 1000, minWidth: 220, maxWidth: 320
+        }}>
+          {text}
+        </div>
+      )}
+    </span>
+  );
+}
+
 export default function AdminAnnouncements() {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<string>("");
@@ -570,7 +600,10 @@ export default function AdminAnnouncements() {
               <form onSubmit={handleCreate}>
                 <textarea name="text" value={form.text} onChange={handleFormChange} required rows={4} placeholder="Announcement text..." className="w-full p-3 rounded-lg border border-gray-700 bg-[#181926] text-white text-base mb-3" />
                 <div className="mb-3 text-left">
-                  <label className="font-semibold text-purple-400">Announcement For (comma separated):</label>
+                  <label className="font-semibold text-purple-400 flex items-center gap-1">
+                    Announcement For (comma separated):
+                    <InfoTooltip text={"You can choose individual roles (Student, Parent, Teacher, Admin), any combination (e.g., Student,Teacher), or 'All' to target everyone."} />
+                  </label>
                   <input
                     type="text"
                     name="announcementFor"
@@ -580,13 +613,15 @@ export default function AdminAnnouncements() {
                     className="w-full p-2 rounded-lg border border-gray-700 bg-[#181926] text-white text-base mt-1"
                     required
                   />
-                  <div className="text-xs text-gray-400 mt-1">Enter target audience separated by commas (e.g. Student, Teacher, Parent, Admin, All)</div>
                 </div>
                 {form.announcementFor &&
                   form.announcementFor.toLowerCase().split(',').map(item => item.trim()).filter(Boolean).length === 1 &&
                   form.announcementFor.toLowerCase().split(',').map(item => item.trim()).filter(Boolean)[0] === 'student' && (
                     <div className="mb-3 text-left">
-                      <label className="font-semibold text-purple-400">Classes (comma separated):</label>
+                      <label className="font-semibold text-purple-400 flex items-center gap-1">
+                        Classes (comma separated):
+                        <InfoTooltip text={"Enter a single class, multiple classes separated by commas, or 'all' for all classes."} />
+                      </label>
                       <input
                         type="text"
                         value={selectedClasses}
@@ -595,7 +630,6 @@ export default function AdminAnnouncements() {
                         className="w-full p-2 rounded-lg border border-gray-700 bg-[#181926] text-white text-base mt-1"
                         required
                       />
-                      <div className="text-xs text-gray-400 mt-1">Enter one or more classes separated by commas (e.g. 10,11,12)</div>
                     </div>
                   )}
                 <input type="file" name="images" accept="image/jpeg,image/png,image/jpg,application/pdf" multiple onChange={handleFormChange} className="mb-3" />
@@ -629,7 +663,10 @@ export default function AdminAnnouncements() {
               <form onSubmit={handleUpdate}>
                 <textarea name="text" value={form.text} onChange={handleFormChange} required rows={4} placeholder="Announcement text..." className="w-full p-3 rounded-lg border border-gray-700 bg-[#181926] text-white text-base mb-3" />
                 <div className="mb-3 text-left">
-                  <label className="font-semibold text-purple-400">Announcement For (comma separated):</label>
+                  <label className="font-semibold text-purple-400 flex items-center gap-1">
+                    Announcement For (comma separated):
+                    <InfoTooltip text={"Edit, add, or remove target audience separated by commas (e.g. Student, Teacher, Parent, Admin, All)"} />
+                  </label>
                   <input
                     type="text"
                     value={editAnnouncementFor}
@@ -638,13 +675,15 @@ export default function AdminAnnouncements() {
                     className="w-full p-2 rounded-lg border border-gray-700 bg-[#181926] text-white text-base mt-1"
                     required
                   />
-                  <div className="text-xs text-gray-400 mt-1">Edit, add, or remove target audience separated by commas (e.g. Student, Teacher, Parent, Admin, All)</div>
                 </div>
                 {editAnnouncementFor &&
                   editAnnouncementFor.toLowerCase().split(',').map(item => item.trim()).filter(Boolean).length === 1 &&
                   editAnnouncementFor.toLowerCase().split(',').map(item => item.trim()).filter(Boolean)[0] === 'student' && (
                     <div className="mb-3 text-left">
-                      <label className="font-semibold text-purple-400">Classes (comma separated):</label>
+                      <label className="font-semibold text-purple-400 flex items-center gap-1">
+                        Classes (comma separated):
+                        <InfoTooltip text={"Edit, add, or remove classes separated by commas (e.g. 10,11,12)"} />
+                      </label>
                       <input
                         type="text"
                         value={editClasses}
@@ -653,7 +692,6 @@ export default function AdminAnnouncements() {
                         className="w-full p-2 rounded-lg border border-gray-700 bg-[#181926] text-white text-base mt-1"
                         required
                       />
-                      <div className="text-xs text-gray-400 mt-1">Edit, add, or remove classes separated by commas (e.g. 10,11,12)</div>
                     </div>
                   )}
                 <input type="file" name="images" accept="image/jpeg,image/png,image/jpg,application/pdf" multiple onChange={handleFormChange} className="mb-3" />
