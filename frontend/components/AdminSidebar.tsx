@@ -49,7 +49,7 @@ export default function Sidebar({ newAnnouncementCount = 0, loadingAnnouncement 
     { label: "Manage Users & Admins", icon: userIcon(), href: "/admin/manage-admins-users" },
     { label: "Creative Corner", icon: paintIcon(), href: "/creative-corner" },
     { label: "Activity", icon: activityIcon(), href: "/admin/activity" },
-
+    { label: "Discussion Panel", icon: messageIcon(), href: "/admin/discussion" }, // Use messageIcon for Discussion Panel
     ...(isSuperAdmin ? [{ label: "Track Screen Time", icon: clockIcon(), href: "/admin/track-screen-time" }] : []),
     { label: "Settings", icon: settingsIcon(), href: "/admin/settings" },
     { label: "Quiz", icon: quizIcon(), href: "/admin/quiz" },
