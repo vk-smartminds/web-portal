@@ -11,8 +11,10 @@ export default function Employee() {
 
   return (
     <div className="flex">
+      <div className="fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 z-60">
         <AdminSidebar />
-        <div className="bg-[#0D0E12] p-6 text-white w-full">
+      </div>
+      <div className="bg-[#0D0E12] p-6 text-white w-full" style={{ marginLeft: '16rem' }}>
         <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Employee List</h2>
             <button className="bg-purple-600 hover:bg-purple-700 transition px-4 py-2 rounded-lg text-sm">
