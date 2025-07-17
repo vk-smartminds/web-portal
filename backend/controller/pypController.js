@@ -86,6 +86,7 @@ export const getPyps = async (req, res) => {
       _id: pyp._id,
       class: pyp.class,
       subject: pyp.subject,
+      pdfType: pyp.pdfType,
       pdfs: (pyp.pdfs || []).map(pdf => ({
         url: `data:application/pdf;base64,${pdf.data.toString('base64')}`,
         fileType: 'pdf'

@@ -88,6 +88,7 @@ export const getPyqs = async (req, res) => {
       class: pyq.class,
       subject: pyq.subject,
       chapter: pyq.chapter,
+      pdfType: pyq.pdfType,
       pdfs: (pyq.pdfs || []).map(pdf => ({
         url: `data:application/pdf;base64,${pdf.data.toString('base64')}`,
         fileType: 'pdf'
