@@ -50,6 +50,7 @@ export default function Sidebar({ newAnnouncementCount = 0, loadingAnnouncement 
     { label: "Creative Corner", icon: paintIcon(), href: "/creative-corner" },
     { label: "Activity", icon: activityIcon(), href: "/admin/activity" },
     ...(isSuperAdmin ? [{ label: "Track Screen Time", icon: clockIcon(), href: "/track-screen-time" }] : []),
+    { label: "Discussion Panel", icon: messageIcon(), href: "/admin/discussion" }, // Use messageIcon for Discussion Panel
     { label: "Settings", icon: settingsIcon(), href: "/settings" },
     // { label: "Report", icon: reportIcon() },
   ];

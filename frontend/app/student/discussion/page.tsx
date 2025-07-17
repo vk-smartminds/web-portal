@@ -43,7 +43,7 @@ const getAvatarColor = (author: string) => {
   return colors[author.length % colors.length];
 };
 
-export default function DiscussionPanel() {
+export default function DiscussionPanel({ userType = 'Student' }: { userType?: string }) {
   const { threads, loading, error } = useThreads();
   const [activeTab, setActiveTab] = useState<'latest' | 'hot' | 'categories'>('latest');
   const [search, setSearch] = useState("");
