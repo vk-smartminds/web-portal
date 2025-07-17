@@ -81,7 +81,6 @@ export default function Sidebar({
   };
 
   const staticsItems = [
-    { key: "sample-papers", label: "Sample Papers", icon: icons.book },
     { key: "avlrs", label: "AVLRs", icon: icons.laptop, href: "/avlrs" },
     { key: "dlrs", label: "DLRs", icon: icons.pdf, href: "/dlrs" },
     { key: "mind-maps", label: "Mind Maps", icon: icons.chart, href: "/mindmaps" },
@@ -102,7 +101,7 @@ export default function Sidebar({
     { key: "creative-corner", label: "Creative Corner", icon: icons.paint, href: "/creative-corner" },
     { key: "books", label: "Books", icon: icons.book },
     { key: "performance", label: "Performance", icon: icons.chart },
-    { key: "settings", label: "Settings", icon: icons.cog, href: "/settings" },
+    { key: "settings", label: "Settings", icon: icons.cog, href: "/student/settings" },
   ];
 
   return (

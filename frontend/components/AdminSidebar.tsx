@@ -46,11 +46,11 @@ export default function Sidebar({ newAnnouncementCount = 0, loadingAnnouncement 
   }, []);
 
   const mainMenu = [
-    { label: "Manage Users & Admins", icon: userIcon(), href: "/manage-admins-users" },
+    { label: "Manage Users & Admins", icon: userIcon(), href: "/admin/manage-admins-users" },
     { label: "Creative Corner", icon: paintIcon(), href: "/creative-corner" },
     { label: "Activity", icon: activityIcon(), href: "/admin/activity" },
-    ...(isSuperAdmin ? [{ label: "Track Screen Time", icon: clockIcon(), href: "/track-screen-time" }] : []),
-    { label: "Settings", icon: settingsIcon(), href: "/settings" },
+    ...(isSuperAdmin ? [{ label: "Track Screen Time", icon: clockIcon(), href: "/admin/track-screen-time" }] : []),
+    { label: "Settings", icon: settingsIcon(), href: "/admin/settings" },
     // { label: "Report", icon: reportIcon() },
   ];
 
