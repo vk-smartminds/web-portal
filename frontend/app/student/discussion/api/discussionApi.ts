@@ -63,6 +63,10 @@ export async function deleteDiscussionPost(threadId: string, postId: string) {
   return api.delete(`/discussion/threads/${threadId}/posts/${postId}`);
 }
 
+export async function deleteDiscussionThread(threadId: string) {
+  return api.delete(`/discussion/threads/${threadId}`);
+}
+
 export async function searchDiscussionThreads(query: string) {
   return api.get(`/discussion/posts/search?query=${encodeURIComponent(query)}`);
 } 

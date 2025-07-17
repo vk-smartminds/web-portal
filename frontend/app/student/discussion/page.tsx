@@ -9,6 +9,7 @@ import { logout } from '../../../utils/auth.js';
 import { getUserData } from '../../../utils/auth.js';
 import BellIcon from '../../../icons/BellIcon';
 import { useNotifications } from '../../../components/NotificationProvider';
+import { deleteDiscussionThread } from "./api/discussionApi";
 
 const TAG_OPTIONS = [
   "CBSE", "Maths", "Chemistry", "Physics", "Science", "JEE", "NEET", "Biology", "English", "Hindi", "Social Studies",
@@ -70,6 +71,21 @@ export default function DiscussionPanel({ userType = 'Student' }: { userType?: s
 
   const userData = typeof window !== 'undefined' ? getUserData() : null;
   const userEmail = userData && userData.email ? userData.email : '';
+
+  // Add userData.role check for admin
+  const isAdmin = userData && (userData.role === 'admin' || userData.role === 'superadmin' || userData.role === 'Admin');
+
+  // Add thread deletion handler
+  const handleDeleteThread = async (threadId: string) => {
+    if (!window.confirm('Are you sure you want to delete this thread?')) return;
+    try {
+      await deleteDiscussionThread(threadId);
+      // Optionally, refetch threads or remove from UI
+      window.location.reload(); // or trigger a state update if you want a better UX
+    } catch (err) {
+      alert('Failed to delete thread');
+    }
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -421,7 +437,17 @@ export default function DiscussionPanel({ userType = 'Student' }: { userType?: s
                 const vote = voteState[thread._id] || 0;
                 const totalVotes = (thread.votes || []).reduce((sum, v) => sum + v.value, 0) + vote;
                 return (
-                  <div key={thread._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push(`/student/discussion/${thread._id}`)}>
+                  <div key={thread._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer relative" onClick={() => router.push(`/student/discussion/${thread._id}`)}>
+                    {/* Delete button (top right) for admins */}
+                    {isAdmin && !thread.deleted && (
+                      <button
+                        onClick={e => { e.stopPropagation(); handleDeleteThread(thread._id); }}
+                        className="absolute top-3 right-3 text-red-600 hover:underline text-sm font-semibold bg-white rounded-full px-3 py-1 shadow border border-red-100 z-10"
+                        title="Delete Thread"
+                      >
+                        Delete
+                      </button>
+                    )}
                     <div className="p-6">
                       <div className="flex gap-4">
                         {/* Voting Section */}
@@ -473,7 +499,9 @@ export default function DiscussionPanel({ userType = 'Student' }: { userType?: s
                               </div>
                             </div>
                             {/* Placeholder for more actions */}
-                            <div className="flex items-center space-x-2"></div>
+                            <div className="flex items-center space-x-2">
+                              {/* Old delete button removed from here */}
+                            </div>
                           </div>
                         </div>
                       </div>

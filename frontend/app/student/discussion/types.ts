@@ -2,7 +2,7 @@ export interface DiscussionUser {
   _id: string;
   name?: string;
   email?: string;
-  role: 'Student' | 'Teacher' | 'Guardian' | 'Admin';
+  role: 'Student' | 'Teacher' | 'Guardian' | 'Admin' | 'admin' | 'superadmin';
 }
 
 export interface DiscussionVote {

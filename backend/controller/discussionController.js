@@ -135,7 +135,11 @@ async function sendNotification({ req, recipientId, senderId, type, threadId, po
   // Emit real-time notification if user is online
   const socketId = userSocketMap.get(recipientId.toString());
   if (io && socketId) {
-    io.to(socketId).emit('notification', notification);
+    // Ensure plain object and _id is serializable
+    io.to(socketId).emit('notification', {
+      ...notification.toObject(),
+      _id: notification._id.toString(),
+    });
   }
 }
 
@@ -589,7 +593,9 @@ export const deletePost = async (req, res) => {
     if (!thread) return res.status(404).json({ message: 'Thread not found' });
     const post = thread.posts.id(postId);
     if (!post) return res.status(404).json({ message: 'Post not found' });
-    if (post.createdBy.toString() !== req.user._id.toString() || post.createdByModel !== normalizeUserModel(req.user.role)) {
+    // Allow admin/superadmin to delete any post, others only their own
+    const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'superadmin' || req.user.isSuperAdmin);
+    if (!isAdmin && (post.createdBy.toString() !== req.user._id.toString() || post.createdByModel !== normalizeUserModel(req.user.role))) {
       return res.status(403).json({ message: 'Not authorized' });
     }
     post.deleted = true;

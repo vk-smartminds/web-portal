@@ -2,7 +2,7 @@ import express from 'express';
 import { sendRegisterOtp,verifyRegisterOtp,registerStudent,registerGuardian,registerTeacher,loginStudent,loginGuardian,loginTeacher,deleteUser,sendChildOtp,verifyChildOtp,checkChildVerified,verifyLoginOtp,sendLoginOtp, loginUser } from '../controller/authController.js';
 import { getProfile, updateProfile, upload, verifyToken, getUserInfoById } from '../controller/profileController.js';
 import { getAdmins, addAdmin, removeAdmin, isAdmin, adminLogin, checkSuperAdmin } from '../controller/adminController.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, isAdminOrSuperAdmin } from '../middleware/auth.js';
 import multer from 'multer';
 import studentController from '../controller/studentController.js';
 import teacherController from '../controller/teacherController.js';
@@ -203,7 +203,7 @@ router.get('/api/discussion/threads', discussionController.getThreads);
 router.get('/api/discussion/threads/:threadId', discussionController.getThread);
 router.post('/api/discussion/threads/:threadId/posts', authenticateToken, postUpload.array('images', 5), discussionController.addPost);
 router.put('/api/discussion/threads/:threadId/posts/:postId', authenticateToken, postUpload.array('images', 5), discussionController.editPost);
-router.delete('/api/discussion/threads/:threadId/posts/:postId', authenticateToken, discussionController.deletePost);
+router.delete('/api/discussion/threads/:threadId/posts/:postId', authenticateToken, isAdminOrSuperAdmin, discussionController.deletePost);
 router.post('/api/discussion/threads/:threadId/vote', authenticateToken, discussionController.voteThread);
 router.post('/api/discussion/threads/:threadId/posts/:postId/vote', authenticateToken, discussionController.votePost);
 
@@ -225,8 +225,8 @@ router.use('/api/admin/quiz', adminQuizRoutes);
 router.use('/api/quiz', quizRoutes);
 
 // Notification API endpoints
-router.get('/api/notifications', notificationController.getNotifications);
-router.post('/api/notifications/mark-read', notificationController.markNotificationsRead);
+router.get('/api/notifications', authenticateToken, notificationController.getNotifications);
+router.post('/api/notifications/mark-read', authenticateToken, notificationController.markNotificationsRead);
 router.get('/api/screen-time', authenticateToken, screenTimeController.getScreenTime);
 router.post('/api/screen-time/increment', authenticateToken, screenTimeController.incrementScreenTime);
 router.get('/api/screen-time/history', authenticateToken, screenTimeController.getScreenTimeHistory);

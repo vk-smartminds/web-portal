@@ -58,3 +58,11 @@ export const verifyToken = (token) => {
     return null;
   }
 };
+
+export const isAdminOrSuperAdmin = (req, res, next) => {
+  // Accepts both 'admin' and 'superadmin' (if you have such a role)
+  if (req.user && (req.user.role === 'admin' || req.user.role === 'superadmin' || req.user.isSuperAdmin)) {
+    return next();
+  }
+  return res.status(403).json({ message: 'Forbidden: Admins only' });
+};

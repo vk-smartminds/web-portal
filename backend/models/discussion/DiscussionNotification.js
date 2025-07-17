@@ -5,7 +5,7 @@ const discussionNotificationSchema = new mongoose.Schema({
   senderId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },
   type: { type: String, required: true, enum: ['NEW_COMMENT', 'REPLY', 'POST_LIKED', 'COMMENT_LIKED'] },
   threadId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'DiscussionThread' },
-  postId: { type: mongoose.Schema.Types.ObjectId, ref: 'DiscussionPost' },
+  postId: { type: mongoose.Schema.Types.ObjectId },
   read: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   message: { type: String, required: true }

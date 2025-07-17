@@ -31,7 +31,7 @@ function safeSrc(src: string | undefined | null): string {
   return '';
 }
 
-const PostTree: React.FC<PostTreeProps> = ({ post, currentUser, onReply, onVote, onEdit, onDelete, replyingTo, setReplyingTo, replyBody, setReplyBody, replyImages, setReplyImages, setImagePreview, highlightId }) => {
+const PostTree: React.FC<PostTreeProps & { isAdmin?: boolean }> = ({ post, currentUser, onReply, onVote, onEdit, onDelete, replyingTo, setReplyingTo, replyBody, setReplyBody, replyImages, setReplyImages, setImagePreview, highlightId, isAdmin }) => {
   const [highlight, setHighlight] = React.useState(false);
   const [collapsed, setCollapsed] = useState(true);
   const postRef = React.useRef<HTMLDivElement>(null);
@@ -60,6 +60,16 @@ const PostTree: React.FC<PostTreeProps> = ({ post, currentUser, onReply, onVote,
       className={`relative group ${post.parentPost ? 'pl-6 border-l-2 border-gray-200' : ''} mb-4`}
       style={{ background: highlight ? '#fff9c4' : isCreator ? '#f0f8ff' : '#fff', transition: 'background 0.3s' }}
     >
+      {/* Delete button: show for post creator or admin */}
+      {(isCreator || (currentUser && (['admin', 'superadmin', 'Admin'].includes(currentUser.role)))) && !post.deleted && (
+        <button
+          onClick={e => { e.stopPropagation(); if (window.confirm('Are you sure you want to delete this post?')) onDelete(post); }}
+          className="absolute top-2 right-2 text-red-600 hover:underline text-xs font-semibold bg-white rounded-full px-3 py-1 shadow border border-red-100 z-10"
+          title="Delete Post"
+        >
+          Delete
+        </button>
+      )}
       {/* Plus/Minus for collapsing/expanding replies */}
       {hasReplies && (
         <button
@@ -98,14 +108,14 @@ const PostTree: React.FC<PostTreeProps> = ({ post, currentUser, onReply, onVote,
         )}
         <div className="flex gap-4 text-gray-500 mt-3 items-center text-sm">
           <button
-            className={`flex items-center gap-1 hover:text-blue-600 ${getUserVote(post.votes, currentUser?._id, currentUser?.role) === 1 ? 'text-blue-600 font-bold' : ''}`}
+            className={`flex items-center gap-1 hover:text-blue-600 ${getUserVote(post.votes, currentUser?._id || '', currentUser?.role || '') === 1 ? 'text-blue-600 font-bold' : ''}`}
             onClick={() => onVote(post._id, 1)}
           >
             ▲
           </button>
           <span className="font-semibold min-w-[24px] text-center text-gray-800">{getVoteCount(post.votes)}</span>
           <button
-            className={`flex items-center gap-1 hover:text-red-500 ${getUserVote(post.votes, currentUser?._id, currentUser?.role) === -1 ? 'text-red-500 font-bold' : ''}`}
+            className={`flex items-center gap-1 hover:text-red-500 ${getUserVote(post.votes, currentUser?._id || '', currentUser?.role || '') === -1 ? 'text-red-500 font-bold' : ''}`}
             onClick={() => onVote(post._id, -1)}
           >
             ▼
@@ -113,11 +123,8 @@ const PostTree: React.FC<PostTreeProps> = ({ post, currentUser, onReply, onVote,
           <button className="flex items-center gap-1 hover:text-blue-700" onClick={() => setReplyingTo(post._id)}>
             Reply
           </button>
-          {isCreator && !post.deleted && (
-            <>
-              <button onClick={() => onEdit(post)} className="ml-2 text-xs text-blue-600 hover:underline">Edit</button>
-              <button onClick={() => onDelete(post)} className="ml-2 text-xs text-red-500 hover:underline">Delete</button>
-            </>
+          {(isCreator && !post.deleted) && (
+            <button onClick={() => onEdit(post)} className="ml-2 text-xs text-blue-600 hover:underline">Edit</button>
           )}
         </div>
         {post.deleted && (
@@ -183,6 +190,7 @@ const PostTree: React.FC<PostTreeProps> = ({ post, currentUser, onReply, onVote,
                 setReplyImages={setReplyImages}
                 setImagePreview={setImagePreview}
                 highlightId={highlightId}
+                isAdmin={isAdmin}
               />
             </div>
           ))}

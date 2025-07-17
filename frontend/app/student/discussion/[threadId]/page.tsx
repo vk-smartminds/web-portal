@@ -216,25 +216,29 @@ export default function ThreadDetailPage({ userType = 'Student', ...props }: { u
             {/* Comments/Posts */}
             <div className="space-y-6">
               {thread.posts && thread.posts.length > 0 ? (
-                buildPostTree(thread.posts).map(post => (
-                  <PostTree
-                    key={post._id}
-                    post={post}
-                    currentUser={currentUser}
-                    onReply={handleReply}
-                    onVote={handleVote}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    replyingTo={replyingTo}
-                    setReplyingTo={setReplyingTo}
-                    replyBody={replyBody}
-                    setReplyBody={setReplyBody}
-                    replyImages={replyImages}
-                    setReplyImages={setReplyImages}
-                    setImagePreview={setImagePreview}
-                    highlightId={highlightId}
-                  />
-                ))
+                buildPostTree(thread.posts).map(post => {
+                  const isAdmin = currentUser?.role === 'Admin';
+                  return (
+                    <PostTree
+                      key={post._id}
+                      post={post}
+                      currentUser={currentUser}
+                      onReply={handleReply}
+                      onVote={handleVote}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      replyingTo={replyingTo}
+                      setReplyingTo={setReplyingTo}
+                      replyBody={replyBody}
+                      setReplyBody={setReplyBody}
+                      replyImages={replyImages}
+                      setReplyImages={setReplyImages}
+                      setImagePreview={setImagePreview}
+                      highlightId={highlightId}
+                      isAdmin={isAdmin}
+                    />
+                  );
+                })
               ) : (
                 <div className="text-gray-500 italic text-center py-8">No posts yet. Be the first to reply!</div>
               )}
