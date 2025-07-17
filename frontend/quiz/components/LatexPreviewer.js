@@ -5,18 +5,36 @@ const LatexPreviewer = ({ value, images = [] }) => {
   const previewRef = useRef(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.MathJax && previewRef.current) {
-      window.MathJax.typesetPromise([previewRef.current]).catch((err) =>
-        console.error('MathJax typesetting error:', err)
-      );
+    let attempts = 0;
+    let maxAttempts = 10;
+    let delay = 200;
+    function tryTypeset() {
+      attempts++;
+      if (typeof window !== 'undefined' && window.MathJax && previewRef.current) {
+        console.log('[LatexPreviewer] MathJax found, typesetting node', previewRef.current);
+        window.MathJax.typesetPromise([previewRef.current])
+          .catch((err) => {
+            console.error('[LatexPreviewer] MathJax typesetting error:', err);
+            // fallback: try typesetting whole document
+            if (window.MathJax && window.MathJax.typesetPromise) {
+              window.MathJax.typesetPromise()
+                .then(() => console.log('[LatexPreviewer] Fallback: typeset whole document'))
+                .catch(e => console.error('[LatexPreviewer] Fallback error:', e));
+            }
+          });
+      } else if (attempts < maxAttempts) {
+        console.log('[LatexPreviewer] MathJax not ready, retrying', attempts);
+        setTimeout(tryTypeset, delay);
+      } else {
+        console.warn('[LatexPreviewer] MathJax not found after retries');
+      }
     }
+    tryTypeset();
   }, [value]);
 
   return (
-    <div
+    <span
       ref={previewRef}
-      className="prose max-w-none"
-      style={{ background: '#f8fafc', borderRadius: 8, padding: 12, minHeight: 40 }}
       dangerouslySetInnerHTML={{ __html: latex2Html(value, images) }}
     />
   );
