@@ -20,6 +20,11 @@ const classDisplayToValue = {
   'CUET': 'CUET',
 };
 
+// Helper to get unique values from an array
+function unique(arr) {
+  return Array.from(new Set(arr));
+}
+
 export default function AdminQuizPage() {
   // Use centralized content file for class/subject options
   const classOptions = Object.keys(SUBJECTS_BY_CLASS);
@@ -191,7 +196,7 @@ export default function AdminQuizPage() {
               <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#2563eb', marginBottom: 4 }}>Subject</label>
               <select name="subject" value={search.subject} onChange={handleSearchChange} style={{ width: '100%', border: '1px solid #c7d2fe', borderRadius: 8, padding: '10px 14px', background: '#f1f5fe', outline: 'none', fontSize: 16 }}>
                 <option value="">All</option>
-                {(subjectOptions[search.class] || Object.values(subjectOptions).flat()).map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                {unique(subjectOptions[search.class] || Object.values(subjectOptions).flat()).map(opt => <option key={opt} value={opt}>{opt}</option>)}
               </select>
             </div>
             <div style={{ flex: 1, minWidth: 200 }}>
@@ -231,7 +236,7 @@ export default function AdminQuizPage() {
                   style={{ width: '100%', border: '1px solid #c7d2fe', borderRadius: 8, padding: '8px 12px', background: '#f1f5fe', outline: 'none' }}
                 >
                   <option value="">Select Subject</option>
-                  {(subjectOptions[form.class] || []).map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  {unique(subjectOptions[form.class] || []).map(opt => <option key={opt} value={opt}>{opt}</option>)}
                 </select>
               </div>
               <div style={{ flex: 1 }}>
@@ -246,7 +251,7 @@ export default function AdminQuizPage() {
                   <option value="">Select Chapter</option>
                   {(CHAPTERS_BY_CLASS_SUBJECT[form.class] && CHAPTERS_BY_CLASS_SUBJECT[form.class][form.subject])
                     ? CHAPTERS_BY_CLASS_SUBJECT[form.class][form.subject].map(ch => (
-                        <option key={ch.number} value={ch.number}>{ch.number}. {ch.name}</option>
+                        <option key={`${form.class}-${form.subject}-${ch.number}`} value={ch.number}>{ch.number}. {ch.name}</option>
                       ))
                     : null}
                 </select>
@@ -354,7 +359,11 @@ export default function AdminQuizPage() {
             </button>
           </div>
           {showPreview && (
-            <div ref={previewRef} style={{ width: '100%', maxWidth: 1300, background: '#f8fafc', borderRadius: 18, padding: 16, margin: '24px auto 0 auto', fontSize: 18, boxShadow: '0 4px 24px 0 #e0e7ff', border: '1px solid #dbeafe' }}>
+            <div
+              ref={previewRef}
+              key={form.question + form.answer + optionInputs.join(',')}
+              style={{ width: '100%', maxWidth: 1300, background: '#f8fafc', borderRadius: 18, padding: 16, margin: '24px auto 0 auto', fontSize: 18, boxShadow: '0 4px 24px 0 #e0e7ff', border: '1px solid #dbeafe' }}
+            >
               <div><strong>Question:</strong><br />{form.question}</div>
               <div style={{ marginTop: 8 }}><strong>Options:</strong>
                 <ul style={{ marginLeft: 16 }}>

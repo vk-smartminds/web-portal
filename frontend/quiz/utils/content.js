@@ -91,6 +91,84 @@ export const CHAPTERS_BY_CLASS_SUBJECT = {
       { number: '10', name: 'नमक का दरोगा' }
     ]
   },
+  '8': {
+    'Mathematics': [
+      { number: '1', name: 'Rational Numbers' },
+      { number: '2', name: 'Linear Equations in One Variable' },
+      { number: '3', name: 'Understanding Quadrilaterals' },
+      { number: '4', name: 'Practical Geometry' },
+      { number: '5', name: 'Data Handling' },
+      { number: '6', name: 'Squares and Square Roots' },
+      { number: '7', name: 'Cubes and Cube Roots' },
+      { number: '8', name: 'Comparing Quantities' },
+      { number: '9', name: 'Algebraic Expressions and Identities' },
+      { number: '10', name: 'Visualising Solid Shapes' },
+      { number: '11', name: 'Mensuration' },
+      { number: '12', name: 'Exponents and Powers' },
+      { number: '13', name: 'Direct and Inverse Proportions' },
+      { number: '14', name: 'Factorisation' },
+      { number: '15', name: 'Introduction to Graphs' },
+      { number: '16', name: 'Playing with Numbers' }
+    ],
+    'Science': [
+      { number: '1', name: 'Crop Production and Management' },
+      { number: '2', name: 'Microorganisms: Friend and Foe' },
+      { number: '3', name: 'Synthetic Fibres and Plastics' },
+      { number: '4', name: 'Materials: Metals and Non-Metals' },
+      { number: '5', name: 'Coal and Petroleum' },
+      { number: '6', name: 'Combustion and Flame' },
+      { number: '7', name: 'Conservation of Plants and Animals' },
+      { number: '8', name: 'Cell — Structure and Functions' },
+      { number: '9', name: 'Reproduction in Animals' },
+      { number: '10', name: 'Reaching the Age of Adolescence' },
+      { number: '11', name: 'Force and Pressure' },
+      { number: '12', name: 'Friction' },
+      { number: '13', name: 'Sound' },
+      { number: '14', name: 'Chemical Effects of Electric Current' },
+      { number: '15', name: 'Some Natural Phenomena' },
+      { number: '16', name: 'Light' },
+      { number: '17', name: 'Stars and the Solar System' },
+      { number: '18', name: 'Pollution of Air and Water' }
+    ],
+    'English': [
+      { number: '1', name: 'The Best Christmas Present in the World' },
+      { number: '2', name: 'The Tsunami' },
+      { number: '3', name: 'Glimpses of the Past' },
+      { number: '4', name: 'Bepin Choudhury’s Lapse of Memory' },
+      { number: '5', name: 'The Summit Within' },
+      { number: '6', name: 'This is Jody’s Fawn' },
+      { number: '7', name: 'A Visit to Cambridge' },
+      { number: '8', name: 'A Short Monsoon Diary' },
+      { number: '9', name: 'The Great Stone Face – I' },
+      { number: '10', name: 'The Great Stone Face – II' }
+    ],
+    'Social Science': [
+      { number: '1', name: 'How, When and Where' },
+      { number: '2', name: 'From Trade to Territory' },
+      { number: '3', name: 'Ruling the Countryside' },
+      { number: '4', name: 'Tribals, Dikus and the Vision of a Golden Age' },
+      { number: '5', name: 'When People Rebel' },
+      { number: '6', name: 'Colonialism and the City' },
+      { number: '7', name: 'Weavers, Iron Smelters and Factory Owners' },
+      { number: '8', name: 'Civilising the "Native", Educating the Nation' },
+      { number: '9', name: 'Women, Caste and Reform' },
+      { number: '10', name: 'The Changing World of Visual Arts' },
+      { number: '11', name: 'The Making of the National Movement: 1870s–1947' },
+      { number: '12', name: 'India After Independence' }
+    ],
+    'Hindi': [
+      { number: '1', name: 'ध्वनि' },
+      { number: '2', name: 'लाख की चूड़ियाँ' },
+      { number: '3', name: 'बस की यात्रा' },
+      { number: '4', name: 'दीवानों की हस्ती' },
+      { number: '5', name: 'चिट्ठियों की अनूठी दुनिया' },
+      { number: '6', name: 'भगवान के डाकिए' },
+      { number: '7', name: 'क्या निराश हुआ जाए' },
+      { number: '8', name: 'यह सबसे कठिन समय नहीं' },
+      { number: '9', name: 'एक कुत्ता और एक मैना' },
+      { number: '10', name: 'संसार पुस्तक है' }
+    ]
+  },
   // Add other classes and subjects as needed
 };
 

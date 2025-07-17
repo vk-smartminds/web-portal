@@ -206,6 +206,26 @@ export default function QuizAttemptPage() {
     };
   }, [isQuizActive]);
 
+  useEffect(() => {
+    if (!quiz) return;
+    let attempts = 0;
+    let maxAttempts = 10;
+    let delay = 200;
+    function tryTypeset() {
+      attempts++;
+      if (typeof window !== 'undefined' && window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise()
+          .then(() => console.log('[QuizAttempt] MathJax typeset whole document'))
+          .catch(e => console.error('[QuizAttempt] MathJax typeset error:', e));
+      } else if (attempts < maxAttempts) {
+        setTimeout(tryTypeset, delay);
+      } else {
+        console.warn('[QuizAttempt] MathJax not found after retries');
+      }
+    }
+    tryTypeset();
+  }, [quiz, current]);
+
   if (!isReady) {
     return <div>Loading...</div>;
   }

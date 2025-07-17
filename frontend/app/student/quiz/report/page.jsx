@@ -27,6 +27,26 @@ export default function QuizReportStandalonePage() {
       .finally(() => setLoading(false));
   }, [quizId]);
 
+  useEffect(() => {
+    if (!quiz) return;
+    let attempts = 0;
+    let maxAttempts = 10;
+    let delay = 200;
+    function tryTypeset() {
+      attempts++;
+      if (typeof window !== 'undefined' && window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise()
+          .then(() => console.log('[QuizReport] MathJax typeset whole document'))
+          .catch(e => console.error('[QuizReport] MathJax typeset error:', e));
+      } else if (attempts < maxAttempts) {
+        setTimeout(tryTypeset, delay);
+      } else {
+        console.warn('[QuizReport] MathJax not found after retries');
+      }
+    }
+    tryTypeset();
+  }, [quiz, showSolutionArr]);
+
   // --- UI Styles ---
   const mainStyle = {
     minHeight: '100vh',
