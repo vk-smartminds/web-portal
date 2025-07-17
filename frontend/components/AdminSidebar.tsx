@@ -77,7 +77,7 @@ export default function Sidebar({ newAnnouncementCount = 0, loadingAnnouncement 
   ];
 
   return (
-    <aside className="bg-[#0D0E12] text-white h-full min-h-full w-64 flex flex-col p-4">
+    <aside className="bg-[#0D0E12] text-white h-full min-h-screen w-64 flex flex-col p-4 rounded-l-3xl">
       <div>
         {/* User info at the top */}
         <div className="flex flex-col items-center mb-8">
