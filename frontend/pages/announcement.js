@@ -50,6 +50,36 @@ const blinkStyle = `
 }
 `;
 
+// Tooltip component
+function InfoTooltip({ text }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span style={{ position: 'relative', display: 'inline-block', marginLeft: 6 }}>
+      <span
+        tabIndex={0}
+        style={{
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          width: 18, height: 18, borderRadius: '50%', background: '#e3e8f0', color: '#1e3c72', fontWeight: 700, fontSize: 14, cursor: 'pointer', border: '1.5px solid #bfc9d9',
+        }}
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        onFocus={() => setShow(true)}
+        onBlur={() => setShow(false)}
+        aria-label="Help"
+      >
+        i
+      </span>
+      {show && (
+        <div style={{
+          position: 'absolute', left: '110%', top: '50%', transform: 'translateY(-50%)', background: '#fff', color: '#222', border: '1.5px solid #bfc9d9', borderRadius: 8, padding: '10px 14px', fontSize: 14, boxShadow: '0 2px 8px rgba(30,60,114,0.10)', zIndex: 1000, minWidth: 220, maxWidth: 320
+        }}>
+          {text}
+        </div>
+      )}
+    </span>
+  );
+}
+
 const AnnouncementPage = ({ newAnnouncementCount, setNewAnnouncementCount }) => {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -597,7 +627,10 @@ const AnnouncementPage = ({ newAnnouncementCount, setNewAnnouncementCount }) => 
             <form onSubmit={handleCreate}>
               <textarea name="text" value={form.text} onChange={handleFormChange} required rows={4} placeholder="Announcement text..." style={{ width: '100%', padding: 10, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16, marginBottom: 12 }} />
               <div style={{ marginBottom: 12, textAlign: "left" }}>
-                <label style={{ fontWeight: 600, color: "#1e3c72" }}>Announcement For (comma separated):</label>
+                <label style={{ fontWeight: 600, color: "#1e3c72" }}>
+                  Announcement For (comma separated):
+                  <InfoTooltip text={"You can choose individual roles (Student, Parent, Teacher, Admin), any combination (e.g., Student,Teacher), or 'All' to target everyone."} />
+                </label>
                 <input
                   type="text"
                   name="announcementFor"
@@ -607,13 +640,15 @@ const AnnouncementPage = ({ newAnnouncementCount, setNewAnnouncementCount }) => 
                   style={{ width: "100%", padding: 8, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16, marginTop: 4 }}
                   required
                 />
-                <div style={{ fontSize: 13, color: "#888", marginTop: 2 }}>Enter target audience separated by commas (e.g. Student, Teacher, Parent, Admin, All)</div>
               </div>
               {form.announcementFor && 
                form.announcementFor.toLowerCase().split(',').map(item => item.trim()).filter(Boolean).length === 1 && 
                form.announcementFor.toLowerCase().split(',').map(item => item.trim()).filter(Boolean)[0] === 'student' && (
                 <div style={{ marginBottom: 12, textAlign: "left" }}>
-                  <label style={{ fontWeight: 600, color: "#1e3c72" }}>Classes (comma separated):</label>
+                  <label style={{ fontWeight: 600, color: "#1e3c72" }}>
+                    Classes (comma separated):
+                    <InfoTooltip text={"Enter a single class, multiple classes separated by commas, or 'all' for all classes."} />
+                  </label>
                   <input
                     type="text"
                     value={typeof selectedClasses === "string" ? selectedClasses : selectedClasses.join(",")}
@@ -622,7 +657,6 @@ const AnnouncementPage = ({ newAnnouncementCount, setNewAnnouncementCount }) => 
                     style={{ width: "100%", padding: 8, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16, marginTop: 4 }}
                     required
                   />
-                  <div style={{ fontSize: 13, color: "#888", marginTop: 2 }}>Enter one or more classes separated by commas (e.g. 10,11,12)</div>
                 </div>
               )}
               <input type="file" name="images" accept="image/jpeg,image/png,image/jpg,application/pdf" multiple onChange={handleFormChange} style={{ marginBottom: 12 }} />
@@ -656,7 +690,10 @@ const AnnouncementPage = ({ newAnnouncementCount, setNewAnnouncementCount }) => 
             <form onSubmit={handleUpdate}>
               <textarea name="text" value={form.text} onChange={handleFormChange} required rows={4} placeholder="Announcement text..." style={{ width: '100%', padding: 10, borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 16, marginBottom: 12 }} />
               <div style={{ marginBottom: 12, textAlign: "left" }}>
-                <label style={{ fontWeight: 600, color: "#1e3c72" }}>Announcement For (comma separated):</label>
+                <label style={{ fontWeight: 600, color: "#1e3c72" }}>
+                  Announcement For (comma separated):
+                  <InfoTooltip text={"Edit, add, or remove target audience separated by commas (e.g. Student, Teacher, Parent, Admin, All)"} />
+                </label>
                 <input
                   type="text"
                   value={editAnnouncementFor}
@@ -665,13 +702,15 @@ const AnnouncementPage = ({ newAnnouncementCount, setNewAnnouncementCount }) => 
                   style={{ width: "100%", padding: 8, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16, marginTop: 4 }}
                   required
                 />
-                <div style={{ fontSize: 13, color: "#888", marginTop: 2 }}>Edit, add, or remove target audience separated by commas (e.g. Student, Teacher, Parent, Admin, All)</div>
               </div>
               {editAnnouncementFor && 
                editAnnouncementFor.toLowerCase().split(',').map(item => item.trim()).filter(Boolean).length === 1 && 
                editAnnouncementFor.toLowerCase().split(',').map(item => item.trim()).filter(Boolean)[0] === 'student' && (
                 <div style={{ marginBottom: 12, textAlign: "left" }}>
-                  <label style={{ fontWeight: 600, color: "#1e3c72" }}>Classes (comma separated):</label>
+                  <label style={{ fontWeight: 600, color: "#1e3c72" }}>
+                    Classes (comma separated):
+                    <InfoTooltip text={"Edit, add, or remove classes separated by commas (e.g. 10,11,12)"} />
+                  </label>
                   <input
                     type="text"
                     value={editClasses}
@@ -680,7 +719,6 @@ const AnnouncementPage = ({ newAnnouncementCount, setNewAnnouncementCount }) => 
                     style={{ width: "100%", padding: 8, borderRadius: 6, border: "1.5px solid #e0e0e0", fontSize: 16, marginTop: 4 }}
                     required
                   />
-                  <div style={{ fontSize: 13, color: "#888", marginTop: 2 }}>Edit, add, or remove classes separated by commas (e.g. 10,11,12)</div>
                 </div>
               )}
               <input type="file" name="images" accept="image/jpeg,image/png,image/jpg,application/pdf" multiple onChange={handleFormChange} style={{ marginBottom: 12 }} />
