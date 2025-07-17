@@ -4,6 +4,7 @@ import React from "react";
 import ForgotPasswordModal from "./ForgotPasswordModal";
 import { BASE_API_URL } from "../../utils/apiurl";
 import RegisterModal from "../RegisterModal";
+import Image from "next/image";
 
 export default function LoginForm(props) {
   const {
@@ -50,123 +51,123 @@ export default function LoginForm(props) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black px-4">
-      <div className="w-full max-w-sm bg-[#111111] rounded-2xl p-6 shadow-lg">
-        {/* Logo */}
-        <div className="flex justify-center mb-6">
-          <div className="h-10 w-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xl font-bold">
-            VK
-          </div>
+    <div className="min-h-screen flex items-center justify-center bg-[#111015] px-4">
+      <div className="w-full max-w-md bg-[#18181b] rounded-2xl p-8 shadow-lg border border-[#23232a]">
+        {/* Logo and Title */}
+        <div className="flex flex-col items-center mb-6">
+          <Image src="/vk-logo.png" alt="VK Logo" width={48} height={48} className="mb-2" />
+          <h1 className="text-white text-2xl font-bold mb-1">VK Global Publications</h1>
         </div>
-
-        <h2 className="text-white text-center text-xl font-semibold mb-1">
-          Welcome Back
-        </h2>
-        <p className="text-sm text-gray-400 text-center mb-6">
-          Don’t have an account yet?{" "}
-          <span
-            className="text-white font-medium cursor-pointer hover:underline"
-            onClick={() => setShowRegister(true)}
-          >
-            Sign up
-          </span>
-        </p>
-
-        {/* Mode Switch */}
-        <div className="flex mb-4">
+        {/* Tab Switch */}
+        <div className="flex mb-6 bg-[#23232a] rounded-lg overflow-hidden">
           <button
-            className={`flex-1 py-2 rounded-l-md ${
-              mode === "password"
-                ? "bg-blue-600 text-white"
-                : "bg-[#1c1c1c] text-gray-400"
-            }`}
+            className={`flex-1 py-2 font-semibold text-sm transition-colors ${mode === "password" ? "bg-[#ff4d1c] text-white" : "bg-[#23232a] text-gray-300"}`}
             onClick={() => setMode("password")}
           >
-            Password
+            Password Login
           </button>
           <button
-            className={`flex-1 py-2 rounded-r-md ${
-              mode === "otp"
-                ? "bg-blue-600 text-white"
-                : "bg-[#1c1c1c] text-gray-400"
-            }`}
+            className={`flex-1 py-2 font-semibold text-sm transition-colors ${mode === "otp" ? "bg-[#ff4d1c] text-white" : "bg-[#23232a] text-gray-300"}`}
             onClick={() => setMode("otp")}
           >
-            OTP
+            OTP Login
           </button>
         </div>
-
         {/* Forms */}
         {mode === "password" && (
           <form onSubmit={handlePasswordLogin} className="w-full">
+            <label className="block text-white text-sm font-semibold mb-1">Email Address</label>
             <input
               type="email"
-              placeholder="email address"
+              placeholder="Enter your email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              className="w-full mb-4 px-4 py-3 rounded-md bg-[#1c1c1c] text-white placeholder-gray-500 border-none"
+              className="w-full mb-4 px-4 py-3 rounded-md bg-[#23232a] text-white placeholder-gray-400 border border-[#23232a] focus:outline-none focus:ring-2 focus:ring-[#ff4d1c]"
             />
-
-            <div className="relative mb-4">
+            <label className="block text-white text-sm font-semibold mb-1">Password</label>
+            <div className="relative mb-2">
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="Password"
+                placeholder="Enter your password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 pr-10 rounded-md bg-[#1c1c1c] text-white placeholder-gray-500 border-none"
+                className="w-full px-4 py-3 pr-10 rounded-md bg-[#23232a] text-white placeholder-gray-400 border border-[#23232a] focus:outline-none focus:ring-2 focus:ring-[#ff4d1c]"
               />
               <span
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-white"
               >
-                {showPassword ? "🙈" : "👁️"}
+                {showPassword ? (
+                  // Eye (visible)
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                ) : (
+                  // Eye-off (hidden)
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.269-2.943-9.543-7a9.956 9.956 0 012.293-3.95m3.25-2.568A9.956 9.956 0 0112 5c4.478 0 8.269 2.943 9.543 7a9.97 9.97 0 01-4.423 5.568M15 12a3 3 0 11-6 0 3 3 0 016 0zm-9 9l18-18"/></svg>
+                )}
               </span>
             </div>
-
+            <div className="w-full text-right mb-4">
+              <span
+                onClick={() => setShowForgotModal(true)}
+                className="text-[13px] text-[#ffb14d] hover:text-[#ff4d1c] cursor-pointer font-medium"
+              >
+                Forgot Password?
+              </span>
+            </div>
             {error && <p className="text-red-500 mb-2 text-sm">{error}</p>}
             {msg && <p className="text-blue-500 mb-2 text-sm">{msg}</p>}
-
             <button
               type="submit"
-              className="w-full py-3 mt-1 mb-2 font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-full py-3 mt-1 mb-2 font-semibold rounded-md bg-[#ff6b4d] text-white transition-colors duration-150 hover:bg-[#d63a1b] active:bg-[#d63a1b] focus:outline-none focus:ring-2 focus:ring-[#ff4d1c]"
             >
               Login
             </button>
-
-            <div className="w-full text-right">
-              <span
-                onClick={() => setShowForgotModal(true)}
-                className="text-[13px] text-gray-400 hover:text-white cursor-pointer underline"
-              >
-                Forgot password?
-              </span>
+            <div className="flex items-center my-4">
+              <div className="flex-grow h-px bg-[#23232a]" />
+              <span className="mx-2 text-gray-400 text-xs">OR</span>
+              <div className="flex-grow h-px bg-[#23232a]" />
             </div>
+            <button
+              type="button"
+              className="w-full py-3 font-semibold rounded-md bg-white text-black flex items-center justify-center gap-2 border border-[#4285F4] hover:bg-gray-100 transition-colors duration-150 mb-2"
+              style={{ boxShadow: 'none' }}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2">
+                <g clipPath="url(#clip0_17_40)">
+                  <path d="M23.766 12.276c0-.818-.074-1.604-.213-2.356H12.24v4.451h6.484a5.54 5.54 0 01-2.4 3.637v3.017h3.877c2.27-2.092 3.565-5.176 3.565-8.749z" fill="#4285F4"/>
+                  <path d="M12.24 24c3.24 0 5.963-1.07 7.95-2.91l-3.877-3.017c-1.077.72-2.453 1.15-4.073 1.15-3.13 0-5.78-2.112-6.73-4.946H1.54v3.09A11.997 11.997 0 0012.24 24z" fill="#34A853"/>
+                  <path d="M5.51 14.277a7.19 7.19 0 010-4.554V6.633H1.54a12.004 12.004 0 000 10.734l3.97-3.09z" fill="#FBBC05"/>
+                  <path d="M12.24 4.771c1.763 0 3.34.606 4.584 1.797l3.436-3.436C18.2 1.07 15.478 0 12.24 0 7.36 0 2.97 2.69 1.54 6.633l3.97 3.09c.95-2.834 3.6-4.946 6.73-4.946z" fill="#EA4335"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_17_40">
+                    <rect width="24" height="24" fill="white"/>
+                  </clipPath>
+                </defs>
+              </svg>
+              Continue with Google
+            </button>
           </form>
         )}
-
         {mode === "otp" && (
           <form onSubmit={handleOtpLogin} className="w-full">
+            <label className="block text-white text-sm font-semibold mb-1">Email Address</label>
             <input
               type="email"
-              placeholder="email address"
+              placeholder="Enter your email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              className="w-full mb-4 px-4 py-3 rounded-md bg-[#1c1c1c] text-white placeholder-gray-500 border-none"
+              className="w-full mb-4 px-4 py-3 rounded-md bg-[#23232a] text-white placeholder-gray-400 border border-[#23232a] focus:outline-none focus:ring-2 focus:ring-[#ff4d1c]"
             />
-
             {!otpSent ? (
               <button
                 type="button"
                 onClick={handleSendOtp}
                 disabled={sendingOtp}
-                className={`w-full py-3 mb-2 font-semibold rounded-md ${
-                  sendingOtp
-                    ? "bg-blue-400 opacity-70 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
-                } text-white`}
+                className={`w-full py-3 mb-2 font-semibold rounded-md ${sendingOtp ? "bg-blue-400 opacity-70 cursor-not-allowed" : "bg-[#ff6b4d] hover:bg-[#d63a1b] active:bg-[#d63a1b]"} text-white transition-colors duration-150`}
               >
                 {sendingOtp ? "Sending..." : "Send OTP"}
               </button>
@@ -182,14 +183,14 @@ export default function LoginForm(props) {
                       value={val}
                       onChange={e => handleOtpBlockChange(idx, e.target.value)}
                       onKeyDown={e => handleOtpBlockKeyDown(idx, e)}
-                      className="w-10 h-12 text-xl text-center rounded-md bg-[#1c1c1c] text-white border border-gray-700"
+                      className="w-10 h-12 text-xl text-center rounded-md bg-[#23232a] text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#ff4d1c]"
                     />
                   ))}
                 </div>
                 <p className="text-sm text-gray-400 mb-2 text-center">
                   {otpExpired ? (
                     <span className="text-red-500">
-                      OTP expired.{" "}
+                      OTP expired.{' '}
                       <span
                         className="text-blue-500 underline cursor-pointer"
                         onClick={handleSendOtp}
@@ -198,56 +199,41 @@ export default function LoginForm(props) {
                       </span>
                     </span>
                   ) : (
-                    <>Time left: <b>{otpTimer}s</b></>
+                    <>Time left: <b className="text-blue-400">{otpTimer}s</b></>
                   )}
                 </p>
                 <button
                   type="submit"
-                  className="w-full py-3 font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white"
+                  className="w-full py-3 font-semibold rounded-md bg-[#ff6b4d] text-white hover:bg-[#d63a1b] active:bg-[#d63a1b] transition-colors duration-150"
                 >
                   Login
                 </button>
               </div>
             )}
-
             {error && <p className="text-red-500 mb-2 text-sm">{error}</p>}
             {msg && <p className="text-blue-500 mb-2 text-sm">{msg}</p>}
           </form>
         )}
-
-        {/* Popups */}
-        {showNotFoundPopup && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-            <div className="relative bg-[#111111] text-white rounded-xl shadow-lg p-9 w-full max-w-sm text-center">
-              <button
-                onClick={() => setShowNotFoundPopup(false)}
-                className="absolute top-3 right-4 w-8 h-8 rounded-full bg-[#1c1c1c] text-white font-bold text-lg"
-              >
-                ×
-              </button>
-              <h3 className="text-xl font-bold mb-4">User not found</h3>
-              <p className="text-gray-400 mb-6">Please register to continue.</p>
-              <button
-                onClick={() => { setShowNotFoundPopup(false); setShowRegister(true); }}
-                className="w-full py-3 font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                Register
-              </button>
-            </div>
-          </div>
-        )}
-
-        <ForgotPasswordModal
-          open={showForgotModal}
-          onClose={() => setShowForgotModal(false)}
-          onSuccess={() => setShowForgotModal(false)}
-          apiSendOtp={apiSendOtp}
-          apiVerifyOtp={apiVerifyOtp}
-          apiResetPassword={apiResetPassword}
-        />
-        
+        {/* Register link */}
+        <div className="text-center mt-6 text-gray-400 text-sm">
+          Don’t have an account?{' '}
+          <span
+            className="text-[#ffb14d] font-medium cursor-pointer hover:underline"
+            onClick={() => setShowRegister(true)}
+          >
+            Register here
+          </span>
+        </div>
       </div>
       <RegisterModal open={showRegister} onClose={() => setShowRegister(false)} />
+      <ForgotPasswordModal
+        open={showForgotModal}
+        onClose={() => setShowForgotModal(false)}
+        onSuccess={() => setShowForgotModal(false)}
+        apiSendOtp={apiSendOtp}
+        apiVerifyOtp={apiVerifyOtp}
+        apiResetPassword={apiResetPassword}
+      />
     </div>
   );
 }
