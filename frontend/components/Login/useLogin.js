@@ -155,6 +155,7 @@ export default function useLogin() {
       }
     } catch (err) {}
     setError("User not found.");
+    setShowNotFoundPopup(true);
   };
 
   const handleSendOtp = async () => {
@@ -242,8 +243,11 @@ export default function useLogin() {
         } else {
           const data = await res.json();
           setError(data.message || "Invalid OTP.");
+          if ((data.message || "").toLowerCase().includes("user not found")) {
+            setShowNotFoundPopup(true);
+          }
         }
-      } catch (err) {
+      } catch {
         setError("Admin OTP login failed.");
       }
       return;
@@ -273,6 +277,9 @@ export default function useLogin() {
       } else {
         const data = await res.json();
         setError(data.message || "Invalid OTP.");
+        if ((data.message || "").toLowerCase().includes("user not found") || res.status === 404) {
+          setShowNotFoundPopup(true);
+        }
       }
     } catch (err) {
       setError("OTP login failed. Please try again.");

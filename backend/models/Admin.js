@@ -41,7 +41,7 @@ const Admin = mongoose.model('Admin', adminSchema);
 
 // Ensure superadmin always exists in the database
 (async () => {
-  const superAdminEmail = "chetandudi791@gmail.com";
+  const superAdminEmail = "sarthak@vkgp.in";
   const defaultPassword = "Vkgp_123";
   const exists = await Admin.findOne({ email: superAdminEmail });
   if (!exists) {
