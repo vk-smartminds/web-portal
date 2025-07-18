@@ -4,7 +4,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { getQuiz, submitQuiz } from '../../../../../quiz/utils/api';
 import { getStudentIdFromJWT, getToken } from '../../../../../utils/auth';
 import { BASE_API_URL } from '../../../../../utils/apiurl';
-import { latex2Html } from '../../../../quiz/utils/latex/latex2html';
+// import { latex2Html } from '../../../quiz/utils/latex/latex2html';
+import LatexPreviewer from '../../utils/LatexPreviewerApp.js';
+import { latex2Html } from '../../utils/latex2Html.js';
 
 const paletteColor = s => s === 'attempted' ? '#22c55e' : s === 'review' ? '#eab308' : '#cbd5e1';
 const paletteBorder = s => s === 'attempted' ? '#22c55e' : s === 'review' ? '#eab308' : '#cbd5e1';
@@ -455,11 +457,10 @@ export default function QuizAttemptPage() {
             <div style={{ ...statValue, background: '#e0e7ef', borderRadius: 8, padding: '4px 16px', fontFamily: 'monospace', fontSize: 20 }}>{Math.floor(timer/60).toString().padStart(2,'0')}:{(timer%60).toString().padStart(2,'0')}</div>
           </div>
           <div style={{ ...qTextStyle, marginBottom: 18 }}>
-            <span dangerouslySetInnerHTML={{ __html: latex2Html(q.question) }} />
+            <LatexPreviewer value={q.question} />
           </div>
           <div style={{ marginBottom: 18 }}>
             {q.options.map((opt, i) => {
-              // Map index to letter
               const optLetter = String.fromCharCode(97 + i);
               const isSelected = isSelectAllType(q)
                 ? Array.isArray(resp.selectedOption) && resp.selectedOption.includes(optLetter)
@@ -470,12 +471,15 @@ export default function QuizAttemptPage() {
                   style={optButtonStyle(isSelected)}
                   onClick={() => handleOption(opt)}
                 >
-                  {opt}
-                  {isSelectAllType(q) && (
-                    <span style={{ marginLeft: 8, fontSize: 13, color: '#64748b' }}>
-                      {isSelected ? '✓' : ''}
-                    </span>
-                  )}
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontWeight: 700, marginRight: 8 }}>{String.fromCharCode(65 + i)}.</span>
+                    <LatexPreviewer value={opt} />
+                    {isSelectAllType(q) && (
+                      <span style={{ marginLeft: 8, fontSize: 13, color: '#64748b' }}>
+                        {isSelected ? '✓' : ''}
+                      </span>
+                    )}
+                  </span>
                 </button>
               );
             })}
