@@ -2,7 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getQuiz } from '../../../../quiz/utils/api';
-import { latex2Html } from '../../../../quiz/utils/latex/latex2html';
+import { latex2Html } from '../utils/latex2Html';
+import LatexPreviewer from '../utils/LatexPreviewerApp';
 
 export default function QuizReportStandalonePage() {
   const searchParams = useSearchParams();
@@ -175,7 +176,7 @@ export default function QuizReportStandalonePage() {
   const optionRowStyle = {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start', // changed from 'space-between' to 'flex-start'
     width: '420px',
     maxWidth: '100%',
     background: '#f8fafc',
@@ -190,6 +191,8 @@ export default function QuizReportStandalonePage() {
     minHeight: 36,
     cursor: 'pointer',
     boxShadow: '0 1px 4px 0 #e0e7ef',
+    textAlign: 'left', // ensure left alignment
+    gap: 8, // add gap for spacing between letter and text
   };
   const optionRowHoverStyle = {
     background: '#e0e7ef',
@@ -344,7 +347,7 @@ export default function QuizReportStandalonePage() {
             return (
               <div key={q._id} style={qBlockStyle}>
                 <div style={qTextStyle}>
-                  <span dangerouslySetInnerHTML={{ __html: latex2Html(q.question) }} />
+                  <LatexPreviewer value={q.question} />
                 </div>
                 {/* --- Topics and Difficulty --- */}
                 <div style={{ margin: '6px 0 12px 0', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
@@ -383,43 +386,18 @@ export default function QuizReportStandalonePage() {
                         return String(sel).toLowerCase() === String(opt).toLowerCase();
                       });
                       // --- VK Portal coloring logic (final fix) ---
-                      let style = {
-                        display: 'inline-block',
-                        width: '420px',
-                        maxWidth: '100%',
-                        padding: '10px 18px',
-                        borderRadius: 16,
-                        border: '2px solid #e0e7ef',
-                        background: '#f1f5f9',
-                        color: '#334155',
-                        fontWeight: 500,
-                        fontSize: 16,
-                        marginRight: 8,
-                        marginBottom: 10,
-                        transition: 'background 0.2s, border 0.2s',
-                      };
-                      if (correct) {
-                        // Correct is always green, even if selected or unattempted
-                        style.background = '#e6fbe8';
-                        style.color = '#15803d';
-                        style.border = '2px solid #22c55e';
-                      } else if (selected) {
-                        // Only non-correct selected is red
-                        style.background = '#fde8e8';
-                        style.color = '#b91c1c';
-                        style.border = '2px solid #ef4444';
-                      }
                       return (
-                        <span key={idx} style={style}>
-                          <span style={{ fontWeight: 900, color: '#64748b', fontSize: 15, marginRight: 10, minWidth: 22, display: 'inline-block', textAlign: 'center', textTransform: 'uppercase' }}>{optionLetter}</span>
-                          {opt}
-                          {correct && (
-                            <span style={{ color: '#22c55e', fontWeight: 900, fontSize: 18, marginLeft: 8 }}>✔</span>
-                          )}
-                          {!correct && selected && (
-                            <span style={{ color: '#ef4444', fontWeight: 900, fontSize: 18, marginLeft: 8 }}>✖</span>
-                          )}
-                        </span>
+                        <div key={idx} style={{ ...optionRowStyle, background: selected ? (isCorrect ? '#d1fae5' : '#fee2e2') : '#f1f5f9', borderColor: selected ? (isCorrect ? '#22c55e' : '#ef4444') : '#e0e7ef', color: selected ? (isCorrect ? '#065f46' : '#991b1b') : '#334155' }}>
+                          <span style={{ fontWeight: 700, marginRight: 8 }}>{optionLetter}.</span>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <LatexPreviewer value={opt} />
+                            {selected && (
+                              <span style={{ marginLeft: 8, fontSize: 13, color: isCorrect ? '#22c55e' : '#ef4444', fontWeight: 700 }}>
+                                {isCorrect ? '✓' : '✗'}
+                              </span>
+                            )}
+                          </span>
+                        </div>
                       );
                     })}
                   </div>

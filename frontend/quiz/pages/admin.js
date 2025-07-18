@@ -72,6 +72,59 @@ function ImageUploadLatexButton({ value, onChange, textareaRef }) {
   );
 }
 
+// Add a reusable image upload button for options and solution, with icon inside the box
+function ImageUploadLatexButtonForField({ value, onChange, inputRef, id }) {
+  const [uploading, setUploading] = useState(false);
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const res = await fetch(`${BASE_API_URL}/images/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      const imageUrl = data.url;
+      const latexToInsert = `\\includegraphics[width=4cm]{${imageUrl}}`;
+      const input = inputRef.current;
+      if (input) {
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const newValue = value.substring(0, start) + latexToInsert + value.substring(end);
+        onChange(newValue);
+        setTimeout(() => {
+          input.focus();
+          input.selectionStart = input.selectionEnd = start + latexToInsert.length;
+        }, 0);
+      } else {
+        onChange(value + latexToInsert);
+      }
+    } catch (err) {
+      alert('Image upload failed.');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+  // SVG paperclip icon
+  const icon = (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7.5 10.8333L12.5 5.83333M12.5 5.83333C13.8807 7.21405 13.8807 9.45262 12.5 10.8333C11.1193 12.2141 8.88074 12.2141 7.5 10.8333C6.11926 9.45262 6.11926 7.21405 7.5 5.83333C8.88074 4.45262 11.1193 4.45262 12.5 5.83333Z" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+  return (
+    <>
+      <input type="file" accept="image/*" style={{ display: 'none' }} id={id} onChange={handleFileChange} disabled={uploading} />
+      <label htmlFor={id} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', cursor: uploading ? 'not-allowed' : 'pointer', opacity: uploading ? 0.5 : 1, zIndex: 2 }}>
+        {icon}
+      </label>
+    </>
+  );
+}
+
 export default function AdminQuizPage() {
   // Use centralized content file for class/subject options
   const classOptions = Object.keys(SUBJECTS_BY_CLASS);
@@ -103,6 +156,9 @@ export default function AdminQuizPage() {
   const [userEmail, setUserEmail] = useState("");
   const [userPhoto, setUserPhoto] = useState("");
   const questionTextareaRef = useRef();
+  // In AdminQuizPage, add refs for each option and the answer
+  const optionRefs = [useRef(), useRef(), useRef(), useRef()];
+  const answerRef = useRef();
 
   useEffect(() => {
     const u = getUserData();
@@ -339,17 +395,26 @@ export default function AdminQuizPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {optionInputs.map((opt, idx) => (
                   <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <input
-                      type="text"
-                      value={opt}
-                      placeholder={`Option ${idx + 1}`}
-                      onChange={e => {
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                      <input
+                        ref={optionRefs[idx]}
+                        name={`option${idx}`}
+                        type="text"
+                        value={opt}
+                        placeholder={`Option ${idx + 1}`}
+                        onChange={e => {
+                          const newOpts = [...optionInputs];
+                          newOpts[idx] = e.target.value;
+                          setOptionInputs(newOpts);
+                        }}
+                        style={{ width: '100%', border: '1px solid #c7d2fe', borderRadius: 8, padding: '8px 36px 8px 12px', background: '#f1f5fe', outline: 'none' }}
+                      />
+                      <ImageUploadLatexButtonForField value={opt} onChange={val => {
                         const newOpts = [...optionInputs];
-                        newOpts[idx] = e.target.value;
+                        newOpts[idx] = val;
                         setOptionInputs(newOpts);
-                      }}
-                      style={{ width: '100%', border: '1px solid #c7d2fe', borderRadius: 8, padding: '8px 12px', background: '#f1f5fe', outline: 'none' }}
-                    />
+                      }} inputRef={optionRefs[idx]} id={`option-img-upload-${idx}`} />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -361,7 +426,17 @@ export default function AdminQuizPage() {
               </div>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', fontWeight: 600, color: '#2563eb', marginBottom: 4 }}>Solution/Answer Explanation</label>
-                <textarea name="answer" value={form.answer} onChange={handleChange} placeholder="Solution/Answer Explanation" style={{ width: '100%', border: '1px solid #c7d2fe', borderRadius: 8, padding: '8px 12px', background: '#f1f5fe', outline: 'none', minHeight: 40 }} />
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <textarea
+                    ref={answerRef}
+                    name="answer"
+                    value={form.answer}
+                    onChange={handleChange}
+                    placeholder="Solution/Answer Explanation"
+                    style={{ width: '100%', border: '1px solid #c7d2fe', borderRadius: 8, padding: '8px 36px 8px 12px', background: '#f1f5fe', outline: 'none', minHeight: 40 }}
+                  />
+                  <ImageUploadLatexButtonForField value={form.answer} onChange={val => setForm(f => ({ ...f, answer: val }))} inputRef={answerRef} id="answer-img-upload" />
+                </div>
               </div>
             </div>
             <div style={{ display: 'flex', gap: 16, width: '100%', marginBottom: 8 }}>
@@ -420,13 +495,13 @@ export default function AdminQuizPage() {
               key={form.question + form.answer + optionInputs.join(',')}
               style={{ width: '100%', maxWidth: 1300, background: '#f8fafc', borderRadius: 18, padding: 16, margin: '24px auto 0 auto', fontSize: 18, boxShadow: '0 4px 24px 0 #e0e7ff', border: '1px solid #dbeafe' }}
             >
-              <div><strong>Question:</strong><br />{form.question}</div>
+              <div><strong>Question:</strong><br /><LatexPreviewer value={form.question} /></div>
               <div style={{ marginTop: 8 }}><strong>Options:</strong>
                 <ul style={{ marginLeft: 16 }}>
-                  {optionInputs.map((opt, idx) => opt && <li key={idx}>{opt}</li>)}
+                  {optionInputs.map((opt, idx) => opt && <li key={idx} style={{ listStyle: 'none', marginBottom: 12 }}><LatexPreviewer value={opt} /></li>)}
                 </ul>
               </div>
-              <div style={{ marginTop: 8 }}><strong>Answer/Solution:</strong><br />{form.answer}</div>
+              <div style={{ marginTop: 8 }}><strong>Answer/Solution:</strong><br /><LatexPreviewer value={form.answer} /></div>
             </div>
           )}
           {error && <div style={{ color: '#dc2626', marginTop: 8 }}>{error}</div>}
