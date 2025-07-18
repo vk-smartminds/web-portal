@@ -50,7 +50,24 @@ export default function DiscussionPanel({ userType = 'Student' }: { userType?: s
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [tag, setTag] = useState<string>("");
+  const [tag, setTag] = useState<string>(""); // deprecated, keep for compatibility
+  const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
+  const [tagSearch, setTagSearch] = useState("");
+  const tagDropdownRef = useRef<HTMLDivElement>(null);
+  // Close tag dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (tagDropdownRef.current && !tagDropdownRef.current.contains(event.target as Node)) {
+        setTagDropdownOpen(false);
+      }
+    }
+    if (tagDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [tagDropdownOpen]);
   const [threadImages, setThreadImages] = useState<File[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [categoriesDropdownOpen, setCategoriesDropdownOpen] = useState(false);
@@ -117,11 +134,11 @@ export default function DiscussionPanel({ userType = 'Student' }: { userType?: s
 
   const handleCreateThread = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !body || !tag) return;
+    if (!title || !body || selectedTags.length === 0) return;
     const formData = new FormData();
     formData.append('title', title);
     formData.append('body', body);
-    formData.append('tags[]', tag);
+    selectedTags.forEach(t => formData.append('tags[]', t));
     threadImages.forEach(file => formData.append('images', file));
     try {
       await createDiscussionThread(formData);
@@ -129,6 +146,7 @@ export default function DiscussionPanel({ userType = 'Student' }: { userType?: s
       setTitle("");
       setBody("");
       setTag("");
+      setSelectedTags([]);
       setThreadImages([]);
       // Optionally, refetch threads if needed
     } catch (err) {
@@ -166,7 +184,7 @@ export default function DiscussionPanel({ userType = 'Student' }: { userType?: s
                   <span className="sr-only">VK Global Logo</span>
                 </div>  
                 <span className="text-xl font-bold text-gray-900">
-                iscussion</span>
+                Discussions</span>
               </div>
               <div className="flex items-center space-x-6">
                 <button onClick={() => setActiveTab('latest')} className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === 'latest' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900'}`}>Latest</button>
@@ -349,19 +367,74 @@ export default function DiscussionPanel({ userType = 'Student' }: { userType?: s
                   <div className="text-right text-xs text-gray-400 mt-1">{body.length}/2000</div>
                 </div>
                 <div className="mb-6">
-                  <label className="block font-semibold text-gray-700 mb-2" htmlFor="threadTag">Category</label>
-                  <select
-                    value={tag}
-                    onChange={e => setTag(e.target.value)}
-                    id="threadTag"
-                    className="w-full px-5 py-4 border-2 border-gray-200 rounded-xl text-lg bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all cursor-pointer"
-                    required
-                  >
-                    <option value="" disabled>Select a category...</option>
-                    {TAG_OPTIONS.map(tagOption => (
-                      <option key={tagOption} value={tagOption}>{tagOption}</option>
-                    ))}
-                  </select>
+                  <label className="block font-semibold text-gray-700 mb-2" htmlFor="threadTag">Categories (Select multiple)</label>
+                  <div className="relative" ref={tagDropdownRef}>
+                    <button
+                      type="button"
+                      id="threadTag"
+                      className="w-full px-5 py-4 border-2 border-gray-200 rounded-xl text-lg bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all cursor-pointer text-left flex flex-wrap gap-2 min-h-[56px]"
+                      onClick={() => setTagDropdownOpen(v => !v)}
+                    >
+                      {selectedTags.length === 0 ? (
+                        <span className="text-gray-400">Select categories...</span>
+                      ) : (
+                        selectedTags.map(t => (
+                          <span key={t} className="inline-block bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs mr-1 mb-1">
+                            {t}
+                            <button
+                              type="button"
+                              className="ml-1 text-blue-500 hover:text-red-500"
+                              onClick={e => {
+                                e.stopPropagation();
+                                setSelectedTags(selectedTags.filter(tag => tag !== t));
+                              }}
+                              aria-label={`Remove ${t}`}
+                            >×</button>
+                          </span>
+                        ))
+                      )}
+                      <span className="ml-auto text-gray-400">▼</span>
+                    </button>
+                    {tagDropdownOpen && (
+                      <div className="absolute left-0 mt-2 w-full max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg z-50 p-2 animate-fade-in">
+                        <input
+                          type="text"
+                          placeholder="Search categories..."
+                          value={tagSearch}
+                          onChange={e => setTagSearch(e.target.value)}
+                          className="mb-2 px-3 py-2 border border-gray-200 rounded-md text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        {TAG_OPTIONS.filter(tagOption => tagOption.toLowerCase().includes(tagSearch.toLowerCase())).map(tagOption => (
+                          <button
+                            type="button"
+                            key={tagOption}
+                            className={`block w-full text-left px-4 py-2 rounded-md text-base transition-colors ${selectedTags.includes(tagOption) ? 'bg-blue-600 text-white' : 'hover:bg-blue-100 hover:text-blue-700'}`}
+                            onClick={e => {
+                              e.stopPropagation();
+                              if (selectedTags.includes(tagOption)) {
+                                setSelectedTags(selectedTags.filter(tag => tag !== tagOption));
+                              } else {
+                                setSelectedTags([...selectedTags, tagOption]);
+                              }
+                            }}
+                          >
+                            {tagOption}
+                            {selectedTags.includes(tagOption) && <span className="ml-2">✓</span>}
+                          </button>
+                        ))}
+                        {selectedTags.length > 0 && (
+                          <button
+                            type="button"
+                            className="mt-2 w-full bg-gray-100 text-gray-700 rounded-md py-1 font-semibold"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setSelectedTags([]);
+                            }}
+                          >Clear All</button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="mb-6">
                   <label className="block font-semibold text-gray-700 mb-2">Images (Optional)</label>
