@@ -5,6 +5,7 @@ import LatexPreviewer from '../components/LatexPreviewer';
 import Script from 'next/script';
 // REMOVE: import AdminDashboardSidebar from '../../components/AdminDashboard/AdminDashboardSidebar';
 import { getUserData } from '../../utils/auth.js';
+import { BASE_API_URL } from '../../utils/apiurl';
 
 // Map display class values to DB values (if needed, otherwise identity)
 const classDisplayToValue = {
@@ -23,6 +24,52 @@ const classDisplayToValue = {
 // Helper to get unique values from an array
 function unique(arr) {
   return Array.from(new Set(arr));
+}
+
+// Add this helper component inside AdminQuizPage (or as a function in the file)
+function ImageUploadLatexButton({ value, onChange, textareaRef }) {
+  const [uploading, setUploading] = useState(false);
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const res = await fetch(`${BASE_API_URL}/images/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      const imageUrl = data.url;
+      const latexToInsert = `\\includegraphics[width=4cm]{${imageUrl}}`;
+      const textarea = textareaRef.current;
+      if (textarea) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const newValue = value.substring(0, start) + latexToInsert + value.substring(end);
+        onChange(newValue);
+        // Move cursor after inserted text
+        setTimeout(() => {
+          textarea.focus();
+          textarea.selectionStart = textarea.selectionEnd = start + latexToInsert.length;
+        }, 0);
+      } else {
+        onChange(value + latexToInsert);
+      }
+    } catch (err) {
+      alert('Image upload failed.');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+  return (
+    <div style={{ marginTop: 8 }}>
+      <input type="file" accept="image/*" onChange={handleFileChange} disabled={uploading} />
+      {uploading && <span style={{ marginLeft: 8, color: '#2563eb' }}>Uploading...</span>}
+    </div>
+  );
 }
 
 export default function AdminQuizPage() {
@@ -55,6 +102,7 @@ export default function AdminQuizPage() {
   const [showPreview, setShowPreview] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [userPhoto, setUserPhoto] = useState("");
+  const questionTextareaRef = useRef();
 
   useEffect(() => {
     const u = getUserData();
@@ -274,9 +322,17 @@ export default function AdminQuizPage() {
                 <option value="SelectResponse">Select Response Type (Multiple correct)</option>
               </select>
             </div>
-            <div style={{ width: '100%', marginBottom: 8 }}>
-              <label style={{ display: 'block', fontWeight: 600, color: '#2563eb', marginBottom: 4 }}>Question</label>
-              <textarea name="question" value={form.question} onChange={handleChange} placeholder="Question" style={{ width: '100%', border: '1px solid #c7d2fe', borderRadius: 8, padding: '8px 12px', background: '#f1f5fe', outline: 'none', minHeight: 48 }} />
+            <div style={{ marginBottom: 8 }}>
+              <label style={{ display: 'block', fontWeight: 600, color: '#2563eb', marginBottom: 4 }}>Question (LaTeX supported)</label>
+              <textarea
+                ref={questionTextareaRef}
+                name="question"
+                value={form.question}
+                onChange={e => setForm(f => ({ ...f, question: e.target.value }))}
+                rows={4}
+                style={{ width: '100%', border: '1px solid #c7d2fe', borderRadius: 8, padding: '8px 12px', fontFamily: 'monospace', fontSize: 16, background: '#f1f5fe', outline: 'none' }}
+              />
+              <ImageUploadLatexButton value={form.question} onChange={val => setForm(f => ({ ...f, question: val }))} textareaRef={questionTextareaRef} />
             </div>
             <div style={{ width: '100%', marginBottom: 8 }}>
               <label style={{ display: 'block', fontWeight: 600, color: '#2563eb', marginBottom: 4 }}>Options</label>

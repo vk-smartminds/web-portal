@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getQuiz } from '../../../../quiz/utils/api';
+import { latex2Html } from '../../../../quiz/utils/latex/latex2html';
 
 export default function QuizReportStandalonePage() {
   const searchParams = useSearchParams();
@@ -342,7 +343,9 @@ export default function QuizReportStandalonePage() {
             // --- Option Letters ---
             return (
               <div key={q._id} style={qBlockStyle}>
-                <div style={qTextStyle}>Q{i+1}. {q.question}</div>
+                <div style={qTextStyle}>
+                  <span dangerouslySetInnerHTML={{ __html: latex2Html(q.question) }} />
+                </div>
                 {/* --- Topics and Difficulty --- */}
                 <div style={{ margin: '6px 0 12px 0', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                   <span style={qMetaPillStyle}>
