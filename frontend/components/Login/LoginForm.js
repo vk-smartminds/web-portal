@@ -234,6 +234,95 @@ export default function LoginForm(props) {
         apiVerifyOtp={apiVerifyOtp}
         apiResetPassword={apiResetPassword}
       />
+
+      {/* Not Found Popup */}
+      {showNotFoundPopup && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{
+            background: '#23232a', color: '#fff', borderRadius: 16, padding: 32, minWidth: 320, boxShadow: '0 8px 32px 0 rgba(31,38,135,0.18)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative'
+          }}>
+            {/* Show error message at the top of the popup if present */}
+            {error && (
+              <div style={{ color: '#ff4d1c', fontWeight: 600, marginBottom: 16, fontSize: 16, textAlign: 'center' }}>{error}</div>
+            )}
+            <div style={{ fontWeight: 700, fontSize: '1.4rem', marginBottom: 12 }}>Let's register</div>
+            <div style={{ display: 'flex', gap: 24, marginTop: 12 }}>
+              <RegisterDropdown router={router} setShowNotFoundPopup={setShowNotFoundPopup} />
+              <button
+                style={{ background: '#444', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 600, cursor: 'pointer' }}
+                onClick={() => setShowNotFoundPopup(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function RegisterDropdown({ router, setShowNotFoundPopup }) {
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  const [hovered, setHovered] = React.useState(null); // 'Student' | 'Teacher' | 'Guardian' | null
+  // Keep dropdown open as long as mouse is over button or dropdown
+  const containerRef = React.useRef();
+  return (
+    <div
+      style={{ position: 'relative', minWidth: 120 }}
+      ref={containerRef}
+      onMouseEnter={() => setDropdownOpen(true)}
+      onMouseLeave={() => { setDropdownOpen(false); setHovered(null); }}
+    >
+      <button
+        style={{ background: '#ff6b4d', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 600, cursor: 'pointer', position: 'relative', zIndex: 1, width: 120 }}
+      >
+        Register
+      </button>
+      {dropdownOpen && (
+        <div
+          style={{
+            position: 'absolute', top: '110%', left: 0, background: '#18181b', borderRadius: 8, boxShadow: '0 2px 8px #0008', minWidth: 140, zIndex: 2,
+            display: 'flex', flexDirection: 'column', overflow: 'hidden', border: '1px solid #333'
+          }}
+        >
+          <DropdownItem label="Student" hovered={hovered === 'Student'} onMouseEnter={() => setHovered('Student')} onMouseLeave={() => setHovered(null)} onClick={() => { setShowNotFoundPopup(false); router.push('/student/register'); }} />
+          <DropdownItem label="Teacher" hovered={hovered === 'Teacher'} onMouseEnter={() => setHovered('Teacher')} onMouseLeave={() => setHovered(null)} onClick={() => { setShowNotFoundPopup(false); router.push('/teacher/register'); }} />
+          <DropdownItem label="Guardian" hovered={hovered === 'Guardian'} onMouseEnter={() => setHovered('Guardian')} onMouseLeave={() => setHovered(null)} onClick={() => { setShowNotFoundPopup(false); router.push('/guardian/register'); }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DropdownItem({ label, hovered, onMouseEnter, onMouseLeave, onClick }) {
+  return (
+    <button
+      style={{
+        background: hovered ? '#2d3748' : 'none',
+        border: hovered ? '2px solid #ff6b4d' : 'none',
+        color: '#fff',
+        padding: '12px 18px',
+        textAlign: 'left',
+        fontWeight: 500,
+        cursor: 'pointer',
+        fontSize: 15,
+        transition: 'background 0.2s, border 0.2s',
+        width: '100%',
+        borderRadius: hovered ? 6 : 0,
+        margin: 0
+      }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onClick={onClick}
+      onMouseDown={e => e.preventDefault()}
+      onKeyDown={e => { if (e.key === 'Enter') onClick(); }}
+    >
+      {label}
+    </button>
   );
 }
