@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import cookieParser from 'cookie-parser';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
+import imageUploadRouter from './routes/imageUpload.js';
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use(cookieParser());
 
 app.use('/', router);
 app.use('/uploads', express.static('backend/public/uploads'));
+app.use('/api/images', imageUploadRouter);
 
 app.get('/', (req, res) => {
     res.send('Welcome to the VK Publications');

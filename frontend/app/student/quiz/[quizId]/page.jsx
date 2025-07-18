@@ -4,6 +4,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { getQuiz, submitQuiz } from '../../../../quiz/utils/api';
 import { getStudentIdFromJWT, getToken } from '../../../../utils/auth';
 import { BASE_API_URL } from '../../../../utils/apiurl';
+import { latex2Html } from '../../../../quiz/utils/latex/latex2html';
 
 const paletteColor = s => s === 'attempted' ? '#22c55e' : s === 'review' ? '#eab308' : '#cbd5e1';
 const paletteBorder = s => s === 'attempted' ? '#22c55e' : s === 'review' ? '#eab308' : '#cbd5e1';
@@ -263,7 +264,11 @@ export default function QuizAttemptStandalonePage() {
         {/* Render quiz UI here: palette, question, options, navigation, submit, etc. */}
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1e293b', marginBottom: 8, textAlign: 'center', letterSpacing: 0.5 }}>Quiz Attempt</h1>
         {/* TODO: Render palette, question, options, navigation, submit, etc. */}
-        <p>Quiz UI goes here.</p>
+        <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: 16, fontSize: 20, lineHeight: 1.4 }}>
+          {quiz && quiz.questions && quiz.questions[current] && (
+            (() => { const html = latex2Html(quiz.questions[current].question); console.log('Rendered HTML:', html); return <span dangerouslySetInnerHTML={{ __html: html }} />; })()
+          )}
+        </div>
       </div>
     </div>
   );
