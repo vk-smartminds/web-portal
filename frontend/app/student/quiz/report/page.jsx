@@ -347,6 +347,7 @@ export default function QuizReportStandalonePage() {
             return (
               <div key={q._id} style={qBlockStyle}>
                 <div style={qTextStyle}>
+                  <span style={{ fontWeight: 700, marginRight: 8 }}>{`Q${i + 1}.`}</span>
                   <LatexPreviewer value={q.question} />
                 </div>
                 {/* --- Topics and Difficulty --- */}
@@ -390,7 +391,7 @@ export default function QuizReportStandalonePage() {
                         <div key={idx} style={{ ...optionRowStyle, background: selected ? (isCorrect ? '#d1fae5' : '#fee2e2') : '#f1f5f9', borderColor: selected ? (isCorrect ? '#22c55e' : '#ef4444') : '#e0e7ef', color: selected ? (isCorrect ? '#065f46' : '#991b1b') : '#334155' }}>
                           <span style={{ fontWeight: 700, marginRight: 8 }}>{optionLetter}.</span>
                           <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <LatexPreviewer value={opt} />
+                            <LatexPreviewer value={opt} optionImage={true} />
                             {selected && (
                               <span style={{ marginLeft: 8, fontSize: 13, color: isCorrect ? '#22c55e' : '#ef4444', fontWeight: 700 }}>
                                 {isCorrect ? '✓' : '✗'}
