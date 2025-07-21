@@ -1,27 +1,30 @@
 "use client";
 import { useState } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import sm9 from "../public/sm9.png"
 
 const books = [
   {
-    title: "sm9",
+    title: "SMART Minds Class 9",
     image: "https://vkpublications.com/cdn/shop/files/Class-9_2.jpg?v=1748239248&width=750",
     bg: "bg-[#9dbdb2]",
+    link: "https://vkpublications.com/products/s-m-a-r-t-minds-mathematics-class-9th-cbse-textbook-and-addendum-with-audio-visual-learning-resources-by-parijat-jain-iit-delhi-iim-ahmedabad"
   },
   {
-    title: "sm10",
+    title: "SMART Minds Class 10",
     image: "https://vkpublications.com/cdn/shop/files/1_2_8cf8b71c-02c4-4748-bb0d-dee3547381ee.jpg?v=1733995950&width=550",
     bg: "bg-[#8b73b1]",
+    link: "https://vkpublications.com/products/s-m-a-r-t-minds-mathematics-textbook-for-cbse-class-10th-vol-1-2-with-audio-visual-learning-resources-by-parijat-jain-iit-delhi-iim-ahmedabad"
   },
   {
-    title: "sm11",
+    title: "SMART Minds Class 11",
     image: "https://vkpublications.com/cdn/shop/files/Class-11-2.jpg?v=1744804001&width=550",
-    },
-    {
-    title: "sm12",
+    link: "https://vkpublications.com/products/s-m-a-r-t-minds-mathematics-textbook-for-cbse-class-11th-vol-1-2-with-audio-visual-learning-resources-by-parijat-jain-iit-delhi-iim-ahmedabad"
+  },
+ {
+    title: "SMART Minds Class 12",
     image: "https://vkpublications.com/cdn/shop/files/Class-12_1_b9535664-5823-4f44-af45-0d80c810d88a.jpg?v=1739599811&width=550",
-    },
+    link: "https://vkpublications.com/products/s-m-a-r-t-minds-mathematics-textbook-for-cbse-class-12th-vol-1-2-3-with-audio-visual-learning-resources-by-parijat-jain-iit-delhi-iim-ahmedabad"
+ },
 ];
 
 export default function FlowerCarousel() {
@@ -41,7 +44,7 @@ export default function FlowerCarousel() {
   return (
     <div className="max-w-[700px] mx-auto p-6">
       <div className="flex items-center justify-between mb-2 text-gray-600">
-        <h2 className="text-lg font-semibold">Theme</h2>
+        <h2 className="text-lg font-semibold"></h2>
         <span className="font-semibold text-sm">{String(index + 1).padStart(2)}/4</span>
       </div>
       <div className="relative flex items-center space-x-4">
@@ -53,19 +56,27 @@ export default function FlowerCarousel() {
           {[-1, 0, 1].map((offset) => {
             const flower = books[getIndex(offset)];
             return (
-              <div
-                key={flower.title}
-                className={`flex-shrink-0 rounded-2xl ${flower.bg} transition-all duration-300 ${
-                  offset === 0 ? "w-[300px] h-[400px]" : "w-[200px] h-[300px] opacity-60"
-                }`}
-                style={{
-                  backgroundImage: `url(${flower.image})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }}
-              >
-  
-              </div>
+                <div key={flower.title} >
+                    <a href={flower.link}>
+                        <div
+                            className={`flex-shrink-0 rounded-2xl ${flower.bg} transition-all duration-300 ${
+                            offset === 0 ? "w-[300px] h-[400px]" : "w-[200px] h-[300px] opacity-60"
+                            }`}
+                            style={{
+                            backgroundImage: `url(${flower.image})`,
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                            }}
+                        > 
+                        </div>
+                        
+                        <div className="w-full h-full flex items-end p-4 relative z-10">
+                            <h3 className={`text-white text-4xl font-bold ${offset !== 0 ? 'opacity-50' : ''}`}>
+                                {flower.title}
+                            </h3>
+                        </div>   
+                    </a>
+                </div>
             );
           })}
         </div>
